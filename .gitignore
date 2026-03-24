@@ -1,0 +1,48 @@
+# =============================================
+# .gitignore para puppy_workspace
+# =============================================
+
+# Datos pesados / resultados de BigQuery
+*.json
+result_*.json
+all_results.json
+bigquery_results/
+
+# Archivos HTML generados (pueden ser muy grandes)
+*.html
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+venv/
+.venv/
+env/
+.env
+*.egg-info/
+dist/
+build/
+
+# Datos sensibles / PII
+*.csv
+*.xlsx
+*.xls
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+*.log
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo

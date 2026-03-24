@@ -1,0 +1,8 @@
+SELECT 
+  SW,
+  COUNT(*) as total_filas,
+  COUNT(DISTINCT CONCAT(CAST(ITEM AS STRING),'|',PAIS,'|',IFNULL(COMPETIDOR,''),'|',IFNULL(FORMATO,''),'|',CAST(IFNULL(CODIGO_ZONA,0) AS STRING))) as combinaciones_unicas
+FROM `wmt-k1-cons-data-users.k1_adhoc_tables.PGMB_PREMED_A0M1J1N`
+WHERE ANIO = 2026 AND SW IN (7,8)
+GROUP BY SW
+ORDER BY SW
