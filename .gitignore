@@ -46,3 +46,9 @@ desktop.ini
 .idea/
 *.swp
 *.swo
+
+# Debug y archivos temporales
+debug_*.py
+debug_*.txt
+build_out.txt
+*.tmp
