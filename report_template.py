@@ -65,7 +65,8 @@ tr:hover td{background:#f0f4ff}
 
 JS_LIB = r"""
 // ==============================================================
-// VC — Vanilla Canvas mini-chart library with hover tooltips
+// VC — Vanilla Canvas mini-chart library
+// Tooltips multi-serie con crosshair vertical + labels en puntos
 // ==============================================================
 const VC = (function(){
   const PAL=['#0053e2','#ea1100','#2a8703','#7c3aed','#f97316',
@@ -73,7 +74,7 @@ const VC = (function(){
     '#06b6d4','#8b5cf6','#ec4899','#14b8a6','#fb923c',
     '#ffc220','#00b0b9','#a855f7','#22c55e','#374151'];
 
-  // Tooltip element
+  // ── Tooltip global ──────────────────────────────────────────
   const tip = document.createElement('div');
   tip.id = 'vc-tip';
   document.body.appendChild(tip);
@@ -82,199 +83,312 @@ const VC = (function(){
     tip.innerHTML = html;
     tip.style.display = 'block';
     const vw = window.innerWidth, vh = window.innerHeight;
-    let tx = ex + 16, ty = ey - 10;
-    if(tx + 250 > vw) tx = ex - 250;
-    if(ty + 120 > vh) ty = ey - 130;
+    let tx = ex + 18, ty = ey - 12;
+    if(tx + 260 > vw) tx = ex - 268;
+    if(ty + 160 > vh) ty = ey - 170;
     tip.style.left = tx + 'px';
     tip.style.top  = ty + 'px';
   }
   function hideTip(){ tip.style.display = 'none'; }
 
-  // Registry: canvasId -> {type, hits[]}
-  const REG = {};
-
-  function attachHover(cv, type){
-    cv.onmousemove = function(e){
-      const rect = cv.getBoundingClientRect();
-      const mx = e.clientX - rect.left;
-      const my = e.clientY - rect.top;
-      const entry = REG[cv.id];
-      if(!entry){ hideTip(); return; }
-      if(type === 'bar'){
-        let found = null;
-        for(const h of entry.hits){
-          if(mx >= h.x && mx <= h.x+h.w && my >= h.y && my <= h.y+h.h){ found=h; break; }
-        }
-        if(found){
-          const val = found.v >= 1000 ? found.v.toLocaleString() : found.v;
-          showTip(`<b>${found.ds}</b><br>${found.lbl}<br>Valor: <b>${val}</b>`, e.clientX, e.clientY);
-        } else hideTip();
-      } else if(type === 'line'){
-        let best = null, bestD = 22;
-        for(const h of entry.hits){
-          const d = Math.sqrt((mx-h.x)**2 + (my-h.y)**2);
-          if(d < bestD){ bestD=d; best=h; }
-        }
-        if(best){
-          const val = best.v >= 1000 ? best.v.toLocaleString() : best.v;
-          showTip(`<b>${best.ds}</b><br>${best.lbl}<br>Valor: <b>${val}</b>`, e.clientX, e.clientY);
-        } else hideTip();
-      }
-    };
-    cv.onmouseleave = hideTip;
-  }
-
+  // ── Helpers de layout ───────────────────────────────────────
   function setup(cv){
-    const dpr = window.devicePixelRatio||1;
-    const W = cv.parentElement ? cv.parentElement.offsetWidth||600 : 600;
-    const H = cv.offsetHeight||350;
-    cv.width = W*dpr; cv.height = H*dpr;
+    const dpr = window.devicePixelRatio || 1;
+    const W = (cv.parentElement ? cv.parentElement.offsetWidth : 0) || 600;
+    const H = cv.offsetHeight || 350;
+    cv.width  = W * dpr;  cv.height = H * dpr;
+    cv.style.width  = W + 'px';
+    cv.style.height = H + 'px';
     const ctx = cv.getContext('2d');
     ctx.scale(dpr, dpr);
     return {ctx, W, H};
   }
 
-  function niceMax(v){ if(!v||v<=0) return 10; const e=Math.pow(10,Math.floor(Math.log10(v))); return Math.ceil(v/e)*e||10; }
-  function yW(max){ return Math.max(52, String(Math.round(max)).length*7+12); }
-  function fmtV(v){ return v>=1000000?(v/1000000).toFixed(1)+'M':v>=1000?(v/1000).toFixed(1)+'K':v.toLocaleString(); }
+  function niceMax(v){
+    if(!v || v <= 0) return 10;
+    const e = Math.pow(10, Math.floor(Math.log10(v)));
+    return Math.ceil(v / e) * e || 10;
+  }
+  function yW(max){ return Math.max(52, String(Math.round(max)).length * 7 + 12); }
+  function fmtV(v){
+    if(v === null || v === undefined) return '-';
+    return v >= 1e6 ? (v/1e6).toFixed(1)+'M' : v >= 1000 ? (v/1000).toFixed(1)+'K' : v.toLocaleString();
+  }
 
-  function drawGrid(ctx,pad,W,H,maxV,nG=5){
-    const {t,b,l,r}=pad, pH=H-t-b;
-    ctx.save(); ctx.strokeStyle='#e5e7eb'; ctx.lineWidth=0.8;
-    ctx.fillStyle='#9ca3af'; ctx.font='10px sans-serif'; ctx.textAlign='right';
-    for(let i=0;i<=nG;i++){
-      const y=t+pH-(i/nG)*pH;
-      ctx.beginPath();ctx.moveTo(l,y);ctx.lineTo(W-r,y);ctx.stroke();
+  function drawGrid(ctx, pad, W, H, maxV, nG=5){
+    const {t,b,l,r} = pad, pH = H-t-b;
+    ctx.save();
+    ctx.strokeStyle = '#e5e7eb'; ctx.lineWidth = 0.8;
+    ctx.fillStyle = '#9ca3af'; ctx.font = '10px sans-serif'; ctx.textAlign = 'right';
+    for(let i = 0; i <= nG; i++){
+      const y = t + pH - (i/nG)*pH;
+      ctx.beginPath(); ctx.moveTo(l,y); ctx.lineTo(W-r,y); ctx.stroke();
       ctx.fillText(fmtV(Math.round(maxV*i/nG)), l-5, y+3);
     }
     ctx.restore();
   }
 
-  function drawXLabels(ctx,labels,pad,W,H,rotate){
-    const {t,b,l,r}=pad, pH=H-t-b, pW=W-l-r;
-    ctx.save(); ctx.fillStyle='#6b7280'; ctx.font='9px sans-serif';
-    const step=pW/labels.length;
-    labels.forEach((lbl,i)=>{
-      const x=l+(i+.5)*step;
-      ctx.save(); ctx.translate(x, t+pH+(rotate?8:14));
-      if(rotate) ctx.rotate(-Math.PI*0.38);
-      ctx.textAlign=rotate?'right':'center';
-      ctx.fillText(lbl,0,0);
+  function drawXLabelsBar(ctx, labels, pad, W, H, rotate){
+    const {t,b,l,r} = pad, pH = H-t-b, pW = W-l-r;
+    ctx.save(); ctx.fillStyle = '#6b7280'; ctx.font = '9px sans-serif';
+    const step = pW / labels.length;
+    labels.forEach((lbl, i) => {
+      const x = l + (i + .5) * step;
+      ctx.save(); ctx.translate(x, t + pH + (rotate ? 8 : 14));
+      if(rotate) ctx.rotate(-Math.PI * 0.38);
+      ctx.textAlign = rotate ? 'right' : 'center';
+      ctx.fillText(lbl, 0, 0);
       ctx.restore();
     });
     ctx.restore();
   }
 
-  function drawLegend(ctx,datasets,pad,W){
-    const rx=W-pad.r+10; let ry=pad.t+2;
-    const mxW=pad.r-16;
-    ctx.save();
-    datasets.forEach((ds,i)=>{
-      const c=ds.color||PAL[i%PAL.length];
-      if(ds.dashed){
-        ctx.strokeStyle=c;ctx.lineWidth=2;ctx.setLineDash([5,3]);ctx.globalAlpha=.8;
-        ctx.beginPath();ctx.moveTo(rx,ry+5);ctx.lineTo(rx+14,ry+5);ctx.stroke();
-        ctx.setLineDash([]);
-      } else {
-        ctx.fillStyle=c;ctx.globalAlpha=.85;ctx.fillRect(rx,ry,14,10);
-      }
-      ctx.globalAlpha=1;ctx.fillStyle='#374151';ctx.font='9px sans-serif';ctx.textAlign='left';
-      const words=(ds.label||'').split(' ');
-      let line='',ly=ry+9;
-      words.forEach(w=>{
-        const t2=line+(line?' ':'')+w;
-        if(ctx.measureText(t2).width>mxW&&line){ctx.fillText(line,rx+17,ly);line=w;ly+=10;}
-        else line=t2;
-      });
-      ctx.fillText(line,rx+17,ly);
-      ry=ly+10;
+  function drawXLabelsLine(ctx, labels, pad, W, H, step, rotate){
+    const {t,b,l} = pad, pH = H-t-b;
+    ctx.save(); ctx.fillStyle = '#6b7280'; ctx.font = '9px sans-serif';
+    labels.forEach((lbl, i) => {
+      const x = l + i * step;
+      ctx.save(); ctx.translate(x, t + pH + (rotate ? 8 : 14));
+      if(rotate) ctx.rotate(-Math.PI * 0.38);
+      ctx.textAlign = rotate ? 'right' : 'center';
+      ctx.fillText(lbl, 0, 0);
+      ctx.restore();
     });
     ctx.restore();
   }
 
-  function drawTitle(ctx,txt,W,padR){
-    ctx.save();ctx.fillStyle='#1a1a2e';ctx.font='bold 12px sans-serif';
-    ctx.textAlign='center';ctx.fillText(txt,(W-padR)/2,16);ctx.restore();
+  function drawLegend(ctx, datasets, pad, W){
+    const rx = W - pad.r + 10; let ry = pad.t + 2;
+    const mxW = pad.r - 16;
+    ctx.save();
+    datasets.forEach((ds, i) => {
+      const c = ds.color || PAL[i % PAL.length];
+      if(ds.dashed){
+        ctx.strokeStyle=c; ctx.lineWidth=2; ctx.setLineDash([5,3]); ctx.globalAlpha=.8;
+        ctx.beginPath(); ctx.moveTo(rx,ry+5); ctx.lineTo(rx+14,ry+5); ctx.stroke();
+        ctx.setLineDash([]);
+      } else {
+        ctx.fillStyle=c; ctx.globalAlpha=.85; ctx.fillRect(rx,ry,14,10);
+      }
+      ctx.globalAlpha=1; ctx.fillStyle='#374151'; ctx.font='9px sans-serif'; ctx.textAlign='left';
+      const words = (ds.label||'').split(' ');
+      let line='', ly=ry+9;
+      words.forEach(w=>{
+        const t2=line+(line?' ':'')+w;
+        if(ctx.measureText(t2).width>mxW && line){ ctx.fillText(line,rx+17,ly); line=w; ly+=10; }
+        else line=t2;
+      });
+      ctx.fillText(line, rx+17, ly);
+      ry = ly + 10;
+    });
+    ctx.restore();
   }
 
+  function drawTitle(ctx, txt, W, padR){
+    ctx.save(); ctx.fillStyle='#1a1a2e'; ctx.font='bold 12px sans-serif';
+    ctx.textAlign='center'; ctx.fillText(txt, (W-padR)/2, 16); ctx.restore();
+  }
+
+  // ── BAR  ────────────────────────────────────────────────────
+  // Tooltip: muestra TODOS los datasets del mismo label al hover
   return {
     bar(cv, {labels, datasets, ttl='', grouped=true}){
-      if(!cv||!datasets||!datasets.length) return;
-      const {ctx,W,H} = setup(cv);
-      ctx.clearRect(0,0,cv.width,cv.height);
-      const legW = Math.min(200,W*.32);
+      if(!cv || !datasets || !datasets.length) return;
+      const {ctx, W, H} = setup(cv);
+      const legW   = Math.min(200, W*.32);
       const rotate = labels.length > 7;
-      const allVals = datasets.flatMap(d=>d.data||[0]);
-      const maxV = niceMax(Math.max(...allVals, 0));
-      const pad = {t:34, b:rotate?92:52, l:yW(maxV), r:legW};
-      drawGrid(ctx,pad,W,H,maxV);
-      drawXLabels(ctx,labels,pad,W,H,rotate);
-      const pH=H-pad.t-pad.b, pW=W-pad.l-pad.r;
-      const nG=labels.length, nS=datasets.length;
-      const gW=pW/nG;
-      const bW=Math.max(3, Math.min(grouped?gW*.82/nS:gW*.72, grouped?36:64));
-      const hits=[];
-      datasets.forEach((ds,di)=>{
-        const c=ds.color||PAL[di%PAL.length];
-        ctx.fillStyle=c; ctx.globalAlpha=.86;
-        (ds.data||[]).forEach((v,i)=>{
-          let bx;
-          if(grouped) bx=pad.l+i*gW+(di-(nS-1)/2)*bW+gW/2-bW/2;
-          else        bx=pad.l+i*gW+(gW-bW)/2;
-          const bH=v/maxV*pH;
-          const by=pad.t+pH-bH;
-          ctx.fillRect(bx, by, bW-1, bH);
-          hits.push({x:bx, y:by, w:bW-1, h:bH, v, lbl:labels[i]||'', ds:ds.label||''});
+      const allV   = datasets.flatMap(d => d.data||[0]);
+      const maxV   = niceMax(Math.max(...allV, 0));
+      const pad    = {t:34, b:rotate?92:52, l:yW(maxV), r:legW};
+      const pH     = H - pad.t - pad.b;
+      const pW     = W - pad.l - pad.r;
+      const nG     = labels.length, nS = datasets.length;
+      const gW     = pW / nG;
+      const bW     = Math.max(3, Math.min(grouped ? gW*.82/nS : gW*.72, grouped ? 36 : 64));
+
+      // Precompute rects grouped by label index
+      const byIdx = labels.map(() => []);
+      datasets.forEach((ds, di) => {
+        const c = ds.color || PAL[di % PAL.length];
+        (ds.data||[]).forEach((v, i) => {
+          let bx = grouped
+            ? pad.l + i*gW + (di-(nS-1)/2)*bW + gW/2 - bW/2
+            : pad.l + i*gW + (gW-bW)/2;
+          const bH = v/maxV*pH, by = pad.t+pH-bH;
+          byIdx[i].push({x:bx, y:by, w:bW-1, h:bH, v, lbl:labels[i]||'', ds:ds.label||'', c});
         });
       });
-      ctx.globalAlpha=1;
-      drawTitle(ctx,ttl,W,pad.r);
-      drawLegend(ctx,datasets,pad,W);
-      if(!cv.id) cv.id='vc_'+(Math.random()*1e6|0);
-      REG[cv.id]={hits};
-      attachHover(cv,'bar');
+
+      function paint(hovIdx){
+        ctx.clearRect(0,0,W,H);
+        drawGrid(ctx,pad,W,H,maxV);
+        drawXLabelsBar(ctx,labels,pad,W,H,rotate);
+
+        // Hover band
+        if(hovIdx !== null){
+          ctx.save();
+          ctx.fillStyle = 'rgba(0,83,226,0.06)';
+          ctx.fillRect(pad.l + hovIdx*gW, pad.t, gW, pH);
+          ctx.restore();
+        }
+
+        byIdx.forEach((grp, gi) => {
+          grp.forEach(h => {
+            ctx.fillStyle = h.c;
+            ctx.globalAlpha = hovIdx === null || hovIdx === gi ? .88 : .35;
+            ctx.fillRect(h.x, h.y, h.w, h.h);
+
+            // Value label above bar when hovered
+            if(hovIdx === gi && h.v > 0){
+              ctx.globalAlpha = 1;
+              ctx.fillStyle = '#1a1a2e';
+              ctx.font = 'bold 9px sans-serif';
+              ctx.textAlign = 'center';
+              ctx.fillText(fmtV(h.v), h.x + h.w/2, h.y - 3);
+            }
+          });
+        });
+        ctx.globalAlpha = 1;
+        drawTitle(ctx, ttl, W, pad.r);
+        drawLegend(ctx, datasets, pad, W);
+      }
+
+      paint(null);
+      if(!cv.id) cv.id = 'vc_' + (Math.random()*1e6|0);
+
+      cv.onmousemove = function(e){
+        const rect = cv.getBoundingClientRect();
+        const mx = e.clientX - rect.left;
+        const idx = Math.floor((mx - pad.l) / gW);
+        if(idx < 0 || idx >= labels.length){ paint(null); hideTip(); return; }
+        paint(idx);
+        // Multi-serie tooltip
+        let html = `<b style="color:#ffc220">${labels[idx]}</b>`;
+        byIdx[idx].forEach(h =>{
+          html += `<br><span style="color:${h.c}">&#9632;</span> ${h.ds}: <b>${fmtV(h.v)}</b>`;
+        });
+        showTip(html, e.clientX, e.clientY);
+      };
+      cv.onmouseleave = () => { paint(null); hideTip(); };
     },
 
+    // ── LINE  ──────────────────────────────────────────────────
+    // Crosshair vertical + tooltip multi-serie + labels en puntos
     line(cv, {labels, datasets, ttl=''}){
-      if(!cv||!datasets||!datasets.length) return;
-      const {ctx,W,H} = setup(cv);
-      ctx.clearRect(0,0,cv.width,cv.height);
-      const legW = Math.min(200,W*.32);
+      if(!cv || !datasets || !datasets.length) return;
+      const {ctx, W, H} = setup(cv);
+      const legW   = Math.min(200, W*.32);
       const rotate = labels.length > 6;
-      const allV = datasets.flatMap(d=>d.data||[0]).filter(Number.isFinite);
-      const maxV = niceMax(Math.max(...allV,1));
-      const pad = {t:34, b:rotate?88:52, l:yW(maxV), r:legW};
-      drawGrid(ctx,pad,W,H,maxV);
-      drawXLabels(ctx,labels,pad,W,H,rotate);
-      const pH=H-pad.t-pad.b, pW=W-pad.l-pad.r;
-      const step = labels.length>1 ? pW/(labels.length-1) : pW;
-      const hits=[];
-      datasets.forEach((ds,di)=>{
-        const c=ds.color||PAL[di%PAL.length];
-        ctx.save();
-        ctx.strokeStyle=c; ctx.lineWidth=2;
-        ctx.setLineDash(ds.dashed?[6,4]:[]);
-        ctx.globalAlpha=ds.dashed?.7:.9;
-        ctx.beginPath();
-        (ds.data||[]).forEach((v,i)=>{
-          const x=pad.l+i*step, y=pad.t+pH-v/maxV*pH;
-          i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+      const allV   = datasets.flatMap(d=>d.data||[0]).filter(Number.isFinite);
+      const maxV   = niceMax(Math.max(...allV, 1));
+      const pad    = {t:34, b:rotate?88:52, l:yW(maxV), r:legW};
+      const pH     = H - pad.t - pad.b;
+      const pW     = W - pad.l - pad.r;
+      const step   = labels.length > 1 ? pW/(labels.length-1) : pW;
+
+      // Auto data labels: solo cuando hay pocos puntos y pocas series
+      const showLabels = labels.length <= 10 && datasets.length <= 4;
+
+      // Precompute point coords por dataset
+      const ptsByDs = datasets.map(ds =>
+        (ds.data||[]).map((v, i) => ({
+          x: pad.l + i*step,
+          y: pad.t + pH - (Number.isFinite(v) ? v/maxV*pH : 0),
+          v, lbl: labels[i]||'', ds: ds.label||''
+        }))
+      );
+
+      function paint(hovIdx){
+        ctx.clearRect(0,0,W,H);
+        drawGrid(ctx,pad,W,H,maxV);
+        drawXLabelsLine(ctx,labels,pad,W,H,step,rotate);
+
+        // Crosshair vertical
+        if(hovIdx !== null){
+          const hx = pad.l + hovIdx * step;
+          ctx.save();
+          ctx.strokeStyle = 'rgba(55,65,81,0.28)';
+          ctx.lineWidth = 1.2;
+          ctx.setLineDash([5,4]);
+          ctx.beginPath(); ctx.moveTo(hx, pad.t); ctx.lineTo(hx, pad.t+pH); ctx.stroke();
+          ctx.setLineDash([]);
+          ctx.restore();
+        }
+
+        datasets.forEach((ds, di) => {
+          const c   = ds.color || PAL[di % PAL.length];
+          const pts = ptsByDs[di];
+          ctx.save();
+          ctx.strokeStyle = c; ctx.lineWidth = 2;
+          ctx.setLineDash(ds.dashed ? [6,4] : []);
+          ctx.globalAlpha = ds.dashed ? .7 : .9;
+          ctx.beginPath();
+          pts.forEach((p, i) => i===0 ? ctx.moveTo(p.x,p.y) : ctx.lineTo(p.x,p.y));
+          ctx.stroke();
+          ctx.setLineDash([]);
+
+          // Puntos
+          ctx.fillStyle = c;
+          pts.forEach((p, i) => {
+            const isHov = hovIdx === i;
+            ctx.globalAlpha = 1;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, isHov ? 7 : (ds.dashed ? 3 : 4.5), 0, Math.PI*2);
+            ctx.fill();
+
+            // Anillo blanco en hover
+            if(isHov){
+              ctx.save();
+              ctx.strokeStyle = '#fff'; ctx.lineWidth = 2;
+              ctx.beginPath(); ctx.arc(p.x, p.y, 7, 0, Math.PI*2); ctx.stroke();
+              ctx.restore();
+            }
+
+            // Data label encima del punto
+            if(showLabels && !ds.dashed && p.v > 0){
+              ctx.save();
+              // Fondo blanco para legibilidad
+              const lbl = fmtV(p.v);
+              ctx.font = isHov ? 'bold 10px sans-serif' : 'bold 9px sans-serif';
+              const tw  = ctx.measureText(lbl).width;
+              ctx.fillStyle = 'rgba(255,255,255,0.85)';
+              ctx.fillRect(p.x - tw/2 - 2, p.y - 19, tw + 4, 13);
+              ctx.fillStyle = isHov ? '#1a1a2e' : c;
+              ctx.textAlign = 'center';
+              ctx.fillText(lbl, p.x, p.y - 9);
+              ctx.restore();
+            }
+          });
+          ctx.restore();
         });
-        ctx.stroke();
-        ctx.setLineDash([]);
-        ctx.fillStyle=c;
-        (ds.data||[]).forEach((v,i)=>{
-          const x=pad.l+i*step, y=pad.t+pH-v/maxV*pH;
-          ctx.beginPath();ctx.arc(x,y,ds.dashed?3:4.5,0,Math.PI*2);ctx.fill();
-          hits.push({x,y,v,lbl:labels[i]||'',ds:ds.label||''});
+
+        drawTitle(ctx, ttl, W, pad.r);
+        drawLegend(ctx, datasets, pad, W);
+      }
+
+      paint(null);
+      if(!cv.id) cv.id = 'vc_' + (Math.random()*1e6|0);
+
+      cv.onmousemove = function(e){
+        const rect = cv.getBoundingClientRect();
+        const mx   = e.clientX - rect.left;
+        if(mx < pad.l - 15 || mx > W - pad.r + 15){ paint(null); hideTip(); return; }
+        const raw  = (mx - pad.l) / (step || 1);
+        const idx  = Math.max(0, Math.min(labels.length-1, Math.round(raw)));
+        paint(idx);
+
+        // Tooltip con TODOS los datasets en ese indice X
+        let html = `<b style="color:#ffc220">${labels[idx] || ''}</b>`;
+        datasets.forEach((ds, di) => {
+          const v = (ds.data||[])[idx];
+          const c = ds.color || PAL[di % PAL.length];
+          if(v !== undefined && v !== null){
+            html += `<br><span style="color:${c}">&#9679;</span> ${ds.label||''}: <b>${fmtV(v)}</b>`;
+          }
         });
-        ctx.restore();
-      });
-      drawTitle(ctx,ttl,W,pad.r);
-      drawLegend(ctx,datasets,pad,W);
-      if(!cv.id) cv.id='vc_'+(Math.random()*1e6|0);
-      REG[cv.id]={hits};
-      attachHover(cv,'line');
+        showTip(html, e.clientX, e.clientY);
+      };
+      cv.onmouseleave = () => { paint(null); hideTip(); };
     },
 
     donut(cv, {labels, data, colors=[], ttl=''}){

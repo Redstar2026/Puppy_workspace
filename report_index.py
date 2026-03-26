@@ -193,76 +193,238 @@ var IDX = (function(){
     ctx.textAlign='center'; ctx.fillText(ttl,(W-padR)/2,14); ctx.restore();
   }
 
-  // Barras bipolares (valores pueden ser negativos)
-  function biBar(id, {labels, datasets, ttl}){
-    const g = getCanvas(id); if(!g) return;
-    const {ctx,W,H} = g;
-    const legW = Math.min(180, W*0.28);
-    const pad  = {t:22, b: labels.length>7?90:52, l:42, r:legW};
-    const allV = datasets.flatMap(d=>d.data||[]).filter(v=>v!==null&&isFinite(v));
-    if(!allV.length) return;
-    const {lo,hi} = niceBound(allV);
-    const {pH,pW,zero_y,range} = bipolarAxes(ctx,pad,W,H,lo,hi);
-    bipolarXLabels(ctx,labels,pad,W,H);
-    bipolarTitle(ctx,ttl,W,legW);
-    const nG=labels.length, nS=datasets.length;
-    const gW=pW/nG;
-    const bW=Math.max(3, Math.min(nS>1 ? gW*0.8/nS : gW*0.6, 30));
-    datasets.forEach((ds,di)=>{
-      const c = ds.color||PAL[di%PAL.length];
-      ctx.fillStyle=c;
-      (ds.data||[]).forEach((v,i)=>{
-        if(v===null||!isFinite(v)) return;
-        let bx = nS>1
-          ? pad.l+i*gW+(di-(nS-1)/2)*bW+gW/2-bW/2
-          : pad.l+i*gW+(gW-bW)/2;
-        const bh = Math.abs((v/range)*pH);
-        const by = v>=0 ? zero_y-bh : zero_y;
-        ctx.globalAlpha=0.85; ctx.fillRect(bx,by,bW-1,bh);
-      });
-    });
-    ctx.globalAlpha=1;
-    bipolarLegend(ctx,datasets,W,H,legW);
+  // ── Tooltip global compartido (reutiliza el de VC si existe) ──────
+  function showTipIDX(html, ex, ey){
+    let t = document.getElementById('vc-tip');
+    if(!t){ t=document.createElement('div'); t.id='vc-tip'; document.body.appendChild(t); }
+    t.innerHTML = html;
+    t.style.display = 'block';
+    const vw=window.innerWidth, vh=window.innerHeight;
+    let tx=ex+18, ty=ey-12;
+    if(tx+260>vw) tx=ex-268;
+    if(ty+180>vh) ty=ey-190;
+    t.style.left=tx+'px'; t.style.top=ty+'px';
+  }
+  function hideTipIDX(){
+    const t=document.getElementById('vc-tip'); if(t) t.style.display='none';
   }
 
-  // Lineas bipolares
-  function biLine(id, {labels, datasets, ttl}){
-    const g = getCanvas(id); if(!g) return;
-    const {ctx,W,H} = g;
+  // ── Barras bipolares con hover-band + multi-serie tooltip + labels ───
+  function biBar(id, {labels, datasets, ttl}){
+    const cv = document.getElementById(id); if(!cv) return;
+    const dpr = window.devicePixelRatio||1;
+    const W   = (cv.parentElement?cv.parentElement.offsetWidth:0)||700;
+    const H   = cv.offsetHeight||320;
+    cv.width=W*dpr; cv.height=H*dpr;
+    cv.style.width=W+'px'; cv.style.height=H+'px';
+    const ctx = cv.getContext('2d'); ctx.scale(dpr,dpr);
     const legW = Math.min(180,W*0.28);
-    const pad  = {t:22, b: labels.length>8?90:52, l:42, r:legW};
+    const pad  = {t:22, b:labels.length>7?90:52, l:42, r:legW};
     const allV = datasets.flatMap(d=>d.data||[]).filter(v=>v!==null&&isFinite(v));
     if(!allV.length) return;
     const {lo,hi} = niceBound(allV);
-    const {pH,pW,zero_y,range} = bipolarAxes(ctx,pad,W,H,lo,hi);
-    bipolarXLabels(ctx,labels,pad,W,H);
-    bipolarTitle(ctx,ttl,W,legW);
-    const step = labels.length>1 ? pW/(labels.length-1) : pW;
+    const pH  = H-pad.t-pad.b, pW = W-pad.l-pad.r;
+    const nG=labels.length, nS=datasets.length;
+    const gW=pW/nG;
+    const bW=Math.max(3, Math.min(nS>1?gW*0.8/nS:gW*0.6, 30));
+
+    // Precompute rects by group index
+    const byIdx = labels.map(()=>[]);
     datasets.forEach((ds,di)=>{
       const c = ds.color||PAL[di%PAL.length];
-      const pts = (ds.data||[]).map((v,i)=>({
-        x: pad.l+i*step,
-        y: (v!==null&&isFinite(v)) ? zero_y-(v/range)*pH : null
-      }));
-      ctx.save();
-      ctx.strokeStyle=c; ctx.lineWidth=2; ctx.globalAlpha=0.9;
-      ctx.beginPath();
-      let started=false;
-      pts.forEach(p=>{
-        if(!p.y||!isFinite(p.y)){ started=false; return; }
-        if(!started){ ctx.moveTo(p.x,p.y); started=true; }
-        else ctx.lineTo(p.x,p.y);
+      (ds.data||[]).forEach((v,i)=>{
+        if(v===null||!isFinite(v)) return;
+        const bx = nS>1
+          ? pad.l+i*gW+(di-(nS-1)/2)*bW+gW/2-bW/2
+          : pad.l+i*gW+(gW-bW)/2;
+        byIdx[i].push({bx, c, v, ds:ds.label||''});
       });
-      ctx.stroke();
-      ctx.fillStyle=c;
-      pts.forEach(p=>{
-        if(!p.y||!isFinite(p.y)) return;
-        ctx.beginPath(); ctx.arc(p.x,p.y,3.5,0,Math.PI*2); ctx.fill();
-      });
-      ctx.restore();
     });
-    ctx.globalAlpha=1;
-    bipolarLegend(ctx,datasets,W,H,legW);
+
+    function paint(hovIdx){
+      ctx.clearRect(0,0,W,H);
+      const {zero_y,range} = bipolarAxes(ctx,pad,W,H,lo,hi);
+
+      // Hover band
+      if(hovIdx!==null){
+        ctx.save();
+        ctx.fillStyle='rgba(0,83,226,0.07)';
+        ctx.fillRect(pad.l+hovIdx*gW, pad.t, gW, pH);
+        ctx.restore();
+      }
+
+      byIdx.forEach((grp,gi)=>{
+        grp.forEach(h=>{
+          const bh = Math.abs((h.v/range)*pH);
+          const by = h.v>=0 ? zero_y-bh : zero_y;
+          ctx.fillStyle=h.c;
+          ctx.globalAlpha = hovIdx===null||hovIdx===gi ? 0.87 : 0.28;
+          ctx.fillRect(h.bx, by, bW-1, bh);
+
+          // Value label on hover
+          if(hovIdx===gi){
+            ctx.globalAlpha=1;
+            ctx.fillStyle='#1a1a2e'; ctx.font='bold 9px sans-serif'; ctx.textAlign='center';
+            const pct = (h.v*100).toFixed(1)+'%';
+            const ly2 = h.v>=0 ? by-3 : by+bh+11;
+            ctx.fillText(pct, h.bx+bW/2, ly2);
+          }
+        });
+      });
+      ctx.globalAlpha=1;
+      bipolarXLabels(ctx,labels,pad,W,H);
+      bipolarTitle(ctx,ttl,W,legW);
+      bipolarLegend(ctx,datasets,W,H,legW);
+    }
+
+    paint(null);
+
+    cv.style.cursor='crosshair';
+    cv.onmousemove=function(e){
+      const rect=cv.getBoundingClientRect();
+      const mx=e.clientX-rect.left;
+      const idx=Math.floor((mx-pad.l)/gW);
+      if(idx<0||idx>=labels.length){ paint(null); hideTipIDX(); return; }
+      paint(idx);
+      let html=`<b style="color:#ffc220">${labels[idx]}</b>`;
+      byIdx[idx].forEach(h=>{
+        const c=h.c;
+        const pct=(h.v>=0?'+':''+(h.v*100).toFixed(2)+'%');
+        html+=`<br><span style="color:${c}">&#9632;</span> ${h.ds}: <b>${(h.v*100).toFixed(2)}%</b>`;
+      });
+      showTipIDX(html, e.clientX, e.clientY);
+    };
+    cv.onmouseleave=()=>{ paint(null); hideTipIDX(); };
+  }
+
+  // ── Lineas bipolares con crosshair + multi-serie tooltip + labels en puntos ───
+  function biLine(id, {labels, datasets, ttl}){
+    const cv = document.getElementById(id); if(!cv) return;
+    const dpr = window.devicePixelRatio||1;
+    const W   = (cv.parentElement?cv.parentElement.offsetWidth:0)||700;
+    const H   = cv.offsetHeight||320;
+    cv.width=W*dpr; cv.height=H*dpr;
+    cv.style.width=W+'px'; cv.style.height=H+'px';
+    const ctx = cv.getContext('2d'); ctx.scale(dpr,dpr);
+    const legW = Math.min(180,W*0.28);
+    const pad  = {t:22, b:labels.length>8?90:52, l:42, r:legW};
+    const allV = datasets.flatMap(d=>d.data||[]).filter(v=>v!==null&&isFinite(v));
+    if(!allV.length) return;
+    const {lo,hi} = niceBound(allV);
+    const pH  = H-pad.t-pad.b, pW = W-pad.l-pad.r;
+    const step = labels.length>1 ? pW/(labels.length-1) : pW;
+
+    // Mostrar labels en puntos cuando hay pocos puntos y pocas series
+    const showLabels = labels.length <= 14 && datasets.length <= 5;
+
+    // Precompute puntos por dataset
+    const ptsByDs = datasets.map((ds,di)=>{
+      const c = ds.color||PAL[di%PAL.length];
+      return (ds.data||[]).map((v,i)=>{
+        const {zero_y, range} = (() => {
+          // mini-calc zero_y sin ctx (solo necesitamos los coords)
+          const r2 = hi-lo; const zy = pad.t+pH*(hi/r2);
+          return {zero_y:zy, range:r2};
+        })();
+        return {
+          x: pad.l+i*step,
+          y: (v!==null&&isFinite(v)) ? pad.t+pH*((hi-v)/(hi-lo)) : null,
+          v, lbl:labels[i]||'', c, ds:ds.label||''
+        };
+      });
+    });
+
+    function paint(hovIdx){
+      ctx.clearRect(0,0,W,H);
+      bipolarAxes(ctx,pad,W,H,lo,hi);
+
+      // Crosshair vertical
+      if(hovIdx!==null){
+        const hx = pad.l+hovIdx*step;
+        ctx.save();
+        ctx.strokeStyle='rgba(55,65,81,0.30)'; ctx.lineWidth=1.2;
+        ctx.setLineDash([5,4]);
+        ctx.beginPath(); ctx.moveTo(hx,pad.t); ctx.lineTo(hx,pad.t+pH); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.restore();
+      }
+
+      datasets.forEach((ds,di)=>{
+        const pts = ptsByDs[di];
+        const c   = ds.color||PAL[di%PAL.length];
+        ctx.save();
+        ctx.strokeStyle=c; ctx.lineWidth=2; ctx.globalAlpha=0.9;
+        ctx.beginPath();
+        let started=false;
+        pts.forEach(p=>{
+          if(!p.y||!isFinite(p.y)){ started=false; return; }
+          if(!started){ ctx.moveTo(p.x,p.y); started=true; }
+          else ctx.lineTo(p.x,p.y);
+        });
+        ctx.stroke();
+        ctx.fillStyle=c;
+        pts.forEach((p,i)=>{
+          if(!p.y||!isFinite(p.y)) return;
+          const isHov = hovIdx===i;
+          const r2 = isHov ? 7 : 4;
+          ctx.globalAlpha=1;
+          ctx.beginPath(); ctx.arc(p.x,p.y,r2,0,Math.PI*2); ctx.fill();
+
+          // Anillo blanco en hover
+          if(isHov){
+            ctx.save();
+            ctx.strokeStyle='#fff'; ctx.lineWidth=2;
+            ctx.beginPath(); ctx.arc(p.x,p.y,r2,0,Math.PI*2); ctx.stroke();
+            ctx.restore();
+          }
+
+          // Data label en punto
+          if(showLabels && p.v!==null && isFinite(p.v)){
+            const lbl = (p.v*100).toFixed(1)+'%';
+            ctx.save();
+            ctx.font = isHov?'bold 10px sans-serif':'bold 9px sans-serif';
+            const tw = ctx.measureText(lbl).width;
+            // Fondo semitransparente para legibilidad
+            ctx.fillStyle='rgba(255,255,255,0.85)';
+            ctx.fillRect(p.x-tw/2-2, p.y-20, tw+4, 13);
+            ctx.fillStyle = isHov?'#1a1a2e':c;
+            ctx.textAlign='center';
+            ctx.fillText(lbl, p.x, p.y-10);
+            ctx.restore();
+          }
+        });
+        ctx.restore();
+      });
+      ctx.globalAlpha=1;
+      bipolarXLabels(ctx,labels,pad,W,H);
+      bipolarTitle(ctx,ttl,W,legW);
+      bipolarLegend(ctx,datasets,W,H,legW);
+    }
+
+    paint(null);
+    cv.style.cursor='crosshair';
+
+    cv.onmousemove=function(e){
+      const rect=cv.getBoundingClientRect();
+      const mx=e.clientX-rect.left;
+      if(mx<pad.l-15||mx>W-pad.r+15){ paint(null); hideTipIDX(); return; }
+      const raw=(mx-pad.l)/(step||1);
+      const idx=Math.max(0,Math.min(labels.length-1, Math.round(raw)));
+      paint(idx);
+      // Tooltip multi-serie
+      let html=`<b style="color:#ffc220">${labels[idx]||''}</b>`;
+      datasets.forEach((ds,di)=>{
+        const c = ds.color||PAL[di%PAL.length];
+        const v = (ds.data||[])[idx];
+        if(v!==null&&v!==undefined&&isFinite(v)){
+          const pct=(v*100).toFixed(2)+'%';
+          const arr=v<-0.001?'\u25bc':v>0.001?'\u25b2':'—';
+          html+=`<br><span style="color:${c}">&#9679;</span> ${ds.label||''}: <b>${arr} ${pct}</b>`;
+        }
+      });
+      showTipIDX(html, e.clientX, e.clientY);
+    };
+    cv.onmouseleave=()=>{ paint(null); hideTipIDX(); };
   }
 
   // ============================================================
