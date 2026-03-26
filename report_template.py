@@ -94,11 +94,14 @@ const VC = (function(){
   // ── Helpers de layout ───────────────────────────────────────
   function setup(cv){
     const dpr = window.devicePixelRatio || 1;
-    const W = (cv.parentElement ? cv.parentElement.offsetWidth : 0) || 600;
-    const H = cv.offsetHeight || 350;
-    cv.width  = W * dpr;  cv.height = H * dpr;
-    cv.style.width  = W + 'px';
-    cv.style.height = H + 'px';
+    // NO sobreescribir style.width/height — dejar que CSS (width:100%, height:350px) lo controle
+    // offsetWidth puede ser 0 si el tab esta oculto; usamos clientWidth del padre como fallback
+    const W = cv.parentElement
+      ? (cv.parentElement.offsetWidth || cv.parentElement.clientWidth || 700)
+      : 700;
+    const H = cv.offsetHeight || cv.clientHeight || 350;
+    cv.width  = W * dpr;
+    cv.height = H * dpr;
     const ctx = cv.getContext('2d');
     ctx.scale(dpr, dpr);
     return {ctx, W, H};

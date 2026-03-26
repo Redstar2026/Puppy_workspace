@@ -1,0 +1,14 @@
+Q1 total_rows=5361
+Q1 keys=['ano', 'cnt_mayoreo', 'cnt_precio_normal', 'cnt_precio_oferta', 'competidor', 'dia_semana', 'inicio_semana', 'mes', 'pais', 'segmento', 'semana']
+Q1 row0={'ano': '2025', 'cnt_mayoreo': '11', 'cnt_precio_normal': '1060', 'cnt_precio_oferta': '112', 'competidor': 'AUTOMERCADO', 'dia_semana': 'Viernes', 'inicio_semana': '2025-07-28', 'mes': '8', 'pais': 'CR', 'segmento': 'Fin de Semana', 'semana': '27'}
+Q1 dias_semana=['Domingo', 'Jueves', 'Lunes', 'Martes', 'Miercoles', 'Sabado', 'Viernes']
+Q1 segmentos=['Entre Semana', 'Fin de Semana']
+Q1 seg_counts={'Fin de Semana': 876, 'Entre Semana': 4485}
+Q1 dia_counts={'Viernes': 512, 'Domingo': 119, 'Sabado': 245, 'Lunes': 170, 'Miercoles': 1481, 'Martes': 1447, 'Jueves': 1387}
+Q1 rows_cnt_normal_zero=0
+Q1 anos=['2025', '2026']
+
+Q3 total_rows=1284
+Q3 keys=['ano', 'cnt_mayoreo', 'cnt_precio_normal', 'cnt_precio_oferta', 'competidor', 'mes', 'pais', 'segmento']
+Q3 row0={'ano': '2025', 'cnt_mayoreo': '0', 'cnt_precio_normal': '144', 'cnt_precio_oferta': '0', 'competidor': 'ALISS', 'mes': '8', 'pais': 'CR', 'segmento': 'Entre Semana'}
+Q3 seg_counts={'Entre Semana': 1049, 'Fin de Semana': 235}

@@ -64,11 +64,23 @@ function resetFilters(){
 }
 
 // ---------- TABS ----------
+// Re-renderizamos siempre al cambiar de tab para que los canvas
+// agarren el ancho real del contenedor (evita charts vacios en tabs ocultos al init)
 function showTab(id,btn){
   document.querySelectorAll('.tab-pane').forEach(t=>t.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   btn.classList.add('active');
+  // Esperar un frame para que el DOM reporte dimensiones correctas, luego re-renderizar
+  requestAnimationFrame(function(){
+    if(id==='t1') renderTab1();
+    else if(id==='t2') renderTab2();
+    else if(id==='t3') renderTab3();
+    else if(id==='t4') renderTab4();
+    else if(id==='t5') renderTab5();
+    else if(id==='t6') renderTab6();
+    else if(id==='tidx') try{ if(typeof IDX!=='undefined') IDX.render(); }catch(e){}
+  });
 }
 
 // ---------- PILLS ----------

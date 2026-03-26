@@ -118,19 +118,7 @@ var IDX = (function(){
   // MOTOR DE GRAFICAS BIPOLAR (soporta valores negativos)
   // Eje Y en % (valores vienen como fraccion: -0.05 = -5%)
   // ============================================================
-  function getCanvas(id){
-    const cv = document.getElementById(id);
-    if(!cv) return null;
-    const dpr = window.devicePixelRatio || 1;
-    const W   = (cv.parentElement ? cv.parentElement.offsetWidth : 0) || 700;
-    const H   = cv.offsetHeight || 320;
-    cv.width  = W * dpr;  cv.height = H * dpr;
-    cv.style.width = W+'px'; cv.style.height = H+'px';
-    const ctx = cv.getContext('2d');
-    ctx.scale(dpr, dpr);
-    ctx.clearRect(0,0,W,H);
-    return {cv, ctx, W, H};
-  }
+
 
   function niceBound(vals){
     const hi0 = Math.max(...vals.filter(isFinite), 0.02);
@@ -213,10 +201,10 @@ var IDX = (function(){
   function biBar(id, {labels, datasets, ttl}){
     const cv = document.getElementById(id); if(!cv) return;
     const dpr = window.devicePixelRatio||1;
-    const W   = (cv.parentElement?cv.parentElement.offsetWidth:0)||700;
-    const H   = cv.offsetHeight||320;
+    const W   = (cv.parentElement ? cv.parentElement.offsetWidth||cv.parentElement.clientWidth : 0) || 700;
+    const H   = cv.offsetHeight || cv.clientHeight || 320;
+    // No sobreescribir style.width/height: dejar que CSS (100% / altura fija) los controle
     cv.width=W*dpr; cv.height=H*dpr;
-    cv.style.width=W+'px'; cv.style.height=H+'px';
     const ctx = cv.getContext('2d'); ctx.scale(dpr,dpr);
     const legW = Math.min(180,W*0.28);
     const pad  = {t:22, b:labels.length>7?90:52, l:42, r:legW};
@@ -301,10 +289,10 @@ var IDX = (function(){
   function biLine(id, {labels, datasets, ttl}){
     const cv = document.getElementById(id); if(!cv) return;
     const dpr = window.devicePixelRatio||1;
-    const W   = (cv.parentElement?cv.parentElement.offsetWidth:0)||700;
-    const H   = cv.offsetHeight||320;
+    const W   = (cv.parentElement ? cv.parentElement.offsetWidth||cv.parentElement.clientWidth : 0) || 700;
+    const H   = cv.offsetHeight || cv.clientHeight || 320;
+    // No sobreescribir style.width/height
     cv.width=W*dpr; cv.height=H*dpr;
-    cv.style.width=W+'px'; cv.style.height=H+'px';
     const ctx = cv.getContext('2d'); ctx.scale(dpr,dpr);
     const legW = Math.min(180,W*0.28);
     const pad  = {t:22, b:labels.length>8?90:52, l:42, r:legW};
