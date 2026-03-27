@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Git & GitHub para el Equipo - Walmart</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Segoe UI', -apple-system, Arial, sans-serif;
+      background: #041E42;
+      overflow: hidden;
+    }
+
+    /* ── Slides ── */
+    .slide {
+      display: none;
+      width: 100vw;
+      height: 100vh;
+      background: #ffffff;
+      padding: 54px 64px 80px;
+      overflow: hidden;
+      flex-direction: column;
+    }
+    .slide.active { display: flex; }
+
+    /* ── Typography ── */
+    h1 { font-size: clamp(34px, 5vw, 52px); font-weight: 700; color: #0053e2; }
+    h2 { font-size: clamp(22px, 3.5vw, 34px); font-weight: 700; color: #041E42; margin-bottom: 12px; }
+    h3 { font-size: clamp(16px, 2.2vw, 22px); font-weight: 700; color: #0053e2; margin-bottom: 8px; }
+    p, li { font-size: clamp(14px, 1.8vw, 18px); color: #333333; line-height: 1.6; }
+    .yellow { color: #ffc220; }
+    .blue   { color: #0053e2; }
+
+    /* ── Slide Header Bar ── */
+    .slide-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 32px;
+      padding-bottom: 16px;
+      border-bottom: 4px solid #ffc220;
+    }
+    .slide-header .icon-badge {
+      width: 52px; height: 52px;
+      background: #0053e2;
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      color: #fff;
+      font-size: 22px;
+      flex-shrink: 0;
+    }
+
+    /* ── NAV ── */
+    .slide-nav {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      background: rgba(4, 30, 66, 0.92);
+      padding: 10px 22px;
+      border-radius: 40px;
+      z-index: 9999;
+      backdrop-filter: blur(6px);
+    }
+    .nav-btn {
+      background: none;
+      border: none;
+      color: #fff;
+      font-size: 17px;
+      cursor: pointer;
+      padding: 7px 10px;
+      border-radius: 8px;
+      transition: background 0.2s, color 0.2s;
+    }
+    .nav-btn:hover { background: #0053e2; color: #ffc220; }
+    .slide-counter { color: #fff; font-size: 13px; min-width: 56px; text-align: center; letter-spacing: 0.5px; }
+
+    /* ══════════════════════════════════════
+       SLIDE 1 — PORTADA
+    ══════════════════════════════════════ */
+    .title-slide {
+      background: linear-gradient(145deg, #041E42 0%, #0053e2 60%, #003cb3 100%);
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 60px;
+    }
+    .title-slide .spark-bar {
+      width: 80px; height: 6px;
+      background: #ffc220;
+      border-radius: 3px;
+      margin: 24px auto;
+    }
+    .title-slide h1 { color: #ffffff; font-size: clamp(40px, 6vw, 64px); line-height: 1.15; }
+    .title-slide .subtitle { color: #ffc220; font-size: clamp(18px, 2.5vw, 26px); font-weight: 400; max-width: 700px; }
+    .title-slide .tag-row {
+      display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; margin-top: 36px;
+    }
+    .title-slide .tag {
+      background: rgba(255,255,255,0.12);
+      border: 1.5px solid rgba(255,194,32,0.5);
+      border-radius: 30px;
+      padding: 8px 20px;
+      color: #fff;
+      font-size: 14px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .title-slide .tag i { color: #ffc220; }
+    .walmart-logo-area {
+      margin-bottom: 40px;
+      display: flex; align-items: center; justify-content: center; gap: 14px;
+    }
+    .walmart-logo-area .spark-icon {
+      font-size: 42px; color: #ffc220;
+    }
+    .walmart-logo-area span {
+      font-size: 28px; font-weight: 700; color: #fff; letter-spacing: 1px;
+    }
+
+    /* ══════════════════════════════════════
+       CARD ATOMS
+    ══════════════════════════════════════ */
+    .card {
+      background: #f5f7ff;
+      border-radius: 14px;
+      border-left: 5px solid #0053e2;
+      padding: 22px 24px;
+      flex: 1;
+    }
+    .card.yellow-accent { border-left-color: #ffc220; }
+    .card.danger { border-left-color: #ea1100; }
+    .card.success { border-left-color: #2a8703; }
+
+    .icon-circle {
+      width: 48px; height: 48px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px;
+      margin-bottom: 12px;
+      flex-shrink: 0;
+    }
+    .icon-circle.blue   { background: #e8f0fe; color: #0053e2; }
+    .icon-circle.yellow { background: #fff8e1; color: #c67c00; }
+    .icon-circle.green  { background: #e6f4ea; color: #2a8703; }
+    .icon-circle.red    { background: #fce8e6; color: #ea1100; }
+    .icon-circle.purple { background: #f0e8ff; color: #6200ea; }
+
+    /* Step flow */
+    .step-flow {
+      display: flex;
+      align-items: stretch;
+      gap: 0;
+      width: 100%;
+    }
+    .step-box {
+      flex: 1;
+      background: #f5f7ff;
+      border-radius: 14px;
+      padding: 22px 16px;
+      text-align: center;
+      position: relative;
+      border-top: 5px solid #0053e2;
+    }
+    .step-box .num {
+      width: 38px; height: 38px;
+      background: #0053e2;
+      color: #fff;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 17px;
+      margin: 0 auto 10px;
+    }
+    .step-box p { font-size: 13px; color: #555; margin-top: 6px; }
+    .step-arrow {
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px; color: #0053e2;
+      padding: 0 6px;
+      flex-shrink: 0;
+    }
+
+    /* Code block */
+    .code-block {
+      background: #1a1a2e;
+      border-radius: 10px;
+      padding: 16px 22px;
+      font-family: 'Courier New', monospace;
+      font-size: clamp(13px, 1.6vw, 16px);
+      color: #a8ff78;
+      border-left: 4px solid #ffc220;
+    }
+    .code-block .cmd-blue { color: #79cfff; }
+    .code-block .cmd-yellow { color: #ffc220; }
+    .code-block .cmd-green { color: #a8ff78; }
+    .code-block .cmd-gray { color: #888; }
+
+    /* Benefit grid */
+    .benefit-card {
+      background: #f5f7ff;
+      border-radius: 14px;
+      padding: 22px;
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+      border-bottom: 4px solid #0053e2;
+    }
+    .benefit-card.spark { border-bottom-color: #ffc220; }
+
+    /* Security rows */
+    .sec-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 12px 16px;
+      border-radius: 10px;
+      margin-bottom: 10px;
+    }
+    .sec-row.ok   { background: #e6f4ea; }
+    .sec-row.nope { background: #fce8e6; }
+    .sec-row .sec-icon { font-size: 18px; width: 24px; text-align: center; }
+    .sec-row.ok   .sec-icon { color: #2a8703; }
+    .sec-row.nope .sec-icon { color: #ea1100; }
+    .sec-row span { font-size: clamp(13px, 1.6vw, 16px); color: #333; }
+
+    /* Next steps */
+    .next-step {
+      display: flex;
+      gap: 18px;
+      align-items: flex-start;
+      background: #f5f7ff;
+      border-radius: 14px;
+      padding: 20px 24px;
+      border-left: 5px solid #ffc220;
+    }
+    .next-step .ns-num {
+      width: 44px; height: 44px;
+      background: #ffc220;
+      color: #041E42;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 20px;
+      flex-shrink: 0;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════
+     SLIDE 1 — PORTADA
+══════════════════════════════════════ -->
+<div class="slide title-slide active" role="main" aria-label="Portada">
+  <div class="walmart-logo-area">
+    <i class="fas fa-star spark-icon"></i>
+    <span>Walmart Analytics</span>
+  </div>
+  <h1>Git &amp; GitHub<br>para el Equipo</h1>
+  <div class="spark-bar"></div>
+  <p class="subtitle">Cómo guardar, versionar y compartir<br>nuestro código de forma profesional</p>
+  <div class="tag-row">
+    <div class="tag"><i class="fab fa-git-alt"></i> Git</div>
+    <div class="tag"><i class="fab fa-github"></i> GitHub</div>
+    <div class="tag"><i class="fas fa-database"></i> SQL &amp; Python</div>
+    <div class="tag"><i class="fas fa-dog"></i> Code Puppy</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     SLIDE 2 — ¿POR QUÉ LO NECESITAMOS?
+══════════════════════════════════════ -->
+<div class="slide" role="main" aria-label="Por qué lo necesitamos">
+  <div class="slide-header">
+    <div class="icon-badge" aria-hidden="true"><i class="fas fa-exclamation-triangle"></i></div>
+    <h2>¿Por qué lo necesitamos?</h2>
+  </div>
+
+  <div style="display:flex; gap:28px; flex:1; align-items:stretch;">
+
+    <!-- PROBLEMA -->
+    <div style="flex:1; display:flex; flex-direction:column; gap:14px;">
+      <div style="background:#fce8e6; border-radius:12px; padding:14px 18px; display:flex; align-items:center; gap:12px; border-left:5px solid #ea1100;">
+        <div style="font-size:22px; color:#ea1100; width:28px; text-align:center;"><i class="fas fa-times-circle"></i></div>
+        <div>
+          <div style="font-weight:700; color:#ea1100; font-size:15px;">Scripts perdidos o sobreescritos</div>
+          <div style="font-size:13px; color:#555; margin-top:2px;">"El reporte_final_v3_ESTE_SI.sql" ya no funciona</div>
+        </div>
+      </div>
+      <div style="background:#fce8e6; border-radius:12px; padding:14px 18px; display:flex; align-items:center; gap:12px; border-left:5px solid #ea1100;">
+        <div style="font-size:22px; color:#ea1100; width:28px; text-align:center;"><i class="fas fa-users-slash"></i></div>
+        <div>
+          <div style="font-weight:700; color:#ea1100; font-size:15px;">Dos personas editan el mismo archivo</div>
+          <div style="font-size:13px; color:#555; margin-top:2px;">Una compañera pisa el trabajo de la otra</div>
+        </div>
+      </div>
+      <div style="background:#fce8e6; border-radius:12px; padding:14px 18px; display:flex; align-items:center; gap:12px; border-left:5px solid #ea1100;">
+        <div style="font-size:22px; color:#ea1100; width:28px; text-align:center;"><i class="fas fa-history"></i></div>
+        <div>
+          <div style="font-weight:700; color:#ea1100; font-size:15px;">Sin historial de cambios</div>
+          <div style="font-size:13px; color:#555; margin-top:2px;">¿Quién cambió esto y por qué? No hay forma de saberlo</div>
+        </div>
+      </div>
+      <div style="background:#fce8e6; border-radius:12px; padding:14px 18px; display:flex; align-items:center; gap:12px; border-left:5px solid #ea1100;">
+        <div style="font-size:22px; color:#ea1100; width:28px; text-align:center;"><i class="fas fa-share-alt-square"></i></div>
+        <div>
+          <div style="font-weight:700; color:#ea1100; font-size:15px;">Compartir por Teams o correo</div>
+          <div style="font-size:13px; color:#555; margin-top:2px;">Versiones desincronizadas, archivos adjuntos acumulados</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FLECHA -->
+    <div style="display:flex; align-items:center; justify-content:center; font-size:42px; color:#0053e2; flex-shrink:0;">
+      <i class="fas fa-long-arrow-alt-right"></i>
+    </div>
+
+    <!-- SOLUCIÓN -->
+    <div style="flex:1; display:flex; flex-direction:column; justify-content:center; background:linear-gradient(145deg,#e8f0fe,#f5f7ff); border-radius:16px; padding:30px 26px; border-left:6px solid #0053e2;">
+      <div style="font-size:42px; color:#0053e2; margin-bottom:12px; text-align:center;"><i class="fab fa-git-alt"></i> &nbsp;<i class="fab fa-github"></i></div>
+      <h3 style="text-align:center; font-size:22px; margin-bottom:16px;">Git + GitHub</h3>
+      <div style="display:flex; flex-direction:column; gap:10px;">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <i class="fas fa-check-circle" style="color:#2a8703; font-size:18px;"></i>
+          <span style="font-size:15px;">Historial completo de cada cambio</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:10px;">
+          <i class="fas fa-check-circle" style="color:#2a8703; font-size:18px;"></i>
+          <span style="font-size:15px;">Trabajo en equipo sin conflictos</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:10px;">
+          <i class="fas fa-check-circle" style="color:#2a8703; font-size:18px;"></i>
+          <span style="font-size:15px;">Recupera cualquier versión anterior</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:10px;">
+          <i class="fas fa-check-circle" style="color:#2a8703; font-size:18px;"></i>
+          <span style="font-size:15px;">Un solo lugar para todo el código</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     SLIDE 3 — ¿QUÉ ES GIT Y GITHUB?
+══════════════════════════════════════ -->
+<div class="slide" role="main" aria-label="Qué es Git y GitHub">
+  <div class="slide-header">
+    <div class="icon-badge" aria-hidden="true"><i class="fas fa-lightbulb"></i></div>
+    <h2>¿Qué es Git y GitHub?</h2>
+  </div>
+
+  <div style="display:flex; gap:22px; flex:1; align-items:stretch;">
+
+    <!-- GIT -->
+    <div style="flex:1; background:#f5f7ff; border-radius:16px; padding:28px 24px; display:flex; flex-direction:column; align-items:center; text-align:center; border-top:6px solid #0053e2;">
+      <div style="width:70px;height:70px;background:#0053e2;border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:16px;">
+        <i class="fab fa-git-alt" style="font-size:36px;color:#fff;"></i>
+      </div>
+      <h3 style="font-size:20px; margin-bottom:10px;">Git</h3>
+      <div style="background:#e8f0fe; border-radius:10px; padding:12px 14px; margin-bottom:14px; width:100%;">
+        <div style="font-size:26px; margin-bottom:6px;"><i class="fas fa-clock" style="color:#0053e2;"></i></div>
+        <div style="font-weight:700; color:#0053e2; font-size:15px;">La máquina del tiempo</div>
+        <div style="font-size:13px; color:#555; margin-top:4px;">de tu código</div>
+      </div>
+      <p style="font-size:14px; color:#444;">Guarda cada versión de tus scripts. Puedes volver a cualquier momento del pasado con un solo comando.</p>
+      <div style="margin-top:12px; background:#1a1a2e; border-radius:8px; padding:10px 14px; width:100%;">
+        <code style="color:#a8ff78; font-size:13px;">git log --oneline</code>
+        <div style="color:#888; font-size:11px; margin-top:4px;">→ ver todos los cambios guardados</div>
+      </div>
+    </div>
+
+    <!-- GITHUB -->
+    <div style="flex:1; background:#f5f7ff; border-radius:16px; padding:28px 24px; display:flex; flex-direction:column; align-items:center; text-align:center; border-top:6px solid #041E42;">
+      <div style="width:70px;height:70px;background:#041E42;border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:16px;">
+        <i class="fab fa-github" style="font-size:36px;color:#fff;"></i>
+      </div>
+      <h3 style="font-size:20px; margin-bottom:10px; color:#041E42;">GitHub</h3>
+      <div style="background:#e8f0fe; border-radius:10px; padding:12px 14px; margin-bottom:14px; width:100%;">
+        <div style="font-size:26px; margin-bottom:6px;"><i class="fas fa-cloud" style="color:#041E42;"></i></div>
+        <div style="font-weight:700; color:#041E42; font-size:15px;">La nube del equipo</div>
+        <div style="font-size:13px; color:#555; margin-top:4px;">donde vive el código</div>
+      </div>
+      <p style="font-size:14px; color:#444;">Repositorio central en internet. Todo el equipo accede, descarga y sube código desde GitHub.</p>
+      <div style="margin-top:12px; background:#1a1a2e; border-radius:8px; padding:10px 14px; width:100%;">
+        <code style="color:#79cfff; font-size:13px;">github.com/tu-equipo</code>
+        <div style="color:#888; font-size:11px; margin-top:4px;">→ repositorio central del equipo</div>
+      </div>
+    </div>
+
+    <!-- CODE PUPPY -->
+    <div style="flex:1; background:#fff8e1; border-radius:16px; padding:28px 24px; display:flex; flex-direction:column; align-items:center; text-align:center; border-top:6px solid #ffc220;">
+      <div style="width:70px;height:70px;background:#ffc220;border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:16px;">
+        <i class="fas fa-dog" style="font-size:36px;color:#041E42;"></i>
+      </div>
+      <h3 style="font-size:20px; margin-bottom:10px; color:#c67c00;">Code Puppy</h3>
+      <div style="background:#fff3cd; border-radius:10px; padding:12px 14px; margin-bottom:14px; width:100%;">
+        <div style="font-size:26px; margin-bottom:6px;"><i class="fas fa-robot" style="color:#c67c00;"></i></div>
+        <div style="font-weight:700; color:#c67c00; font-size:15px;">El asistente de IA</div>
+        <div style="font-size:13px; color:#555; margin-top:4px;">que crea y guarda automáticamente</div>
+      </div>
+      <p style="font-size:14px; color:#444;">Crea scripts, los guarda en Git y los sube a GitHub — solo dile qué hacer en lenguaje natural.</p>
+      <div style="margin-top:12px; background:#1a1a2e; border-radius:8px; padding:10px 14px; width:100%;">
+        <code style="color:#ffc220; font-size:12px;">"Guarda los cambios en GitHub"</code>
+        <div style="color:#888; font-size:11px; margin-top:4px;">→ Code Puppy hace el git push</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     SLIDE 4 — 4 PASOS SIMPLES
+══════════════════════════════════════ -->
+<div class="slide" role="main" aria-label="Cuatro pasos simples">
+  <div class="slide-header">
+    <div class="icon-badge" aria-hidden="true"><i class="fas fa-list-ol"></i></div>
+    <h2>Cómo funciona en 4 pasos simples</h2>
+  </div>
+
+  <div style="display:flex; gap:10px; flex:1; align-items:center; padding-bottom:10px;">
+
+    <div class="step-box" style="border-top-color:#0053e2;">
+      <div class="num">1</div>
+      <div style="font-size:34px; color:#0053e2; margin:10px 0;"><i class="fas fa-user-plus"></i></div>
+      <h3 style="font-size:16px;">Crear cuenta</h3>
+      <p>Regístrate en<br><strong>github.com</strong></p>
+      <div style="margin-top:12px; background:#e8f0fe; border-radius:8px; padding:8px; font-size:12px; color:#0053e2;">
+        <i class="fas fa-clock"></i> &nbsp;5 minutos
+      </div>
+    </div>
+
+    <div class="step-arrow" aria-hidden="true"><i class="fas fa-chevron-right"></i></div>
+
+    <div class="step-box">
+      <div class="num" style="background:#0053e2;">2</div>
+      <div style="font-size:34px; color:#0053e2; margin:10px 0;"><i class="fas fa-folder-plus"></i></div>
+      <h3 style="font-size:16px;">Crear repositorio</h3>
+      <p>Una carpeta en la nube para los scripts del equipo</p>
+      <div style="margin-top:12px; background:#e8f0fe; border-radius:8px; padding:8px; font-size:12px; color:#0053e2;">
+        <i class="fas fa-clock"></i> &nbsp;2 minutos
+      </div>
+    </div>
+
+    <div class="step-arrow" aria-hidden="true"><i class="fas fa-chevron-right"></i></div>
+
+    <div class="step-box">
+      <div class="num" style="background:#0053e2;">3</div>
+      <div style="font-size:34px; color:#0053e2; margin:10px 0;"><i class="fas fa-link"></i></div>
+      <h3 style="font-size:16px;">Conectar local</h3>
+      <p>Vincula tu carpeta local con el repositorio en GitHub</p>
+      <div style="margin-top:12px; background:#1a1a2e; border-radius:8px; padding:8px; font-size:11px;">
+        <code style="color:#a8ff78;">git clone [url]</code>
+      </div>
+    </div>
+
+    <div class="step-arrow" aria-hidden="true"><i class="fas fa-chevron-right"></i></div>
+
+    <div class="step-box" style="border-top-color:#ffc220;">
+      <div class="num" style="background:#ffc220; color:#041E42;">4</div>
+      <div style="font-size:34px; color:#c67c00; margin:10px 0;"><i class="fas fa-cloud-upload-alt"></i></div>
+      <h3 style="font-size:16px; color:#c67c00;">Guardar cambios</h3>
+      <p>add &rarr; commit &rarr; push</p>
+      <div style="margin-top:12px; background:#1a1a2e; border-radius:8px; padding:8px; font-size:11px; line-height:1.8;">
+        <code style="color:#ffc220;">git add .</code><br>
+        <code style="color:#a8ff78;">git commit -m "..."</code><br>
+        <code style="color:#79cfff;">git push</code>
+      </div>
+    </div>
+
+  </div>
+
+  <div style="background:#e8f0fe; border-radius:12px; padding:14px 20px; display:flex; align-items:center; gap:12px; margin-top:4px;">
+    <i class="fas fa-info-circle" style="color:#0053e2; font-size:20px;"></i>
+    <span style="font-size:14px; color:#041E42;"><strong>Pro tip:</strong> Code Puppy puede ejecutar todos estos pasos automáticamente con una sola instrucción en lenguaje natural.</span>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     SLIDE 5 — FLUJO DIARIO
+══════════════════════════════════════ -->
+<div class="slide" role="main" aria-label="Flujo diario del equipo">
+  <div class="slide-header">
+    <div class="icon-badge" aria-hidden="true"><i class="fas fa-sync-alt"></i></div>
+    <h2>El flujo diario del equipo</h2>
+  </div>
+
+  <!-- FLOW DIAGRAM -->
+  <div style="display:flex; align-items:center; justify-content:center; gap:0; margin-bottom:22px; padding:0 10px;">
+
+    <div style="background:#f5f7ff; border:2.5px solid #0053e2; border-radius:12px; padding:16px 18px; text-align:center; min-width:130px;">
+      <i class="fas fa-laptop-code" style="font-size:28px;color:#0053e2;margin-bottom:6px;"></i>
+      <div style="font-weight:700; font-size:14px; color:#041E42;">Tu computadora</div>
+      <div style="font-size:11px; color:#666;">script.sql / .py</div>
+    </div>
+
+    <div style="display:flex; flex-direction:column; align-items:center; padding:0 8px;">
+      <div style="height:2px; width:55px; background:#0053e2;"></div>
+      <div style="font-size:10px; color:#0053e2; font-weight:600; margin-top:3px;">git add .</div>
+    </div>
+
+    <div style="background:#fff8e1; border:2.5px solid #ffc220; border-radius:12px; padding:16px 18px; text-align:center; min-width:130px;">
+      <i class="fas fa-check-square" style="font-size:28px;color:#c67c00;margin-bottom:6px;"></i>
+      <div style="font-weight:700; font-size:14px; color:#041E42;">Área de espera</div>
+      <div style="font-size:11px; color:#666;">archivos listos</div>
+    </div>
+
+    <div style="display:flex; flex-direction:column; align-items:center; padding:0 8px;">
+      <div style="height:2px; width:55px; background:#0053e2;"></div>
+      <div style="font-size:10px; color:#0053e2; font-weight:600; margin-top:3px;">git commit</div>
+    </div>
+
+    <div style="background:#f5f7ff; border:2.5px solid #0053e2; border-radius:12px; padding:16px 18px; text-align:center; min-width:130px;">
+      <i class="fas fa-save" style="font-size:28px;color:#0053e2;margin-bottom:6px;"></i>
+      <div style="font-weight:700; font-size:14px; color:#041E42;">Historial local</div>
+      <div style="font-size:11px; color:#666;">guardado con mensaje</div>
+    </div>
+
+    <div style="display:flex; flex-direction:column; align-items:center; padding:0 8px;">
+      <div style="height:2px; width:55px; background:#0053e2;"></div>
+      <div style="font-size:10px; color:#0053e2; font-weight:600; margin-top:3px;">git push</div>
+    </div>
+
+    <div style="background:linear-gradient(135deg,#041E42,#0053e2); border-radius:12px; padding:16px 18px; text-align:center; min-width:130px;">
+      <i class="fab fa-github" style="font-size:28px;color:#fff;margin-bottom:6px;"></i>
+      <div style="font-weight:700; font-size:14px; color:#fff;">GitHub</div>
+      <div style="font-size:11px; color:#ffc220;">compartido con el equipo</div>
+    </div>
+
+  </div>
+
+  <!-- COMANDOS -->
+  <div style="display:flex; gap:18px; flex:1; align-items:stretch; min-height:0;">
+
+    <div style="flex:1; display:flex; flex-direction:column; gap:10px;">
+      <div style="font-weight:700; color:#041E42; font-size:15px; display:flex; align-items:center; gap:8px;">
+        <i class="fas fa-terminal" style="color:#0053e2;"></i> El atajo mágico (un solo comando)
+      </div>
+      <div class="code-block" style="flex:1;">
+        <span class="cmd-gray"># Guardar y subir todo en una línea</span><br><br>
+        <span class="cmd-blue">git</span> <span class="cmd-green">add</span> . <span class="cmd-gray">&amp;&amp;</span> <span class="cmd-blue">git</span> <span class="cmd-green">commit</span> <span class="cmd-yellow">-m</span> <span style="color:#ff9e64;">"actualización de reporte Q1"</span> <span class="cmd-gray">&amp;&amp;</span> <span class="cmd-blue">git</span> <span class="cmd-green">push</span><br><br>
+        <span class="cmd-gray"># Resultado</span><br>
+        <span class="cmd-green">Branch 'main' → origin/main ✓</span>
+      </div>
+    </div>
+
+    <div style="width:2px; background:#e0e0e0; border-radius:2px; flex-shrink:0;"></div>
+
+    <div style="flex:1; display:flex; flex-direction:column; gap:10px;">
+      <div style="font-weight:700; color:#041E42; font-size:15px; display:flex; align-items:center; gap:8px;">
+        <i class="fas fa-dog" style="color:#c67c00;"></i> O simplemente dile a Code Puppy
+      </div>
+      <div class="code-block" style="flex:1; border-left-color:#0053e2;">
+        <span class="cmd-gray"># Tú escribes (en lenguaje natural):</span><br><br>
+        <span class="cmd-yellow">"Guarda los cambios en GitHub con el</span><br>
+        <span class="cmd-yellow">&nbsp;mensaje: reporte ventas enero 2026"</span><br><br>
+        <span class="cmd-gray"># Code Puppy ejecuta automáticamente:</span><br>
+        <span class="cmd-green">git add . &amp;&amp; git commit -m "..." &amp;&amp; git push</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     SLIDE 6 — REGLAS DE SEGURIDAD
+══════════════════════════════════════ -->
+<div class="slide" role="main" aria-label="Reglas de seguridad">
+  <div class="slide-header">
+    <div class="icon-badge" style="background:#0053e2;" aria-hidden="true"><i class="fas fa-shield-alt"></i></div>
+    <h2>Reglas de seguridad del equipo</h2>
+  </div>
+
+  <div style="display:flex; gap:28px; flex:1;">
+
+    <!-- SÍ SUBIR -->
+    <div style="flex:1; display:flex; flex-direction:column; gap:0;">
+      <div style="background:#2a8703; color:#fff; border-radius:12px 12px 0 0; padding:12px 18px; display:flex; align-items:center; gap:10px;">
+        <i class="fas fa-check-circle" style="font-size:20px;"></i>
+        <span style="font-weight:700; font-size:17px;">SÍ subir a GitHub</span>
+      </div>
+      <div style="border:2px solid #2a8703; border-top:none; border-radius:0 0 12px 12px; padding:14px; display:flex; flex-direction:column; gap:8px; flex:1;">
+        <div class="sec-row ok"><i class="fas fa-code sec-icon"></i><span>Scripts <strong>.py</strong> — código Python</span></div>
+        <div class="sec-row ok"><i class="fas fa-database sec-icon"></i><span>Scripts <strong>.sql</strong> — consultas y reportes</span></div>
+        <div class="sec-row ok"><i class="fas fa-file-alt sec-icon"></i><span>Documentación <strong>.md</strong> / README</span></div>
+        <div class="sec-row ok"><i class="fas fa-cog sec-icon"></i><span>Configuraciones sin credenciales</span></div>
+        <div class="sec-row ok"><i class="fas fa-project-diagram sec-icon"></i><span>Estructuras de carpetas y plantillas</span></div>
+      </div>
+    </div>
+
+    <!-- NO SUBIR -->
+    <div style="flex:1; display:flex; flex-direction:column; gap:0;">
+      <div style="background:#ea1100; color:#fff; border-radius:12px 12px 0 0; padding:12px 18px; display:flex; align-items:center; gap:10px;">
+        <i class="fas fa-times-circle" style="font-size:20px;"></i>
+        <span style="font-weight:700; font-size:17px;">NO subir a GitHub</span>
+      </div>
+      <div style="border:2px solid #ea1100; border-top:none; border-radius:0 0 12px 12px; padding:14px; display:flex; flex-direction:column; gap:8px; flex:1;">
+        <div class="sec-row nope"><i class="fas fa-id-card sec-icon"></i><span>Datos con <strong>PII</strong> (nombres, SSN, CURP)</span></div>
+        <div class="sec-row nope"><i class="fas fa-file-csv sec-icon"></i><span>Archivos <strong>.csv</strong> con datos sensibles</span></div>
+        <div class="sec-row nope"><i class="fas fa-key sec-icon"></i><span>Contraseñas, tokens o API Keys</span></div>
+        <div class="sec-row nope"><i class="fas fa-weight-hanging sec-icon"></i><span>Archivos pesados &gt;50MB (.xlsx, dumps)</span></div>
+        <div class="sec-row nope"><i class="fas fa-user-secret sec-icon"></i><span>Datos de salud (HIPAA) o financieros raw</span></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- VPN NOTICE -->
+  <div style="background:#fff8e1; border:2px solid #ffc220; border-radius:12px; padding:14px 20px; display:flex; align-items:center; gap:14px; margin-top:16px;">
+    <i class="fas fa-network-wired" style="font-size:26px; color:#c67c00;"></i>
+    <div>
+      <div style="font-weight:700; color:#c67c00; font-size:15px;">Walmart VPN o Eagle WiFi requerido para usar Code Puppy</div>
+      <div style="font-size:13px; color:#555;">Code Puppy opera dentro de la red de Walmart (Eagle). Todos tus datos permanecen dentro de Walmart — InfoSec lo avala.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     SLIDE 7 — BENEFICIOS
+══════════════════════════════════════ -->
+<div class="slide" role="main" aria-label="Beneficios para el equipo">
+  <div class="slide-header">
+    <div class="icon-badge" aria-hidden="true"><i class="fas fa-trophy"></i></div>
+    <h2>Beneficios para el equipo</h2>
+  </div>
+
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:18px; flex:1;">
+
+    <div class="benefit-card">
+      <div class="icon-circle blue" style="width:54px;height:54px;font-size:24px;"><i class="fas fa-history"></i></div>
+      <div>
+        <h3 style="font-size:18px;">Historial completo de cambios</h3>
+        <p style="font-size:14px;">Cada modificación queda registrada con fecha, autora y descripción. Nunca más "¿quién cambió esto?"</p>
+      </div>
+    </div>
+
+    <div class="benefit-card spark">
+      <div class="icon-circle yellow" style="width:54px;height:54px;font-size:24px;"><i class="fas fa-users"></i></div>
+      <div>
+        <h3 style="font-size:18px; color:#c67c00;">Colaboración sin conflictos</h3>
+        <p style="font-size:14px;">Varias personas trabajan en paralelo sin pisarse. Git fusiona los cambios automáticamente.</p>
+      </div>
+    </div>
+
+    <div class="benefit-card" style="border-bottom-color:#2a8703;">
+      <div class="icon-circle green" style="width:54px;height:54px;font-size:24px;"><i class="fas fa-undo-alt"></i></div>
+      <div>
+        <h3 style="font-size:18px; color:#2a8703;">Recuperar versiones anteriores</h3>
+        <p style="font-size:14px;">¿Rompiste algo? Con un comando regresas al estado anterior. Es como Ctrl+Z pero infinito.</p>
+      </div>
+    </div>
+
+    <div class="benefit-card" style="border-bottom-color:#6200ea;">
+      <div class="icon-circle purple" style="width:54px;height:54px;font-size:24px;"><i class="fas fa-share-nodes"></i></div>
+      <div>
+        <h3 style="font-size:18px; color:#6200ea;">Compartir código entre compañeras</h3>
+        <p style="font-size:14px;">Un repositorio centralizado. Cualquiera del equipo descarga la versión más reciente con <code style="background:#e8f0fe;padding:2px 6px;border-radius:4px;color:#0053e2;">git pull</code></p>
+      </div>
+    </div>
+
+  </div>
+
+  <div style="background:linear-gradient(90deg,#0053e2,#041E42); border-radius:12px; padding:14px 22px; display:flex; align-items:center; gap:14px; margin-top:14px;">
+    <i class="fas fa-rocket" style="font-size:24px;color:#ffc220;"></i>
+    <span style="color:#fff; font-size:15px;">Con Code Puppy, el equipo puede enfocarse en el <strong style="color:#ffc220;">análisis</strong>, no en los comandos de Git.</span>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     SLIDE 8 — PRÓXIMOS PASOS
+══════════════════════════════════════ -->
+<div class="slide" role="main" aria-label="Próximos pasos">
+  <div class="slide-header">
+    <div class="icon-badge" aria-hidden="true"><i class="fas fa-flag-checkered"></i></div>
+    <h2>Próximos pasos</h2>
+  </div>
+
+  <div style="display:flex; flex-direction:column; gap:16px; flex:1;">
+
+    <div class="next-step">
+      <div class="ns-num">1</div>
+      <div style="flex:1;">
+        <h3 style="font-size:18px; color:#c67c00;">Cada integrante crea su cuenta en GitHub</h3>
+        <p style="font-size:14px;">Ir a <strong>github.com</strong> &rarr; Sign Up. Usar correo corporativo de Walmart. Tarda menos de 5 minutos.</p>
+        <div style="margin-top:8px; display:flex; gap:10px; align-items:center;">
+          <div style="background:#fff3cd; border-radius:8px; padding:6px 12px; font-size:12px; color:#c67c00; display:flex; align-items:center; gap:6px;">
+            <i class="fas fa-clock"></i> Esta semana
+          </div>
+          <div style="background:#fff3cd; border-radius:8px; padding:6px 12px; font-size:12px; color:#c67c00; display:flex; align-items:center; gap:6px;">
+            <i class="fas fa-users"></i> Todo el equipo
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="next-step">
+      <div class="ns-num">2</div>
+      <div style="flex:1;">
+        <h3 style="font-size:18px; color:#c67c00;">Crear el repositorio del equipo</h3>
+        <p style="font-size:14px;">Una persona crea el repo central (ej: <code style="background:#fff3cd;padding:2px 8px;border-radius:4px;">walmart-analytics-scripts</code>) e invita al resto como colaboradoras.</p>
+        <div style="margin-top:8px; display:flex; gap:10px; align-items:center;">
+          <div style="background:#fff3cd; border-radius:8px; padding:6px 12px; font-size:12px; color:#c67c00; display:flex; align-items:center; gap:6px;">
+            <i class="fas fa-clock"></i> Día 1
+          </div>
+          <div style="background:#fff3cd; border-radius:8px; padding:6px 12px; font-size:12px; color:#c67c00; display:flex; align-items:center; gap:6px;">
+            <i class="fas fa-user-cog"></i> Líder del equipo
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="next-step">
+      <div class="ns-num">3</div>
+      <div style="flex:1;">
+        <h3 style="font-size:18px; color:#c67c00;">Code Puppy guarda automáticamente en cada sesión</h3>
+        <p style="font-size:14px;">Configurar Code Puppy para que haga <code style="background:#fff3cd;padding:2px 8px;border-radius:4px;">git push</code> al terminar cada sesión de trabajo. Sin esfuerzo extra.</p>
+        <div style="margin-top:8px; display:flex; gap:10px; align-items:center;">
+          <div style="background:#fff3cd; border-radius:8px; padding:6px 12px; font-size:12px; color:#c67c00; display:flex; align-items:center; gap:6px;">
+            <i class="fas fa-clock"></i> Desde el día 2
+          </div>
+          <div style="background:#fff3cd; border-radius:8px; padding:6px 12px; font-size:12px; color:#c67c00; display:flex; align-items:center; gap:6px;">
+            <i class="fas fa-dog"></i> Code Puppy
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div style="background:linear-gradient(135deg,#041E42,#0053e2); border-radius:14px; padding:18px 26px; display:flex; align-items:center; gap:16px; margin-top:4px;">
+    <i class="fas fa-star" style="font-size:28px;color:#ffc220;"></i>
+    <div>
+      <div style="font-weight:700; font-size:16px; color:#fff;">El código del equipo, seguro y compartido — desde hoy.</div>
+      <div style="font-size:13px; color:#ffc220; margin-top:3px;">Con Git + GitHub + Code Puppy, el equipo de analytics de Walmart trabaja al siguiente nivel.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ NAV ══════ -->
+<nav class="slide-nav" role="navigation" aria-label="Navegación de diapositivas">
+  <button class="nav-btn prev" aria-label="Diapositiva anterior"><i class="fas fa-chevron-left"></i></button>
+  <span class="slide-counter" aria-live="polite">1 / 8</span>
+  <button class="nav-btn next" aria-label="Siguiente diapositiva"><i class="fas fa-chevron-right"></i></button>
+  <button class="nav-btn fullscreen" aria-label="Pantalla completa"><i class="fas fa-expand"></i></button>
+</nav>
+
+<script>
+  const slides  = document.querySelectorAll('.slide');
+  const counter = document.querySelector('.slide-counter');
+  let current   = 0;
+
+  function showSlide(n) {
+    slides[current].classList.remove('active');
+    current = (n + slides.length) % slides.length;
+    slides[current].classList.add('active');
+    counter.textContent = `${current + 1} / ${slides.length}`;
+  }
+
+  document.querySelector('.prev').addEventListener('click', () => showSlide(current - 1));
+  document.querySelector('.next').addEventListener('click', () => showSlide(current + 1));
+
+  document.querySelector('.fullscreen').addEventListener('click', () => {
+    if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+    else document.exitFullscreen();
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); showSlide(current + 1); }
+    if (e.key === 'ArrowLeft')                    { e.preventDefault(); showSlide(current - 1); }
+    if (e.key === 'Home')                         { e.preventDefault(); showSlide(0); }
+    if (e.key === 'End')                          { e.preventDefault(); showSlide(slides.length - 1); }
+    if (e.key === 'f' || e.key === 'F')           { document.querySelector('.fullscreen').click(); }
+  });
+
+  showSlide(0);
+</script>
+</body>
+</html>

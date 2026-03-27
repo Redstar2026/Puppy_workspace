@@ -10,6 +10,8 @@ bigquery_results/
 
 # Archivos HTML generados (pueden ser muy grandes)
 *.html
+# Excepcion: presentaciones del equipo
+!git-github-equipo.html
 
 # Python
 __pycache__/
