@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Competitividad Pricing | SW10 vs SW9 · 2026</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --blue-100:#0053e2;--blue-110:#0047c7;--blue-130:#0035a0;
+    --spark-100:#ffc220;--spark-140:#995213;--spark-10:#fff8e7;
+    --red-100:#ea1100;--green-100:#2a8703;
+    --gray-10:#f5f5f5;--gray-50:#c5c5c5;--gray-100:#8c8c8c;--gray-160:#1d1d1d;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;font-family:'Segoe UI',system-ui,sans-serif}
+  body{background:#f5f5f5;color:#1d1d1d;min-height:100vh}
+  header{background:#0053e2;color:#fff;padding:16px 24px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+  header .logo{font-size:22px;font-weight:900;letter-spacing:-1px}
+  header .subtitle{font-size:13px;opacity:.85}
+  header .badge{margin-left:auto;background:#ffc220;color:#1d1d1d;border-radius:20px;padding:4px 14px;font-size:12px;font-weight:700}
+  .container{max-width:1400px;margin:0 auto;padding:20px 16px}
+  .kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:20px}
+  .kpi{background:#fff;border-radius:10px;padding:16px;border-left:4px solid var(--blue-100);box-shadow:0 1px 4px rgba(0,0,0,.08)}
+  .kpi .label{font-size:11px;color:#8c8c8c;text-transform:uppercase;font-weight:600;margin-bottom:4px}
+  .kpi .value{font-size:24px;font-weight:800;color:#0053e2}
+  .kpi .delta{font-size:12px;margin-top:4px;font-weight:600}
+  .delta.up{color:#2a8703} .delta.down{color:#ea1100} .delta.flat{color:#8c8c8c}
+  .tabs{display:flex;gap:4px;margin-bottom:16px;flex-wrap:wrap;background:#fff;border-radius:10px;padding:8px;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+  .tab{padding:8px 16px;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;background:transparent;color:#8c8c8c;transition:all .2s}
+  .tab:hover{background:#f5f5f5;color:#1d1d1d}
+  .tab.active{background:#0053e2;color:#fff}
+  .section{display:none} .section.active{display:block}
+  .card{background:#fff;border-radius:10px;padding:20px;box-shadow:0 1px 4px rgba(0,0,0,.08);margin-bottom:16px}
+  .card h2{font-size:15px;font-weight:700;margin-bottom:14px;color:#1d1d1d;border-bottom:2px solid #0053e2;padding-bottom:8px}
+  .card h3{font-size:13px;font-weight:700;margin-bottom:10px;color:#0053e2}
+  .chart-wrap{position:relative;height:280px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+  @media(max-width:768px){.grid2,.grid3{grid-template-columns:1fr}}
+  table{width:100%;border-collapse:collapse;font-size:12px}
+  th{background:#0053e2;color:#fff;padding:8px 10px;text-align:left;font-weight:600;position:sticky;top:0}
+  td{padding:7px 10px;border-bottom:1px solid #f5f5f5}
+  tr:hover td{background:#f5f5f5}
+  tr:nth-child(even) td{background:#fafafa}
+  .pill{display:inline-block;border-radius:12px;padding:2px 8px;font-size:11px;font-weight:700}
+  .pill.g{background:#e6f5e0;color:#2a8703}
+  .pill.r{background:#fde9e8;color:#ea1100}
+  .pill.y{background:#fff8e7;color:#995213}
+  .pill.b{background:#e8eeff;color:#0053e2}
+  .alert-bar{background:#fff8e7;border:1px solid #ffc220;border-left:4px solid #ffc220;border-radius:6px;padding:10px 14px;margin-bottom:14px;font-size:13px;color:#995213}
+  .section-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#8c8c8c;margin-bottom:8px}
+  select,input{padding:6px 10px;border:1px solid #c5c5c5;border-radius:6px;font-size:13px;outline:none}
+  select:focus,input:focus{border-color:#0053e2;box-shadow:0 0 0 2px rgba(0,83,226,.2)}
+  .btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .2s}
+  .btn-primary{background:#0053e2;color:#fff}.btn-primary:hover{background:#0047c7}
+  .btn-secondary{background:#fff;color:#1d1d1d;border:1.5px solid #c5c5c5}.btn-secondary:hover{background:#f5f5f5}
+  .progress-bar{height:8px;background:#f5f5f5;border-radius:4px;overflow:hidden;margin-top:4px}
+  .progress-fill{height:100%;border-radius:4px;transition:width .4s}
+  .meta-line{border-top:2px dashed #ea1100;position:absolute}
+  .tbl-wrap{max-height:420px;overflow-y:auto;border-radius:8px;border:1px solid #f0f0f0}
+  .filter-row{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <div class="logo">⭐ Walmart Pricing</div>
+    <div class="subtitle">Análisis de Competitividad · Año 2026</div>
+  </div>
+  <div class="badge">SW10 vs SW9 · Centroamérica</div>
+</header>
+
+<div class="container">
+
+<!-- TABS -->
+<div class="tabs" role="tablist">
+  <button class="tab active" onclick="showTab('overview')" role="tab">📊 General</button>
+  <button class="tab" onclick="showTab('pais')" role="tab">🌎 País</button>
+  <button class="tab" onclick="showTab('division')" role="tab">🏪 División</button>
+  <button class="tab" onclick="showTab('meta')" role="tab">🎯 Meta</button>
+  <button class="tab" onclick="showTab('outliers')" role="tab">⚠️ Outliers Top30</button>
+  <button class="tab" onclick="showTab('descarga')" role="tab">⬇️ Descargables</button>
+  <button class="tab" onclick="showTab('base100')" role="tab">📐 Base 100</button>
+  <button class="tab" onclick="showTab('desviacion')" role="tab">🔍 Desviación Meta</button>
+</div>
+
+<!-- ============================================================ OVERVIEW ============================================================ -->
+<div id="tab-overview" class="section active">
+  <div class="alert-bar">⚠️ <strong>NI</strong> registra la mayor caída en %PG_MB (−0.29pp) y una caída severa en %MB_MB de −5.67pp. <strong>MG Y TEXTIL</strong> está bajo meta en todos los países.</div>
+  <div class="kpi-row" id="kpi-row"></div>
+  <div class="grid2">
+    <div class="card">
+      <h2>% PG MB por País · SW9 vs SW10</h2>
+      <div class="chart-wrap"><canvas id="chartPgmbPais"></canvas></div>
+    </div>
+    <div class="card">
+      <h2>% MB MB por País · SW9 vs SW10</h2>
+      <div class="chart-wrap"><canvas id="chartMbmbPais"></canvas></div>
+    </div>
+  </div>
+  <div class="card">
+    <h2>Tendencia de Competitividad: SW9 → SW10 (BPS)</h2>
+    <div class="chart-wrap"><canvas id="chartBps"></canvas></div>
+  </div>
+</div>
+
+<!-- ============================================================ PAIS ============================================================ -->
+<div id="tab-pais" class="section">
+  <div class="filter-row">
+    <div class="section-label">País:</div>
+    <select id="selectPais" onchange="renderPaisDetail()">
+      <option>CR</option><option>GT</option><option>HN</option><option>NI</option><option>SV</option>
+    </select>
+  </div>
+  <div class="grid2">
+    <div class="card">
+      <h2>KPIs del País Seleccionado</h2>
+      <div id="paisKpis"></div>
+    </div>
+    <div class="card">
+      <h2>% PG MB vs META por División (SW10)</h2>
+      <div class="chart-wrap"><canvas id="chartPaisDivision"></canvas></div>
+    </div>
+  </div>
+  <div class="card">
+    <h2>División más Afectada (mayor caída SW9→SW10 en % PG MB)</h2>
+    <div class="chart-wrap"><canvas id="chartDivDelta"></canvas></div>
+  </div>
+</div>
+
+<!-- ============================================================ DIVISIÓN ============================================================ -->
+<div id="tab-division" class="section">
+  <div class="card">
+    <h2>% PG MB por División y País · SW10 (vs META)</h2>
+    <div class="chart-wrap" style="height:340px"><canvas id="chartDivAll"></canvas></div>
+  </div>
+  <div class="card">
+    <h2>Semáforo: Divisiones Fuera de Meta por País (SW10)</h2>
+    <div id="semaforoDivision"></div>
+  </div>
+</div>
+
+<!-- ============================================================ META ============================================================ -->
+<div id="tab-meta" class="section">
+  <div class="card">
+    <h2>% PG MB vs META por País (SW10)</h2>
+    <div class="chart-wrap"><canvas id="chartMetaPais"></canvas></div>
+  </div>
+  <div class="card">
+    <h2>Heatmap División × País: Diferencia PG MB − META (SW10, en pp)</h2>
+    <div id="heatmapDiv"></div>
+  </div>
+</div>
+
+<!-- ============================================================ OUTLIERS ============================================================ -->
+<div id="tab-outliers" class="section">
+  <div class="filter-row">
+    <div class="section-label">Filtrar País:</div>
+    <select id="filterPaisOut" onchange="renderOutliers()">
+      <option value="">Todos</option>
+      <option>CR</option><option>GT</option><option>HN</option><option>NI</option><option>SV</option>
+    </select>
+    <div class="section-label">Filtrar División:</div>
+    <select id="filterDivOut" onchange="renderOutliers()">
+      <option value="">Todas</option>
+    </select>
+    <button class="btn btn-secondary" onclick="resetOutFilters()">↺ Reset</button>
+  </div>
+  <div class="card">
+    <h2>⚠️ Outliers Negativos (PG MB &lt; 0%) · Primero por Peso</h2>
+    <div class="tbl-wrap" id="tblNeg"></div>
+  </div>
+  <div class="card">
+    <h2>🚀 Outliers Positivos (PG MB &gt; META) · Por Peso</h2>
+    <div class="tbl-wrap" id="tblPos"></div>
+  </div>
+</div>
+
+<!-- ============================================================ DESCARGA ============================================================ -->
+<div id="tab-descarga" class="section">
+  <div class="card">
+    <h2>Descarga de Outliers por País y División</h2>
+    <p style="font-size:13px;color:#8c8c8c;margin-bottom:14px">Selecciona país y división para descargar el CSV de outliers en Price Gap.</p>
+    <div class="filter-row">
+      <select id="dlPais"><option value="">Todos los países</option><option>CR</option><option>GT</option><option>HN</option><option>NI</option><option>SV</option></select>
+      <select id="dlDiv"><option value="">Todas las divisiones</option></select>
+      <button class="btn btn-primary" onclick="downloadCSV()">⬇️ Descargar CSV</button>
+    </div>
+    <div class="tbl-wrap" id="tblDescarga"></div>
+  </div>
+</div>
+
+<!-- ============================================================ BASE 100 ============================================================ -->
+<div id="tab-base100" class="section">
+  <div class="filter-row">
+    <div class="section-label">País:</div>
+    <select id="b100Pais" onchange="renderBase100()">
+      <option>CR</option><option>GT</option><option>HN</option><option>NI</option><option>SV</option>
+    </select>
+    <div class="section-label">División:</div>
+    <select id="b100Div" onchange="renderBase100()"><option value="">Todas</option></select>
+  </div>
+  <div class="card">
+    <h2>📐 Contribución al PG MB en Base 100 por Ítem (SW10)</h2>
+    <p style="font-size:12px;color:#8c8c8c;margin-bottom:12px">Muestra qué ítems arrastran más la competitividad cuando se normaliza el peso total a 100.</p>
+    <div class="chart-wrap" style="height:360px"><canvas id="chartBase100"></canvas></div>
+  </div>
+  <div class="card">
+    <h2>Tabla de Contribución Base 100</h2>
+    <div class="tbl-wrap" id="tblBase100"></div>
+  </div>
+</div>
+
+<!-- ============================================================ DESVIACIÓN META ============================================================ -->
+<div id="tab-desviacion" class="section">
+  <div class="card">
+    <h2>🔍 Ítems más Desviados vs Meta en PG MB (SW10)</h2>
+    <p style="font-size:12px;color:#8c8c8c;margin-bottom:12px">Desviación = META_PG − % PG_MB. Positivo = debajo de meta (más caro), Negativo = sobre meta (más barato).</p>
+    <div class="chart-wrap" style="height:360px"><canvas id="chartDesviacion"></canvas></div>
+  </div>
+  <div class="card">
+    <h2>Top Ítems con Mayor Desviación vs Meta</h2>
+    <div class="tbl-wrap" id="tblDesviacion"></div>
+  </div>
+</div>
+
+</div><!-- /container -->
+
+<script>
+// ============================================================ DATA ============================================================
+const D_PAIS = [
+  {pais:"CR",sw:9,pgmb:.0522,mbmb:.7108,pg:.1131,mb:.7714,meta:.0376},
+  {pais:"CR",sw:10,pgmb:.0542,mbmb:.7153,pg:.1146,mb:.7725,meta:.0369},
+  {pais:"GT",sw:9,pgmb:.0284,mbmb:.7027,pg:.0720,mb:.7670,meta:.0363},
+  {pais:"GT",sw:10,pgmb:.0302,mbmb:.7028,pg:.0768,mb:.7668,meta:.0358},
+  {pais:"HN",sw:9,pgmb:.0630,mbmb:.7470,pg:.0657,mb:.7546,meta:.0495},
+  {pais:"HN",sw:10,pgmb:.0669,mbmb:.7404,pg:.0701,mb:.7491,meta:.0495},
+  {pais:"NI",sw:9,pgmb:.0778,mbmb:.9014,pg:.0994,mb:.9132,meta:.0471},
+  {pais:"NI",sw:10,pgmb:.0749,mbmb:.8447,pg:.0967,mb:.8778,meta:.0479},
+  {pais:"SV",sw:9,pgmb:.0689,mbmb:.8383,pg:.0904,mb:.8551,meta:.0453},
+  {pais:"SV",sw:10,pgmb:.0693,mbmb:.8369,pg:.0884,mb:.8545,meta:.0456},
+];
+
+const D_DIV = [
+  {pais:"CR",div:"ABARROTES",sw:9,pgmb:.0663,mbmb:.7964,pg:.1095,mb:.8500,meta:.0338,peso:.2079},
+  {pais:"CR",div:"ABARROTES",sw:10,pgmb:.0649,mbmb:.8035,pg:.1065,mb:.8560,meta:.0331,peso:.2022},
+  {pais:"CR",div:"CONSUMO",sw:9,pgmb:.0614,mbmb:.7763,pg:.1053,mb:.8371,meta:.0379,peso:.1008},
+  {pais:"CR",div:"CONSUMO",sw:10,pgmb:.0653,mbmb:.7856,pg:.1107,mb:.8465,meta:.0372,peso:.0989},
+  {pais:"CR",div:"FARMACIA",sw:9,pgmb:.0196,mbmb:.3785,pg:.0516,mb:.4595,meta:.0231,peso:.0088},
+  {pais:"CR",div:"FARMACIA",sw:10,pgmb:.0349,mbmb:.3542,pg:.0641,mb:.4212,meta:.0234,peso:.0089},
+  {pais:"CR",div:"FRUTAS Y VEGETALES",sw:9,pgmb:.0215,mbmb:.7667,pg:.1680,mb:.8734,meta:.0614,peso:.0422},
+  {pais:"CR",div:"FRUTAS Y VEGETALES",sw:10,pgmb:.0533,mbmb:.7557,pg:.1893,mb:.8709,meta:.0613,peso:.0422},
+  {pais:"CR",div:"MG Y TEXTIL",sw:9,pgmb:.0107,mbmb:.6344,pg:.0728,mb:.7023,meta:.0200,peso:.0007},
+  {pais:"CR",div:"MG Y TEXTIL",sw:10,pgmb:-.0002,mbmb:.6285,pg:.0638,mb:.6990,meta:.0200,peso:.0007},
+  {pais:"CR",div:"PROTEINAS/INDUSTRIAL",sw:9,pgmb:.0291,mbmb:.7178,pg:.1110,mb:.8179,meta:.0397,peso:.0981},
+  {pais:"CR",div:"PROTEINAS/INDUSTRIAL",sw:10,pgmb:.0234,mbmb:.7491,pg:.1077,mb:.8381,meta:.0388,peso:.0971},
+  {pais:"GT",div:"ABARROTES",sw:9,pgmb:.0294,mbmb:.7085,pg:.0707,mb:.7658,meta:.0333,peso:.1416},
+  {pais:"GT",div:"ABARROTES",sw:10,pgmb:.0258,mbmb:.7013,pg:.0691,mb:.7592,meta:.0328,peso:.1373},
+  {pais:"GT",div:"CONSUMO",sw:9,pgmb:.0239,mbmb:.6572,pg:.0736,mb:.7325,meta:.0401,peso:.0701},
+  {pais:"GT",div:"CONSUMO",sw:10,pgmb:.0464,mbmb:.6827,pg:.1008,mb:.7511,meta:.0389,peso:.0702},
+  {pais:"GT",div:"FARMACIA",sw:9,pgmb:.0474,mbmb:.8840,pg:.0669,mb:.9145,meta:.0311,peso:.0026},
+  {pais:"GT",div:"FARMACIA",sw:10,pgmb:.0431,mbmb:.8651,pg:.0622,mb:.8966,meta:.0311,peso:.0026},
+  {pais:"GT",div:"FRUTAS Y VEGETALES",sw:9,pgmb:.0249,mbmb:.7630,pg:.0643,mb:.8405,meta:.0459,peso:.0287},
+  {pais:"GT",div:"FRUTAS Y VEGETALES",sw:10,pgmb:.0175,mbmb:.7186,pg:.0548,mb:.8030,meta:.0459,peso:.0287},
+  {pais:"GT",div:"MG Y TEXTIL",sw:9,pgmb:.0042,mbmb:.4797,pg:.0570,mb:.5764,meta:.0200,peso:.0002},
+  {pais:"GT",div:"MG Y TEXTIL",sw:10,pgmb:-.0190,mbmb:.4474,pg:.0404,mb:.5737,meta:.0200,peso:.0002},
+  {pais:"GT",div:"PROTEINAS/INDUSTRIAL",sw:9,pgmb:.0320,mbmb:.7001,pg:.0765,mb:.7666,meta:.0361,peso:.0676},
+  {pais:"GT",div:"PROTEINAS/INDUSTRIAL",sw:10,pgmb:.0274,mbmb:.7014,pg:.0777,mb:.7733,meta:.0361,peso:.0674},
+  {pais:"HN",div:"ABARROTES",sw:9,pgmb:.0678,mbmb:.7847,pg:.0698,mb:.7896,meta:.0475,peso:.0736},
+  {pais:"HN",div:"ABARROTES",sw:10,pgmb:.0681,mbmb:.7774,pg:.0710,mb:.7840,meta:.0474,peso:.0728},
+  {pais:"HN",div:"CONSUMO",sw:9,pgmb:.0592,mbmb:.7656,pg:.0631,mb:.7741,meta:.0553,peso:.0328},
+  {pais:"HN",div:"CONSUMO",sw:10,pgmb:.0721,mbmb:.7601,pg:.0767,mb:.7692,meta:.0553,peso:.0327},
+  {pais:"HN",div:"FARMACIA",sw:9,pgmb:.0657,mbmb:.7782,pg:.0704,mb:.7860,meta:.0550,peso:.0013},
+  {pais:"HN",div:"FARMACIA",sw:10,pgmb:.0583,mbmb:.7895,pg:.0654,mb:.7976,meta:.0549,peso:.0013},
+  {pais:"HN",div:"FRUTAS Y VEGETALES",sw:9,pgmb:.0716,mbmb:.8665,pg:.0747,mb:.8784,meta:.0523,peso:.0100},
+  {pais:"HN",div:"FRUTAS Y VEGETALES",sw:10,pgmb:.0744,mbmb:.8334,pg:.0797,mb:.8479,meta:.0523,peso:.0100},
+  {pais:"HN",div:"MG Y TEXTIL",sw:9,pgmb:-.0083,mbmb:.5565,pg:.0834,mb:.6399,meta:.0200,peso:.0000},
+  {pais:"HN",div:"MG Y TEXTIL",sw:10,pgmb:-.0296,mbmb:.4483,pg:.0845,mb:.5808,meta:.0200,peso:.0000},
+  {pais:"HN",div:"PROTEINAS/INDUSTRIAL",sw:9,pgmb:.0549,mbmb:.6158,pg:.0574,mb:.6256,meta:.0478,peso:.0390},
+  {pais:"HN",div:"PROTEINAS/INDUSTRIAL",sw:10,pgmb:.0585,mbmb:.6362,pg:.0606,mb:.6454,meta:.0479,peso:.0388},
+  {pais:"NI",div:"ABARROTES",sw:9,pgmb:.0903,mbmb:.9115,pg:.1112,mb:.9257,meta:.0403,peso:.0524},
+  {pais:"NI",div:"ABARROTES",sw:10,pgmb:.0836,mbmb:.8371,pg:.1057,mb:.8768,meta:.0411,peso:.0615},
+  {pais:"NI",div:"CONSUMO",sw:9,pgmb:.0951,mbmb:.9322,pg:.1141,mb:.9440,meta:.0468,peso:.0223},
+  {pais:"NI",div:"CONSUMO",sw:10,pgmb:.0910,mbmb:.8421,pg:.1099,mb:.8807,meta:.0479,peso:.0289},
+  {pais:"NI",div:"FARMACIA",sw:9,pgmb:.0728,mbmb:.8106,pg:.0815,mb:.8193,meta:.0534,peso:.0011},
+  {pais:"NI",div:"FARMACIA",sw:10,pgmb:.0756,mbmb:.8345,pg:.0841,mb:.8476,meta:.0541,peso:.0013},
+  {pais:"NI",div:"FRUTAS Y VEGETALES",sw:9,pgmb:.1228,mbmb:.9063,pg:.1371,mb:.9152,meta:.1027,peso:.0097},
+  {pais:"NI",div:"FRUTAS Y VEGETALES",sw:10,pgmb:.1346,mbmb:.9270,pg:.1514,mb:.9338,meta:.1027,peso:.0098},
+  {pais:"NI",div:"MG Y TEXTIL",sw:9,pgmb:.1129,mbmb:.7047,pg:.1601,mb:.6844,meta:.0200,peso:.0000},
+  {pais:"NI",div:"MG Y TEXTIL",sw:10,pgmb:.0549,mbmb:.6184,pg:.1111,mb:.7123,meta:.0200,peso:.0000},
+  {pais:"NI",div:"PROTEINAS/INDUSTRIAL",sw:9,pgmb:.0159,mbmb:.8931,pg:.0448,mb:.9060,meta:.0520,peso:.0237},
+  {pais:"NI",div:"PROTEINAS/INDUSTRIAL",sw:10,pgmb:.0167,mbmb:.8713,pg:.0434,mb:.8932,meta:.0534,peso:.0272},
+  {pais:"SV",div:"ABARROTES",sw:9,pgmb:.0696,mbmb:.8270,pg:.0967,mb:.8429,meta:.0428,peso:.0522},
+  {pais:"SV",div:"ABARROTES",sw:10,pgmb:.0743,mbmb:.8377,pg:.0999,mb:.8524,meta:.0433,peso:.0515},
+  {pais:"SV",div:"CONSUMO",sw:9,pgmb:.1040,mbmb:.8466,pg:.1306,mb:.8681,meta:.0522,peso:.0223},
+  {pais:"SV",div:"CONSUMO",sw:10,pgmb:.1029,mbmb:.8411,pg:.1290,mb:.8664,meta:.0523,peso:.0222},
+  {pais:"SV",div:"FARMACIA",sw:9,pgmb:.0677,mbmb:.9518,pg:.0716,mb:.9625,meta:.0336,peso:.0014},
+  {pais:"SV",div:"FARMACIA",sw:10,pgmb:.0696,mbmb:.9460,pg:.0740,mb:.9583,meta:.0337,peso:.0014},
+  {pais:"SV",div:"FRUTAS Y VEGETALES",sw:9,pgmb:.0622,mbmb:.8242,pg:.0602,mb:.8282,meta:.0504,peso:.0118},
+  {pais:"SV",div:"FRUTAS Y VEGETALES",sw:10,pgmb:.0475,mbmb:.6424,pg:.0471,mb:.6484,meta:.0504,peso:.0118},
+  {pais:"SV",div:"MG Y TEXTIL",sw:9,pgmb:.0041,mbmb:.6076,pg:.0855,mb:.6463,meta:.0200,peso:.0001},
+  {pais:"SV",div:"MG Y TEXTIL",sw:10,pgmb:-.0518,mbmb:.5858,pg:.0493,mb:.6418,meta:.0200,peso:.0001},
+  {pais:"SV",div:"PROTEINAS/INDUSTRIAL",sw:9,pgmb:.0471,mbmb:.8871,pg:.0651,mb:.9028,meta:.0433,peso:.0337},
+  {pais:"SV",div:"PROTEINAS/INDUSTRIAL",sw:10,pgmb:.0475,mbmb:.8684,pg:.0590,mb:.8785,meta:.0433,peso:.0339},
+];
+
+const D_ITEMS = [
+  {pais:"CR",div:"PROTEINAS/INDUSTRIAL",cat:"EGGS - D93",item:75006091,desc:"HUEVO GALLINA MARRON KG",marca:"MARKETSIDE",pgmb:-.2358,mbmb:.2439,pg:-.0095,meta:.0289,peso:.00975,desv:.2647},
+  {pais:"CR",div:"FRUTAS Y VEGETALES",cat:"FRUIT D94",item:70149316,desc:"BANANO SELECCION ESPECIAL KILO",marca:"HORTIFRUTI",pgmb:.0123,mbmb:1.0,pg:.0123,meta:.0724,peso:.00571,desv:.0601},
+  {pais:"CR",div:"CONSUMO",cat:"PAPER TOWELS D04",item:70067855,desc:"TOALLA SULI COCINA 60HD 3 ROLL",marca:"SULI",pgmb:.0591,mbmb:.9444,pg:.1668,meta:.0300,peso:.00440,desv:-.0291},
+  {pais:"CR",div:"PROTEINAS/INDUSTRIAL",cat:"MILK&CREM D90",item:9001750,desc:"LECH LIQ DOS P HOMOG 2PORC 3785ML",marca:"DOS PINOS",pgmb:.0045,mbmb:.9394,pg:.0614,meta:.0459,peso:.00430,desv:.0414},
+  {pais:"CR",div:"FRUTAS Y VEGETALES",cat:"VEGETABLES D94",item:9401764,desc:"CEBOLLA KG 2DA CALIDAD ORIG CR",marca:"HORTIFRUTI",pgmb:.0676,mbmb:.9231,pg:.1379,meta:.0600,peso:.00356,desv:-.0076},
+  {pais:"CR",div:"CONSUMO",cat:"TOILET TISSUE D04",item:70478347,desc:"PH SULI 1P 4R 1000 HOJAS 629GR",marca:"SULI",pgmb:.0458,mbmb:.7778,pg:.1153,meta:.0300,peso:.00284,desv:-.0158},
+  {pais:"CR",div:"PROTEINAS/INDUSTRIAL",cat:"POULTRY D93",item:70011346,desc:"PECHUGA ENTERA DE POLLO KG",marca:"DON CRISTOBAL",pgmb:.0749,mbmb:1.0,pg:.1315,meta:.0558,peso:.00271,desv:-.0191},
+  {pais:"CR",div:"CONSUMO",cat:"BLEACH D13",item:75167226,desc:"CLORO SULI BT 3785 ML GALON",marca:"SULI",pgmb:.0913,mbmb:.7333,pg:.1874,meta:.0326,peso:.00237,desv:-.0587},
+  {pais:"CR",div:"ABARROTES",cat:"BEVERAGES CARBONATED D95",item:9522120,desc:"COCA COLA ORIGINAL PE 3000ML",marca:"COCA-COLA",pgmb:-.1087,mbmb:.2121,pg:-.0932,meta:.0433,peso:.00228,desv:.1520},
+  {pais:"CR",div:"PROTEINAS/INDUSTRIAL",cat:"PORK D93",item:75375016,desc:"POSTA DE CERDO 1 KG",marca:"DON CRISTOBAL",pgmb:.0440,mbmb:.8293,pg:.1041,meta:.0395,peso:.00215,desv:-.0045},
+  {pais:"CR",div:"PROTEINAS/INDUSTRIAL",cat:"PORK D93",item:75375013,desc:"CHULETA ECONOMICA DE CERDO 1 KG",marca:"DON CRISTOBAL",pgmb:.0472,mbmb:.5714,pg:.2601,meta:.0429,peso:.00213,desv:-.0043},
+  {pais:"CR",div:"ABARROTES",cat:"SUGAR D92",item:9211753,desc:"AZUCAR DONA M REG BCO 1000 GR",marca:"DOÑA MARÍA",pgmb:.0143,mbmb:.8519,pg:.0509,meta:.0197,peso:.00209,desv:.0054},
+  {pais:"CR",div:"FRUTAS Y VEGETALES",cat:"VEGETABLES D94",item:75121113,desc:"CHILE DULCE EA",marca:"HORTIFRUTI",pgmb:.1595,mbmb:.9231,pg:.3164,meta:.0600,peso:.00201,desv:-.0995},
+  {pais:"CR",div:"ABARROTES",cat:"BEANS D92",item:70000614,desc:"FRIJOL ROJO INDIANA 3000GR",marca:"INDIANA",pgmb:.0588,mbmb:1.0,pg:.0625,meta:.0604,peso:.00192,desv:.0016},
+  {pais:"CR",div:"ABARROTES",cat:"RICE D92",item:75242122,desc:"ARROZ SABEMAS GRANO ENTERO 1500GR",marca:"SABEMAS",pgmb:.0126,mbmb:.5758,pg:.1487,meta:.0216,peso:.00188,desv:.0089},
+  {pais:"CR",div:"ABARROTES",cat:"BUTTER D92",item:70478386,desc:"MARGAR NUMAR CAJ 500 GR",marca:"NUMAR",pgmb:.0348,mbmb:.9697,pg:.0787,meta:.0675,peso:.00182,desv:.0328},
+  {pais:"CR",div:"FRUTAS Y VEGETALES",cat:"VEGETABLES D94",item:9402359,desc:"ZANAHORIA KG PRIMERA CALIDAD",marca:"HORTIFRUTI",pgmb:-.0947,mbmb:.3415,pg:.2176,meta:.0569,peso:.00181,desv:.1516},
+  {pais:"CR",div:"PROTEINAS/INDUSTRIAL",cat:"POULTRY D93",item:70011208,desc:"MUSLO POLLO FRESCO NACIONAL KG",marca:"DON CRISTOBAL",pgmb:.0661,mbmb:.8889,pg:.1703,meta:.0599,peso:.00176,desv:-.0062},
+  {pais:"CR",div:"ABARROTES",cat:"COFFEE D92",item:70392159,desc:"CAFE LEYENDA MOLIDO 1000 GR",marca:"LEYENDA",pgmb:-.0338,mbmb:.5217,pg:-.0246,meta:.0720,peso:.00176,desv:.1058},
+  {pais:"CR",div:"CONSUMO",cat:"ORAL CARE D02",item:70393628,desc:"CREMA DENT COLGATE CALC 50ML",marca:"COLGATE",pgmb:.0585,mbmb:.9189,pg:.1231,meta:.0315,peso:.00171,desv:-.0270},
+  {pais:"CR",div:"ABARROTES",cat:"SUGAR D92",item:70635167,desc:"AZUCAR DONA MARIA BLANCA 5000GR",marca:"DOÑA MARÍA",pgmb:.0170,mbmb:1.0,pg:.0262,meta:.0196,peso:.00171,desv:.0026},
+  {pais:"CR",div:"ABARROTES",cat:"SUGAR D92",item:70643818,desc:"AZUCAR DONA MARIA BLANCA 2000GR",marca:"DOÑA MARÍA",pgmb:.0195,mbmb:.9697,pg:.0483,meta:.0197,peso:.00168,desv:.0002},
+  {pais:"CR",div:"FRUTAS Y VEGETALES",cat:"VEGETABLES D94",item:70135192,desc:"AJO MALLA 3 EA",marca:"HORTIFRUTI",pgmb:.0878,mbmb:.6585,pg:.2508,meta:.0584,peso:.00166,desv:-.0295},
+  {pais:"CR",div:"ABARROTES",cat:"BEANS D92",item:70634791,desc:"FRIJOL NEGRO INDIANA 1800 GR",marca:"INDIANA",pgmb:.0809,mbmb:1.0,pg:.0809,meta:.0584,peso:.00156,desv:-.0225},
+  {pais:"CR",div:"PROTEINAS/INDUSTRIAL",cat:"SEAFOOD D83",item:75381756,desc:"MIX MARISCOS 454 G",marca:"DELIMAR",pgmb:.1434,mbmb:1.0,pg:.1434,meta:.0288,peso:.00148,desv:-.1146},
+  {pais:"CR",div:"ABARROTES",cat:"SUGAR D92",item:70240507,desc:"AZUCAR SULI BLANCA 2000GR",marca:"SULI",pgmb:.0579,mbmb:1.0,pg:.0793,meta:.0399,peso:.00147,desv:-.0180},
+  {pais:"CR",div:"ABARROTES",cat:"SALT D92",item:75023226,desc:"SAL SOL CON FLUOR 500GR",marca:"SAL SOL",pgmb:-.0187,mbmb:.6667,pg:.1221,meta:.0386,peso:.00146,desv:.0573},
+  {pais:"CR",div:"ABARROTES",cat:"SOUPS D92",item:70023456,desc:"CONSOME MAGGI POLLO 50 GR",marca:"MAGGI",pgmb:.0205,mbmb:.5455,pg:.0992,meta:.0686,peso:.00137,desv:.0481},
+  {pais:"CR",div:"FRUTAS Y VEGETALES",cat:"VEGETABLES D94",item:70185463,desc:"PAPA KG SEGUNDA CALIDAD",marca:"HORTIFRUTI",pgmb:-.0777,mbmb:.2424,pg:-.0049,meta:.0583,peso:.00135,desv:.1360},
+  {pais:"CR",div:"ABARROTES",cat:"BEVERAGES CARBONATED D95",item:75234456,desc:"BEBIDA GAS BIG COLA 3030ML",marca:"BIG COLA",pgmb:.1454,mbmb:.8889,pg:.1843,meta:.0200,peso:.00133,desv:-.1254},
+];
+
+// ============================================================ HELPERS ============================================================
+const pct = v => (v*100).toFixed(2)+"%";
+const bps = v => {const s=Math.round(v*10000); return (s>0?"▲ +":"▼ ")+Math.abs(s)+" bps"};
+const bpsRaw = v => Math.round(v*10000);
+const clr = v => v>=0?"#2a8703":"#ea1100";
+const countries = ["CR","GT","HN","NI","SV"];
+const divs = [...new Set(D_DIV.map(d=>d.div))];
+const W_COLORS = ["#0053e2","#ffc220","#2a8703","#ea1100","#6b21a8","#0891b2"];
+
+function getPais(p,sw){return D_PAIS.find(d=>d.pais===p&&d.sw===sw)}
+function getDivPais(p,sw){return D_DIV.filter(d=>d.pais===p&&d.sw===sw)}
+
+// ============================================================ TABS ============================================================
+function showTab(id){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  event.target.classList.add('active');
+  if(id==='pais') renderPaisDetail();
+  if(id==='outliers') renderOutliers();
+  if(id==='descarga') renderDescarga();
+  if(id==='base100') renderBase100();
+  if(id==='desviacion') renderDesviacion();
+  if(id==='division') renderDivision();
+  if(id==='meta') renderMeta();
+}
+
+// ============================================================ KPI ROW ============================================================
+function buildKPIs(){
+  const row=document.getElementById('kpi-row');
+  const data=[
+    {label:"País que MÁS cae en PG MB",value:"NI",delta:"−29 bps SW9→SW10",down:true},
+    {label:"País que MÁS sube en PG MB",value:"HN",delta:"+39 bps SW9→SW10",up:true},
+    {label:"Mayor caída %MB MB",value:"NI",delta:"−567 bps SW9→SW10",down:true},
+    {label:"División más afectada",value:"MG Y TEXTIL",delta:"Bajo meta en 5/5 países",down:true},
+    {label:"Ítem crítico SW10",value:"HUEVO GALLINA",delta:"PG MB: −23.6% | Desv: +26.5pp",down:true},
+    {label:"Países sobre META PG MB",value:"5/5",delta:"Todos sobre meta global",up:true},
+  ];
+  row.innerHTML=data.map(d=>`
+    <div class="kpi">
+      <div class="label">${d.label}</div>
+      <div class="value">${d.value}</div>
+      <div class="delta ${d.down?'down':d.up?'up':'flat'}">${d.delta}</div>
+    </div>`).join('');
+}
+
+// ============================================================ OVERVIEW CHARTS ============================================================
+function buildOverview(){
+  buildKPIs();
+  const labels=countries;
+  const sw9pgmb=countries.map(c=>getPais(c,9).pgmb*100);
+  const sw10pgmb=countries.map(c=>getPais(c,10).pgmb*100);
+  const sw9mbmb=countries.map(c=>getPais(c,9).mbmb*100);
+  const sw10mbmb=countries.map(c=>getPais(c,10).mbmb*100);
+
+  new Chart(document.getElementById('chartPgmbPais'),{
+    type:'bar',
+    data:{labels,datasets:[
+      {label:'SW9',data:sw9pgmb,backgroundColor:'rgba(0,83,226,.5)',borderColor:'#0053e2',borderWidth:2},
+      {label:'SW10',data:sw10pgmb,backgroundColor:'rgba(255,194,32,.7)',borderColor:'#ffc220',borderWidth:2},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top'},
+      tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: ${ctx.parsed.y.toFixed(2)}%`}}},
+      scales:{y:{ticks:{callback:v=>v+'%'},title:{display:true,text:'% PG MB'}}}}
+  });
+
+  new Chart(document.getElementById('chartMbmbPais'),{
+    type:'bar',
+    data:{labels,datasets:[
+      {label:'SW9',data:sw9mbmb,backgroundColor:'rgba(42,135,3,.5)',borderColor:'#2a8703',borderWidth:2},
+      {label:'SW10',data:sw10mbmb,backgroundColor:'rgba(234,17,0,.6)',borderColor:'#ea1100',borderWidth:2},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top'},
+      tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: ${ctx.parsed.y.toFixed(2)}%`}}},
+      scales:{y:{min:60,ticks:{callback:v=>v+'%'},title:{display:true,text:'% MB MB'}}}}
+  });
+
+  const bpsData=countries.map(c=>bpsRaw(getPais(c,10).pgmb-getPais(c,9).pgmb));
+  new Chart(document.getElementById('chartBps'),{
+    type:'bar',
+    data:{labels,datasets:[{
+      label:'Δ BPS en % PG MB (SW10−SW9)',
+      data:bpsData,
+      backgroundColor:bpsData.map(v=>v>=0?'rgba(42,135,3,.7)':'rgba(234,17,0,.7)'),
+      borderColor:bpsData.map(v=>v>=0?'#2a8703':'#ea1100'),
+      borderWidth:2
+    }]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:'top'},tooltip:{callbacks:{label:ctx=>`${ctx.parsed.y>0?'+':''}${ctx.parsed.y} BPS`}}},
+      scales:{y:{ticks:{callback:v=>(v>0?'+':'')+v+' bps'},title:{display:true,text:'Δ BPS'}},
+        x:{grid:{display:false}}}}
+  });
+}
+
+// ============================================================ PAIS DETAIL ============================================================
+let chartPaisDiv=null, chartDivDelta=null;
+function renderPaisDetail(){
+  const p=document.getElementById('selectPais').value;
+  const sw9=getPais(p,9), sw10=getPais(p,10);
+  const delta_pgmb=sw10.pgmb-sw9.pgmb, delta_mbmb=sw10.mbmb-sw9.mbmb;
+
+  document.getElementById('paisKpis').innerHTML=`
+    <table><thead><tr><th>Métrica</th><th>SW9</th><th>SW10</th><th>Δ BPS</th><th>META</th><th>vs Meta</th></tr></thead>
+    <tbody>
+      <tr><td><b>% PG MB</b></td><td>${pct(sw9.pgmb)}</td><td>${pct(sw10.pgmb)}</td>
+          <td style="color:${clr(delta_pgmb)}">${bps(delta_pgmb)}</td><td>${pct(sw10.meta)}</td>
+          <td><span class="pill ${sw10.pgmb>=sw10.meta?'g':'r'}">${sw10.pgmb>=sw10.meta?'✅ Sobre':'⚠️ Bajo'} meta</span></td></tr>
+      <tr><td><b>% MB MB</b></td><td>${pct(sw9.mbmb)}</td><td>${pct(sw10.mbmb)}</td>
+          <td style="color:${clr(delta_mbmb)}">${bps(delta_mbmb)}</td><td>—</td><td>—</td></tr>
+      <tr><td><b>% PG</b></td><td>${pct(sw9.pg)}</td><td>${pct(sw10.pg)}</td>
+          <td style="color:${clr(sw10.pg-sw9.pg)}">${bps(sw10.pg-sw9.pg)}</td><td>—</td><td>—</td></tr>
+      <tr><td><b>% MB</b></td><td>${pct(sw9.mb)}</td><td>${pct(sw10.mb)}</td>
+          <td style="color:${clr(sw10.mb-sw9.mb)}">${bps(sw10.mb-sw9.mb)}</td><td>—</td><td>—</td></tr>
+    </tbody></table>`;
+
+  const divs10=getDivPais(p,10);
+  const divLabels=divs10.map(d=>d.div.length>12?d.div.substring(0,12)+'…':d.div);
+  if(chartPaisDiv) chartPaisDiv.destroy();
+  chartPaisDiv=new Chart(document.getElementById('chartPaisDivision'),{
+    type:'bar',
+    data:{labels:divLabels,datasets:[
+      {label:'% PG MB SW10',data:divs10.map(d=>+(d.pgmb*100).toFixed(2)),backgroundColor:'rgba(0,83,226,.7)',borderColor:'#0053e2',borderWidth:2},
+      {label:'META',data:divs10.map(d=>+(d.meta*100).toFixed(2)),type:'line',borderColor:'#ea1100',borderWidth:2,borderDash:[6,3],pointRadius:5,pointBackgroundColor:'#ea1100',fill:false},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: ${ctx.parsed.y.toFixed(2)}%`}}},
+      scales:{y:{ticks:{callback:v=>v+'%'}}}}
+  });
+
+  const divs9=getDivPais(p,9);
+  const deltaDiv=divs10.map((d,i)=>+((d.pgmb-divs9[i].pgmb)*10000).toFixed(0));
+  if(chartDivDelta) chartDivDelta.destroy();
+  chartDivDelta=new Chart(document.getElementById('chartDivDelta'),{
+    type:'bar',
+    data:{labels:divLabels,datasets:[{
+      label:'Δ BPS PG MB (SW10−SW9)',
+      data:deltaDiv,
+      backgroundColor:deltaDiv.map(v=>v>=0?'rgba(42,135,3,.7)':'rgba(234,17,0,.7)'),
+      borderColor:deltaDiv.map(v=>v>=0?'#2a8703':'#ea1100'),borderWidth:2
+    }]},
+    options:{responsive:true,maintainAspectRatio:false,
+      scales:{y:{ticks:{callback:v=>(v>0?'+':'')+v+' bps'}}}}
+  });
+}
+
+// ============================================================ DIVISION ============================================================
+let chartDivAll=null;
+function renderDivision(){
+  const allDivs=[...new Set(D_DIV.map(d=>d.div))];
+  const ds=countries.map((c,i)=>{
+    const vals=allDivs.map(div=>{
+      const found=D_DIV.find(d=>d.pais===c&&d.div===div&&d.sw===10);
+      return found?+(found.pgmb*100).toFixed(2):null;
+    });
+    return{label:c,data:vals,backgroundColor:W_COLORS[i]+'99',borderColor:W_COLORS[i],borderWidth:2};
+  });
+  if(chartDivAll) chartDivAll.destroy();
+  chartDivAll=new Chart(document.getElementById('chartDivAll'),{
+    type:'bar',
+    data:{labels:allDivs.map(d=>d.length>14?d.substring(0,14)+'…':d),datasets:ds},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top'}},
+      scales:{x:{stacked:false},y:{ticks:{callback:v=>v+'%'},title:{display:true,text:'% PG MB SW10'}}}}
+  });
+
+  // Semáforo
+  const html=allDivs.map(div=>`
+    <div style="margin-bottom:10px">
+      <div class="section-label">${div}</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        ${countries.map(c=>{
+          const d=D_DIV.find(x=>x.pais===c&&x.div===div&&x.sw===10);
+          if(!d) return '';
+          const ok=d.pgmb>=d.meta;
+          return `<span class="pill ${ok?'g':'r'}" title="${pct(d.pgmb)} vs META ${pct(d.meta)}">${c} ${ok?'✅':'⚠️'}</span>`;
+        }).join('')}
+      </div>
+    </div>`).join('');
+  document.getElementById('semaforoDivision').innerHTML=html;
+}
+
+// ============================================================ META ============================================================
+let chartMetaPais=null;
+function renderMeta(){
+  const labels=countries;
+  const pgmb=countries.map(c=>+(getPais(c,10).pgmb*100).toFixed(2));
+  const meta=countries.map(c=>+(getPais(c,10).meta*100).toFixed(2));
+  const gap=countries.map((c,i)=>+((pgmb[i]-meta[i]).toFixed(2)));
+  if(chartMetaPais) chartMetaPais.destroy();
+  chartMetaPais=new Chart(document.getElementById('chartMetaPais'),{
+    type:'bar',
+    data:{labels,datasets:[
+      {label:'% PG MB SW10',data:pgmb,backgroundColor:'rgba(0,83,226,.7)',borderColor:'#0053e2',borderWidth:2},
+      {label:'META',data:meta,type:'line',borderColor:'#ea1100',borderWidth:3,borderDash:[6,3],fill:false,pointRadius:6,pointBackgroundColor:'#ea1100'},
+      {label:'Gap vs Meta (pp)',data:gap,type:'line',borderColor:'#2a8703',borderWidth:2,fill:false,pointRadius:5,pointStyle:'triangle'},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      scales:{y:{ticks:{callback:v=>v+'%'}}}}
+  });
+
+  // Heatmap divisions vs countries
+  const allDivs=[...new Set(D_DIV.map(d=>d.div))];
+  let tbl=`<div class="tbl-wrap"><table><thead><tr><th>División</th>${countries.map(c=>`<th>${c}</th>`).join('')}</tr></thead><tbody>`;
+  allDivs.forEach(div=>{
+    tbl+=`<tr><td><b>${div}</b></td>`;
+    countries.forEach(c=>{
+      const d=D_DIV.find(x=>x.pais===c&&x.div===div&&x.sw===10);
+      if(!d){tbl+='<td>—</td>';return;}
+      const diff=+(( d.pgmb - d.meta)*100).toFixed(2);
+      const bg=diff>=0?`rgba(42,135,3,${Math.min(0.8,diff/10+.1)})`:`rgba(234,17,0,${Math.min(0.8,Math.abs(diff)/10+.1)})`;
+      tbl+=`<td style="background:${bg};color:#fff;font-weight:700;text-align:center">${diff>0?'+':''}${diff}pp</td>`;
+    });
+    tbl+='</tr>';
+  });
+  tbl+='</tbody></table></div>';
+  document.getElementById('heatmapDiv').innerHTML=tbl;
+}
+
+// ============================================================ OUTLIERS ============================================================
+function buildOutlierTable(items){
+  if(!items.length) return '<p style="padding:12px;color:#8c8c8c">Sin datos para el filtro seleccionado.</p>';
+  return`<table>
+    <thead><tr><th>#</th><th>País</th><th>División</th><th>Categoría</th><th>Ítem</th><th>Descripción</th><th>Marca</th>
+      <th>% PG MB</th><th>% MB MB</th><th>META</th><th>Desv vs Meta</th><th>Peso MB</th></tr></thead>
+    <tbody>${items.map((d,i)=>`<tr>
+      <td>${i+1}</td><td><span class="pill b">${d.pais}</span></td><td>${d.div}</td><td>${d.cat}</td>
+      <td>${d.item}</td><td style="max-width:180px">${d.desc}</td><td>${d.marca}</td>
+      <td style="color:${d.pgmb>=0?'#2a8703':'#ea1100'};font-weight:700">${pct(d.pgmb)}</td>
+      <td>${pct(d.mbmb)}</td><td>${pct(d.meta)}</td>
+      <td style="color:${d.desv>0?'#ea1100':'#2a8703'};font-weight:700">${d.desv>0?'+':''}${pct(d.desv)}</td>
+      <td>${(d.peso*100).toFixed(3)}%</td></tr>`).join('')}
+    </tbody></table>`;
+}
+
+function renderOutliers(){
+  const fp=document.getElementById('filterPaisOut').value;
+  const fd=document.getElementById('filterDivOut').value;
+  let items=D_ITEMS.filter(d=>(!fp||d.pais===fp)&&(!fd||d.div===fd));
+  // Populate div filter
+  const allDivs=[...new Set(D_ITEMS.map(d=>d.div))];
+  const selDiv=document.getElementById('filterDivOut');
+  if(selDiv.options.length<=1){
+    allDivs.forEach(dv=>{const o=document.createElement('option');o.value=dv;o.text=dv;selDiv.appendChild(o);});
+  }
+  const neg=items.filter(d=>d.pgmb<0).sort((a,b)=>a.pgmb-b.pgmb);
+  const pos=items.filter(d=>d.pgmb>=0).sort((a,b)=>b.pgmb-a.pgmb);
+  document.getElementById('tblNeg').innerHTML=buildOutlierTable(neg);
+  document.getElementById('tblPos').innerHTML=buildOutlierTable(pos);
+}
+function resetOutFilters(){
+  document.getElementById('filterPaisOut').value='';
+  document.getElementById('filterDivOut').value='';
+  renderOutliers();
+}
+
+// ============================================================ DESCARGA ============================================================
+function renderDescarga(){
+  const selDiv=document.getElementById('dlDiv');
+  if(selDiv.options.length<=1){
+    [...new Set(D_ITEMS.map(d=>d.div))].forEach(dv=>{const o=document.createElement('option');o.value=dv;o.text=dv;selDiv.appendChild(o);});
+  }
+  const fp=document.getElementById('dlPais').value;
+  const fd=document.getElementById('dlDiv').value;
+  let items=D_ITEMS.filter(d=>(!fp||d.pais===fp)&&(!fd||d.div===fd));
+  document.getElementById('tblDescarga').innerHTML=buildOutlierTable(items);
+}
+function downloadCSV(){
+  const fp=document.getElementById('dlPais').value||'TODOS';
+  const fd=document.getElementById('dlDiv').value||'TODOS';
+  let items=D_ITEMS.filter(d=>(!fp||fp==='TODOS'||d.pais===fp)&&(!fd||fd==='TODOS'||d.div===fd));
+  const hdr='PAIS,DIVISION,CATEGORIA,ITEM_NBR,DESCRIPCION,MARCA,PCT_PGMB,PCT_MB_MB,PCT_PG,META_PG,PESO_MB,DESV_VS_META\n';
+  const rows=items.map(d=>[d.pais,d.div,d.cat,d.item,`"${d.desc}"`,d.marca,
+    pct(d.pgmb),pct(d.mbmb),pct(d.pg),pct(d.meta),(d.peso*100).toFixed(4)+'%',pct(d.desv)].join(',')).join('\n');
+  const blob=new Blob([hdr+rows],{type:'text/csv'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download=`outliers_pricegap_${fp}_${fd}_SW10_2026.csv`;a.click();
+}
+
+// ============================================================ BASE 100 ============================================================
+let chartB100=null;
+function renderBase100(){
+  const p=document.getElementById('b100Pais').value;
+  const dv=document.getElementById('b100Div').value;
+  // populate div
+  const sel=document.getElementById('b100Div');
+  if(sel.options.length<=1){
+    [...new Set(D_ITEMS.map(d=>d.div))].forEach(d=>{const o=document.createElement('option');o.value=d;o.text=d;sel.appendChild(o);});
+  }
+  let items=D_ITEMS.filter(d=>d.pais===p&&(!dv||d.div===dv));
+  items.sort((a,b)=>b.peso-a.peso);
+  const totalPeso=items.reduce((s,d)=>s+d.peso,0);
+  const base100=items.map(d=>({...d,pesoNorm:totalPeso>0?d.peso/totalPeso*100:0,contrib:totalPeso>0?(d.pgmb*d.peso/totalPeso*100):0}));
+
+  const labels=base100.map(d=>d.item+'');
+  const contribs=base100.map(d=>+d.contrib.toFixed(3));
+
+  if(chartB100) chartB100.destroy();
+  chartB100=new Chart(document.getElementById('chartBase100'),{
+    type:'bar',
+    data:{labels,datasets:[{
+      label:'Contribución al PG MB (Base 100)',
+      data:contribs,
+      backgroundColor:contribs.map(v=>v>=0?'rgba(42,135,3,.7)':'rgba(234,17,0,.7)'),
+      borderColor:contribs.map(v=>v>=0?'#2a8703':'#ea1100'),borderWidth:2
+    }]},
+    options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',
+      plugins:{tooltip:{callbacks:{label:(ctx)=>{
+        const it=base100[ctx.dataIndex];
+        return[`Ítem: ${it.desc}`,`Contrib: ${ctx.parsed.x.toFixed(3)}`,`Peso norm: ${it.pesoNorm.toFixed(2)}/100`,`PG MB: ${pct(it.pgmb)}`];
+      }}}},
+      scales:{x:{ticks:{callback:v=>v.toFixed(2)},title:{display:true,text:'Contribución (Peso×PG MB, normalizado a 100)'}}}}
+  });
+
+  let tbl=`<table><thead><tr><th>Ítem</th><th>Descripción</th><th>% PG MB</th><th>Peso Norm /100</th><th>Contribución Base 100</th><th>Impacto</th></tr></thead><tbody>`;
+  base100.forEach(d=>{
+    const imp=d.contrib>=0?'<span class="pill g">✅ Sube PG</span>':'<span class="pill r">⬇️ Baja PG</span>';
+    tbl+=`<tr><td>${d.item}</td><td style="max-width:160px;font-size:11px">${d.desc}</td>
+      <td style="color:${d.pgmb>=0?'#2a8703':'#ea1100'};font-weight:700">${pct(d.pgmb)}</td>
+      <td>${d.pesoNorm.toFixed(2)}</td>
+      <td style="color:${d.contrib>=0?'#2a8703':'#ea1100'};font-weight:700">${d.contrib>0?'+':''}${d.contrib.toFixed(3)}</td>
+      <td>${imp}</td></tr>`;
+  });
+  tbl+='</tbody></table>';
+  document.getElementById('tblBase100').innerHTML=`<div class="tbl-wrap">${tbl}</div>`;
+}
+
+// ============================================================ DESVIACIÓN META ============================================================
+let chartDesv=null;
+function renderDesviacion(){
+  const sorted=[...D_ITEMS].sort((a,b)=>b.desv-a.desv).slice(0,20);
+  const labels=sorted.map(d=>d.item+'');
+  const data=sorted.map(d=>+(d.desv*100).toFixed(2));
+
+  if(chartDesv) chartDesv.destroy();
+  chartDesv=new Chart(document.getElementById('chartDesviacion'),{
+    type:'bar',
+    data:{labels,datasets:[{
+      label:'Desviación vs META (pp)',
+      data,
+      backgroundColor:data.map(v=>v>5?'rgba(234,17,0,.8)':v>0?'rgba(255,194,32,.8)':'rgba(42,135,3,.7)'),
+      borderColor:data.map(v=>v>5?'#ea1100':v>0?'#ffc220':'#2a8703'),borderWidth:2
+    }]},
+    options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',
+      plugins:{tooltip:{callbacks:{label:(ctx)=>{
+        const it=sorted[ctx.dataIndex];
+        return[`${it.desc}`,`Desv: ${ctx.parsed.x>0?'+':''}${ctx.parsed.x}pp`,`PG MB: ${pct(it.pgmb)}`,`META: ${pct(it.meta)}`];
+      }}}},
+      scales:{x:{ticks:{callback:v=>(v>0?'+':'')+v+'pp'},title:{display:true,text:'META − PG MB (positivo = debajo de meta)'}}}}
+  });
+
+  let tbl=`<table><thead><tr><th>País</th><th>División</th><th>Ítem</th><th>Descripción</th><th>% PG MB</th><th>META</th><th>Desv (pp)</th><th>Semáforo</th></tr></thead><tbody>`;
+  sorted.forEach(d=>{
+    const desv_pp=(d.desv*100);
+    const sem=desv_pp>5?'<span class="pill r">🔴 Crítico</span>':desv_pp>0?'<span class="pill y">🟡 Atención</span>':'<span class="pill g">🟢 OK</span>';
+    tbl+=`<tr><td><span class="pill b">${d.pais}</span></td><td>${d.div}</td><td>${d.item}</td>
+      <td style="font-size:11px;max-width:160px">${d.desc}</td>
+      <td style="color:${d.pgmb>=0?'#2a8703':'#ea1100'};font-weight:700">${pct(d.pgmb)}</td>
+      <td>${pct(d.meta)}</td>
+      <td style="color:${desv_pp>0?'#ea1100':'#2a8703'};font-weight:700">${desv_pp>0?'+':''}${desv_pp.toFixed(2)}pp</td>
+      <td>${sem}</td></tr>`;
+  });
+  tbl+='</tbody></table>';
+  document.getElementById('tblDesviacion').innerHTML=`<div class="tbl-wrap">${tbl}</div>`;
+}
+
+// ============================================================ INIT ============================================================
+buildOverview();
+// Pre-populate download div select
+window.addEventListener('load',()=>{
+  [...new Set(D_ITEMS.map(d=>d.div))].forEach(d=>{
+    const o=document.createElement('option');o.value=d;o.text=d;
+    document.getElementById('dlDiv').appendChild(o);
+  });
+  renderOutliers();
+});
+</script>
+</body>
+</html>

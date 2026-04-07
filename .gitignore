@@ -12,6 +12,8 @@ bigquery_results/
 *.html
 # Excepcion: presentaciones del equipo
 !git-github-equipo.html
+# Excepcion: analisis guardados en carpetas de proyecto
+!Analisis_Premedicion/*.html
 
 # Python
 __pycache__/
