@@ -1,58 +1,36 @@
-# =============================================
-# .gitignore para puppy_workspace
-# =============================================
-
-# Datos pesados / resultados de BigQuery
-*.json
-result_*.json
-all_results.json
-bigquery_results/
-
-# Archivos HTML generados (pueden ser muy grandes)
-*.html
-# Excepcion: presentaciones del equipo
-!git-github-equipo.html
-# Excepcion: analisis guardados en carpetas de proyecto
-!Analisis_Premedicion/*.html
-
 # Python
 __pycache__/
-*.py[cod]
+*.pyc
 *.pyo
-*.pyd
-.Python
 venv/
-.venv/
-env/
 .env
-*.egg-info/
-dist/
-build/
 
-# Datos sensibles / PII
-*.csv
-*.xlsx
-*.xls
-*.db
-*.sqlite
-*.sqlite3
+# Excel temporales (lock files de Office)
+~$*.xlsx
+~$*.xls
+~$*.docx
 
-# Logs
-*.log
+# BigQuery - CSVs grandes (outputs, no versionarlos)
+bigquery_results/*.csv
 
-# Sistema operativo
+# Scripts de debug/utilidad temporal
+check_*.py
+check_*.txt
+scan_tables.py
+verify_csv.py
+patch_csv_buttons.py
+create_repo.py
+copy_to_repo.py
+json_check.txt
+preview_sample.*
+extract_docx.py
+transform_bq.py
+prompt_extraido.txt
+
+# OS
 .DS_Store
 Thumbs.db
 desktop.ini
 
-# IDEs
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# Debug y archivos temporales
-debug_*.py
-debug_*.txt
-build_out.txt
-*.tmp
+# Node
+node_modules/
