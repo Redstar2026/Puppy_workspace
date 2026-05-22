@@ -23,11 +23,14 @@ prompt_text.txt
 
 # BigQuery results (datos crudos - no versionar)
 bigquery_results/
-Analisis Impactos Semanales/v2/*.csv
-Analisis Impactos Semanales/q*.csv
+**/v2/*.csv
+**/q*.csv
 
 # Archivos Excel grandes
 *.xlsx
+
+# Temporales de Office
+~$*
 
 # OS
 .DS_Store
