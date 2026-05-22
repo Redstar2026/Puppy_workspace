@@ -1,36 +1,34 @@
 # Python
 __pycache__/
-*.pyc
+*.py[cod]
 *.pyo
+.venv/
 venv/
+env/
+
+# Node
+node_modules/
+
+# Env / secrets
 .env
+*.env
 
-# Excel temporales (lock files de Office)
-~$*.xlsx
-~$*.xls
-~$*.docx
+# Logs
+server.log
+*.log
 
-# BigQuery - CSVs grandes (outputs, no versionarlos)
-bigquery_results/*.csv
+# Archivos temporales del docx
+doc_raw.xml
+prompt_text.txt
 
-# Scripts de debug/utilidad temporal
-check_*.py
-check_*.txt
-scan_tables.py
-verify_csv.py
-patch_csv_buttons.py
-create_repo.py
-copy_to_repo.py
-json_check.txt
-preview_sample.*
-extract_docx.py
-transform_bq.py
-prompt_extraido.txt
+# BigQuery results (datos crudos - no versionar)
+bigquery_results/
+Analisis Impactos Semanales/v2/*.csv
+Analisis Impactos Semanales/q*.csv
+
+# Archivos Excel grandes
+*.xlsx
 
 # OS
 .DS_Store
 Thumbs.db
-desktop.ini
-
-# Node
-node_modules/
