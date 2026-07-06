@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block title %}Historial de Cambios{% endblock %}
+{% block breadcrumb %}
+  <a href="/" class="hover:text-wm-blue">Home</a>
+  <span class="material-icons-round text-base text-gray-300">chevron_right</span>
+  <span>Historial</span>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+  <div class="mb-6">
+    <h1 class="text-2xl font-bold text-gray-900">Historial Global de Cambios</h1>
+    <p class="text-sm text-gray-500 mt-1">Auditoría completa de todas las acciones realizadas — últimos 200 registros</p>
+  </div>
+
+  <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead class="bg-gray-50 border-b border-gray-100">
+          <tr>
+            <th class="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Fecha</th>
+            <th class="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Usuario</th>
+            <th class="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Acción</th>
+            <th class="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Tarea</th>
+            <th class="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Detalle</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-50">
+          {% for h in registros %}
+          <tr class="hover:bg-gray-50 transition-colors">
+            <td class="px-5 py-3.5 text-gray-500 text-xs whitespace-nowrap">
+              {{ h.creado_en.strftime('%d/%m/%Y') }}<br>
+              <span class="text-gray-400">{{ h.creado_en.strftime('%H:%M:%S') }}</span>
+            </td>
+            <td class="px-5 py-3.5">
+              {% if h.usuario %}
+              <div class="flex items-center gap-2">
+                <div class="w-7 h-7 rounded-full bg-wm-blue flex items-center justify-center flex-shrink-0">
+                  <span class="text-white text-xs font-bold">{{ h.usuario.nombre[0].upper() }}</span>
+                </div>
+                <span class="text-gray-700 text-xs">{{ h.usuario.nombre }}</span>
+              </div>
+              {% else %}
+              <span class="text-gray-400 text-xs italic">Sistema</span>
+              {% endif %}
+            </td>
+            <td class="px-5 py-3.5">
+              <span class="inline-flex items-center gap-1 text-xs font-medium
+                {% if 'creada' in h.accion %}text-green-700 bg-green-50 px-2 py-0.5 rounded-md
+                {% elif 'eliminada' in h.accion %}text-red-700 bg-red-50 px-2 py-0.5 rounded-md
+                {% elif 'Aprobación' in h.accion %}text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md
+                {% elif 'modificado' in h.accion %}text-yellow-700 bg-yellow-50 px-2 py-0.5 rounded-md
+                {% else %}text-gray-600{% endif %}">
+                <span class="material-icons-round text-xs">
+                  {% if 'creada' in h.accion %}add_circle
+                  {% elif 'eliminada' in h.accion %}delete
+                  {% elif 'Aprobación' in h.accion %}verified
+                  {% elif 'modificado' in h.accion %}edit
+                  {% elif 'Comentario' in h.accion %}comment
+                  {% else %}info{% endif %}
+                </span>
+                {{ h.accion }}
+              </span>
+            </td>
+            <td class="px-5 py-3.5">
+              {% if h.tarea %}
+              <a href="/tareas/{{ h.tarea_id }}" class="text-wm-blue hover:underline text-xs font-medium">
+                #{{ h.tarea_id }} {{ h.tarea.titulo | truncate(40) }}
+              </a>
+              {% else %}
+              <span class="text-gray-400 text-xs">#{{ h.tarea_id }}</span>
+              {% endif %}
+            </td>
+            <td class="px-5 py-3.5 text-gray-500 text-xs">
+              {% if h.campo_modificado %}
+              <span class="font-mono bg-gray-100 px-1 rounded">{{ h.campo_modificado }}</span>:
+              <span class="text-red-500 line-through">{{ h.valor_anterior or '∅' }}</span> →
+              <span class="text-green-600">{{ h.valor_nuevo or '∅' }}</span>
+              {% elif h.detalle %}
+              {{ h.detalle }}
+              {% endif %}
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="5" class="text-center py-16 text-gray-400">
+              <span class="material-icons-round text-4xl block mb-2">history</span>
+              Sin registros en el historial
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

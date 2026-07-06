@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% block title %}Aprobaciones — {{ app_name }}{% endblock %}
+{% block breadcrumb %}
+  <span class="text-gray-400">Inicio /</span>
+  <span class="font-semibold text-walmart-blue">✅ Gestión de Aprobaciones</span>
+{% endblock %}
+
+{% block content %}
+<div class="space-y-5">
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-xl font-bold text-gray-900 dark:text-white">Aprobaciones</h1>
+      {% if pendientes_mias > 0 %}
+      <p class="text-sm text-yellow-600 font-semibold">⚠️ Tienes {{ pendientes_mias }} aprobación{{ 'es' if pendientes_mias != 1 else '' }} pendiente{{ 's' if pendientes_mias != 1 else '' }}</p>
+      {% else %}
+      <p class="text-sm text-green-600 font-semibold">✅ Sin aprobaciones pendientes para ti</p>
+      {% endif %}
+    </div>
+    <div class="flex gap-2">
+      <a href="/aprobaciones?filtro=mias" class="px-4 py-2 {% if filtros.filtro == 'mias' %}bg-walmart-blue text-white{% else %}border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300{% endif %} text-sm font-semibold rounded-lg hover:opacity-80 transition-colors">
+        Mis Aprobaciones
+      </a>
+      <a href="/aprobaciones?filtro=todas" class="px-4 py-2 {% if filtros.filtro != 'mias' %}bg-walmart-blue text-white{% else %}border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300{% endif %} text-sm font-semibold rounded-lg hover:opacity-80 transition-colors">
+        Todas
+      </a>
+    </div>
+  </div>
+
+  {# Filtros #}
+  <div class="card p-4">
+    <form method="GET" class="flex flex-wrap items-end gap-3">
+      <input type="hidden" name="filtro" value="{{ filtros.filtro }}" />
+      <div class="w-36">
+        <label class="form-label">Estado</label>
+        <select name="estado" class="form-input">
+          <option value="">Todos</option>
+          {% for e in ['pendiente','aprobado','rechazado'] %}
+          <option value="{{ e }}" {% if filtros.estado == e %}selected{% endif %}>{{ e.capitalize() }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <button type="submit" class="bg-walmart-blue text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-blue-700">Filtrar</button>
+    </form>
+  </div>
+
+  {# Lista #}
+  <div class="space-y-3">
+    {% for ap in aprobaciones %}
+    {% set es_mia = ap.aprobador_id == user.id %}
+    {% set es_pendiente = ap.estado.value == 'pendiente' %}
+    <div class="card p-5 {% if es_mia and es_pendiente %}ring-2 ring-yellow-400 ring-offset-1{% endif %}">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div class="flex-1">
+          <div class="flex flex-wrap items-center gap-2 mb-1">
+            {% if ap.solicitud %}
+            <a href="/solicitudes/{{ ap.solicitud.id }}" class="font-mono text-xs font-bold text-walmart-blue hover:underline">
+              {{ ap.solicitud.folio }}
+            </a>
+            <span class="text-xs text-gray-500 truncate max-w-[300px]">{{ ap.solicitud.titulo }}</span>
+            {% elif ap.desarrollo %}
+            <a href="/desarrollos/{{ ap.desarrollo.id }}" class="font-mono text-xs font-bold text-indigo-600 hover:underline">
+              {{ ap.desarrollo.folio }}
+            </a>
+            <span class="text-xs text-gray-500 truncate max-w-[300px]">{{ ap.desarrollo.nombre }}</span>
+            {% endif %}
+            {% if es_mia %}<span class="badge badge-blue">📌 Tu aprobación</span>{% endif %}
+          </div>
+          <div class="flex flex-wrap items-center gap-3 text-xs text-gray-400">
+            <span>Aprobador: <strong class="text-gray-700 dark:text-gray-300">{{ ap.aprobador.nombre }}</strong></span>
+            <span>Orden: {{ ap.orden }}</span>
+            <span>Solicitado: {{ ap.solicitada_en.strftime('%d/%m/%Y %H:%M') }}</span>
+            {% if ap.respondida_en %}<span>Respondido: {{ ap.respondida_en.strftime('%d/%m/%Y %H:%M') }}</span>{% endif %}
+          </div>
+          {% if ap.comentario %}
+          <p class="text-xs text-gray-500 italic mt-1">"{{ ap.comentario }}"</p>
+          {% endif %}
+        </div>
+        <div class="flex items-center gap-3 flex-shrink-0">
+          {% if ap.estado.value == 'pendiente' %}
+          <span class="badge badge-yellow">⏳ Pendiente</span>
+          {% if es_mia %}
+          <div x-data="{ mostrarForm: false }">
+            <button @click="mostrarForm = !mostrarForm"
+                    class="px-4 py-2 bg-green-600 text-white text-sm font-bold rounded-lg hover:bg-green-700 transition-colors">
+              Responder
+            </button>
+            <div x-show="mostrarForm" @click.away="mostrarForm=false"
+                 class="absolute mt-2 right-0 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 p-5 w-80 z-50"
+                 style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%)">
+              <h3 class="font-semibold text-sm mb-3">Respuesta de Aprobación</h3>
+              <form method="POST" action="/aprobaciones/{{ ap.id }}/aprobar" class="mb-3">
+                <textarea name="comentario" placeholder="Comentario (opcional)..." rows="3" class="form-input resize-none mb-2"></textarea>
+                <button type="submit" class="w-full py-2 bg-green-600 text-white text-sm font-bold rounded-lg hover:bg-green-700">✅ Aprobar</button>
+              </form>
+              <form method="POST" action="/aprobaciones/{{ ap.id }}/rechazar">
+                <textarea name="comentario" placeholder="Motivo del rechazo (requerido)..." rows="3" required class="form-input resize-none mb-2"></textarea>
+                <button type="submit" class="w-full py-2 bg-red-600 text-white text-sm font-bold rounded-lg hover:bg-red-700">❌ Rechazar</button>
+              </form>
+              <button @click="mostrarForm=false" class="w-full mt-2 py-1.5 text-xs text-gray-400 hover:text-gray-600">Cancelar</button>
+            </div>
+          </div>
+          {% endif %}
+          {% elif ap.estado.value == 'aprobado' %}
+          <span class="badge badge-green">✅ Aprobado</span>
+          {% else %}
+          <span class="badge badge-red">❌ Rechazado</span>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% else %}
+    <div class="card p-12 text-center">
+      <p class="text-gray-400 text-lg">✅ Sin aprobaciones que mostrar</p>
+      <p class="text-gray-300 text-sm mt-1">Todo está en orden por aquí</p>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

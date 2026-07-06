@@ -1,0 +1,299 @@
+{% extends "base.html" %}
+{% block title %}{{ sol.folio }} — {{ app_name }}{% endblock %}
+{% block breadcrumb %}
+  <a href="/solicitudes" class="text-gray-400 hover:text-walmart-blue">Solicitudes</a>
+  <span class="text-gray-400">/</span>
+  <span class="font-semibold text-walmart-blue">{{ sol.folio }}</span>
+{% endblock %}
+
+{% block content %}
+{% set ep = label_estado(sol.estado.value) %}
+{% set pp = label_prioridad(sol.prioridad.value) %}
+
+<div class="space-y-5" x-data="{ tabActivo: 'detalle' }">
+
+  {# ── Header ─────────────────────────────────────── #}
+  <div class="card p-6">
+    <div class="flex flex-col md:flex-row md:items-start justify-between gap-4">
+      <div class="flex-1 min-w-0">
+        <div class="flex flex-wrap items-center gap-2 mb-2">
+          <span class="font-mono text-sm font-bold text-walmart-blue bg-blue-50 dark:bg-blue-900/30 px-2 py-1 rounded">{{ sol.folio }}</span>
+          <span class="badge {{ pp.css }}">{{ pp.icon }} {{ pp.label }}</span>
+          <span class="badge {{ ep.css }}">{{ ep.label }}</span>
+          {% set rr = label_riesgo(sol.riesgo_operativo.value if sol.riesgo_operativo else 'bajo') %}
+          <span class="text-xs font-semibold {{ rr.css }}">⚡ Riesgo: {{ rr.label }}</span>
+          <span class="text-xs text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">
+            {{ sol.tipo.value.replace('_',' ').title() }}
+          </span>
+        </div>
+        <h1 class="text-xl font-bold text-gray-900 dark:text-white leading-tight">{{ sol.titulo }}</h1>
+        <div class="flex flex-wrap items-center gap-4 mt-2 text-xs text-gray-500 dark:text-gray-400">
+          {% if sol.creado_por %}
+          <span>👤 {{ sol.creado_por.nombre }}</span>
+          {% endif %}
+          <span>📅 {{ sol.fecha_ingreso.strftime('%d/%m/%Y %H:%M') }}</span>
+          {% if sol.fecha_estimada_fin %}
+          <span>🎯 Estimado: {{ sol.fecha_estimada_fin.strftime('%d/%m/%Y') }}</span>
+          {% endif %}
+          {% if sol.encargado %}
+          <span>⚙️ Encargado: <strong class="text-gray-700 dark:text-gray-300">{{ sol.encargado.nombre }}</strong></span>
+          {% endif %}
+        </div>
+      </div>
+      <div class="flex gap-2 flex-shrink-0">
+        <a href="/solicitudes/{{ sol.id }}/editar"
+           class="px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-semibold rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+          ✏️ Editar
+        </a>
+        {% if sol.desarrollo %}
+        <a href="/desarrollos/{{ sol.desarrollo.id }}"
+           class="px-4 py-2 bg-indigo-600 text-white text-sm font-semibold rounded-lg hover:bg-indigo-700 transition-colors">
+          ⚙️ Ver Desarrollo
+        </a>
+        {% else %}
+        <a href="/desarrollos/nuevo?solicitud_id={{ sol.id }}"
+           class="px-4 py-2 bg-indigo-600 text-white text-sm font-semibold rounded-lg hover:bg-indigo-700 transition-colors">
+          + Crear Desarrollo
+        </a>
+        {% endif %}
+      </div>
+    </div>
+
+    {# Progress bar #}
+    <div class="mt-4">
+      <div class="flex justify-between text-xs text-gray-500 mb-1">
+        <span>Avance del proceso</span>
+        <span class="font-bold text-walmart-blue">{{ sol.porcentaje_avance | int }}%</span>
+      </div>
+      <div class="h-3 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
+        <div class="h-full rounded-full bg-walmart-blue transition-all duration-700"
+             style="width:{{ sol.porcentaje_avance }}%"></div>
+      </div>
+    </div>
+
+    {# Quick status update #}
+    <form method="POST" action="/solicitudes/{{ sol.id }}/estado"
+          class="flex flex-wrap items-center gap-3 mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
+      <select name="estado" class="form-input w-44 text-xs">
+        {% for e in estados %}
+        <option value="{{ e }}" {% if sol.estado.value == e %}selected{% endif %}>
+          {{ label_estado(e).label }}
+        </option>
+        {% endfor %}
+      </select>
+      <input type="number" name="porcentaje_avance" min="0" max="100"
+             value="{{ sol.porcentaje_avance | int }}"
+             class="form-input w-24 text-xs" placeholder="% Avance" />
+      <button type="submit"
+              class="px-4 py-2 bg-green-600 text-white text-xs font-bold rounded-lg hover:bg-green-700 transition-colors">
+        Actualizar Estado
+      </button>
+    </form>
+  </div>
+
+  {# ── Tabs ───────────────────────────────────────── #}
+  <div class="flex border-b border-gray-200 dark:border-gray-700 gap-0">
+    {% for tab, ico, lbl in [('detalle','📋','Detalle'),('comentarios','💬','Comentarios ('+sol.comentarios|length|string+')'),('historial','📜','Historial'),('aprobaciones','✅','Aprobaciones'),('adjuntos','📎','Adjuntos')] %}
+    <button @click="tabActivo='{{ tab }}'"
+            :class="tabActivo==='{{ tab }}' ? 'border-b-2 border-walmart-blue text-walmart-blue font-semibold' : 'text-gray-500 hover:text-gray-700'"
+            class="px-5 py-3 text-sm transition-all -mb-px">
+      {{ ico }} {{ lbl }}
+    </button>
+    {% endfor %}
+  </div>
+
+  {# ── TAB: Detalle ───────────────────────────────── #}
+  <div x-show="tabActivo==='detalle'" class="grid grid-cols-1 md:grid-cols-3 gap-5">
+    <div class="md:col-span-2 space-y-5">
+      <div class="card p-6">
+        <h3 class="text-sm font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-3">Descripción</h3>
+        <p class="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-line leading-relaxed">
+          {{ sol.descripcion or 'Sin descripción registrada.' }}
+        </p>
+      </div>
+      {% if sol.impacto_esperado or sol.beneficios_esperados %}
+      <div class="card p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Impacto Esperado</h3>
+          <p class="text-sm text-gray-700 dark:text-gray-300">{{ sol.impacto_esperado or '—' }}</p>
+        </div>
+        <div>
+          <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Beneficios</h3>
+          <p class="text-sm text-gray-700 dark:text-gray-300">{{ sol.beneficios_esperados or '—' }}</p>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+    <div class="space-y-4">
+      <div class="card p-4 space-y-3">
+        <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wide">Metadatos</h3>
+        {% set meta = [
+          ('Área Impactada', sol.area_impactada or '—'),
+          ('Área Solicitante', sol.area_solicitante or '—'),
+          ('Equipo', sol.equipo_responsable or '—'),
+          ('KPI', sol.kpi_asociado or '—'),
+          ('Dependencias', sol.dependencias or '—'),
+        ] %}
+        {% for lbl, val in meta %}
+        <div>
+          <p class="text-xs text-gray-400">{{ lbl }}</p>
+          <p class="text-sm font-medium text-gray-800 dark:text-gray-200">{{ val }}</p>
+        </div>
+        {% endfor %}
+      </div>
+      {% if sol.etiquetas %}
+      <div class="card p-4">
+        <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Etiquetas</h3>
+        <div class="flex flex-wrap gap-2">
+          {% for etq in sol.etiquetas %}
+          <span class="px-2 py-1 rounded-full text-xs font-semibold text-white"
+                style="background-color:{{ etq.color }}">{{ etq.nombre }}</span>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  {# ── TAB: Comentarios ───────────────────────────── #}
+  <div x-show="tabActivo==='comentarios'" class="space-y-4" id="comentarios">
+    <div class="card p-6 space-y-4">
+      {% for com in sol.comentarios | sort(attribute='creado_en') %}
+      <div class="flex gap-3">
+        <div class="w-8 h-8 rounded-full bg-walmart-blue flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+          {{ com.autor.nombre[:1] }}
+        </div>
+        <div class="flex-1">
+          <div class="flex items-center gap-2 mb-1">
+            <span class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ com.autor.nombre }}</span>
+            <span class="text-xs text-gray-400">{{ com.creado_en.strftime('%d/%m/%Y %H:%M') }}</span>
+            <span class="text-xs px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-500">{{ com.tipo }}</span>
+          </div>
+          <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 text-sm text-gray-700 dark:text-gray-300">
+            {{ com.contenido }}
+          </div>
+        </div>
+      </div>
+      {% else %}
+      <p class="text-center text-gray-400 text-sm py-4">Sin comentarios aún.</p>
+      {% endfor %}
+    </div>
+    {# Form nuevo comentario #}
+    <div class="card p-5">
+      <form method="POST" action="/solicitudes/{{ sol.id }}/comentario" class="space-y-3">
+        <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300">Agregar Comentario</h3>
+        <textarea name="contenido" required rows="3" placeholder="Escribe tu comentario..."
+                  class="form-input resize-none"></textarea>
+        <div class="flex items-center justify-between">
+          <select name="tipo" class="form-input w-36 text-xs">
+            <option value="interno">Interno</option>
+            <option value="aprobador">Aprobador</option>
+          </select>
+          <button type="submit"
+                  class="px-5 py-2 bg-walmart-blue text-white text-sm font-bold rounded-lg hover:bg-blue-700 transition-colors">
+            💬 Comentar
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  {# ── TAB: Historial ─────────────────────────────── #}
+  <div x-show="tabActivo==='historial'" class="card p-6">
+    <h3 class="text-sm font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-4">Timeline de Cambios</h3>
+    <div class="space-y-0">
+      {% for h in sol.historial | sort(attribute='creado_en', reverse=True) %}
+      <div class="timeline-item">
+        <div class="timeline-dot bg-walmart-blue"></div>
+        <div class="mb-0.5 flex flex-wrap items-center gap-2">
+          <span class="text-xs font-bold text-gray-800 dark:text-gray-200">{{ h.accion }}</span>
+          {% if h.campo_modificado %}
+          <span class="text-xs text-gray-400 bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded">{{ h.campo_modificado }}</span>
+          {% endif %}
+        </div>
+        {% if h.valor_anterior and h.valor_nuevo %}
+        <p class="text-xs text-gray-500 dark:text-gray-400">
+          <span class="line-through text-red-500">{{ h.valor_anterior }}</span>
+          → <span class="text-green-600">{{ h.valor_nuevo }}</span>
+        </p>
+        {% endif %}
+        {% if h.detalle %}
+        <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ h.detalle }}</p>
+        {% endif %}
+        <p class="text-xs text-gray-400 mt-1">
+          {{ h.usuario.nombre if h.usuario else 'Sistema' }} · {{ h.creado_en.strftime('%d/%m/%Y %H:%M') }}
+        </p>
+      </div>
+      {% else %}
+      <p class="text-gray-400 text-sm text-center py-4">Sin historial registrado.</p>
+      {% endfor %}
+    </div>
+  </div>
+
+  {# ── TAB: Aprobaciones ──────────────────────────── #}
+  <div x-show="tabActivo==='aprobaciones'" class="space-y-4">
+    {% if sol.aprobaciones %}
+    {% for ap in sol.aprobaciones | sort(attribute='orden') %}
+    <div class="card p-5 flex items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center font-bold text-sm">
+          {{ ap.aprobador.nombre[:2].upper() }}
+        </div>
+        <div>
+          <p class="font-semibold text-sm text-gray-800 dark:text-gray-200">{{ ap.aprobador.nombre }}</p>
+          <p class="text-xs text-gray-400">Orden {{ ap.orden }} · {{ ap.aprobador.cargo }}</p>
+          {% if ap.comentario %}
+          <p class="text-xs text-gray-500 mt-1 italic">"{{ ap.comentario }}"</p>
+          {% endif %}
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        {% if ap.estado.value == 'pendiente' %}
+        <span class="badge badge-yellow">⏳ Pendiente</span>
+        {% if ap.aprobador_id == user.id %}
+        <form method="POST" action="/aprobaciones/{{ ap.id }}/aprobar" class="flex gap-1">
+          <input type="hidden" name="comentario" value="Aprobado desde detalle de solicitud" />
+          <button type="submit" class="px-3 py-1.5 bg-green-600 text-white text-xs font-bold rounded-lg hover:bg-green-700">✅ Aprobar</button>
+        </form>
+        {% endif %}
+        {% elif ap.estado.value == 'aprobado' %}
+        <span class="badge badge-green">✅ Aprobado</span>
+        <span class="text-xs text-gray-400">{{ ap.respondida_en.strftime('%d/%m/%Y') if ap.respondida_en else '' }}</span>
+        {% else %}
+        <span class="badge badge-red">❌ Rechazado</span>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+    {% else %}
+    <div class="card p-8 text-center text-gray-400">
+      <p class="text-sm">No hay aprobadores configurados para esta solicitud.</p>
+    </div>
+    {% endif %}
+  </div>
+
+  {# ── TAB: Adjuntos ──────────────────────────────── #}
+  <div x-show="tabActivo==='adjuntos'" class="card p-6">
+    {% if sol.adjuntos %}
+    <div class="space-y-2">
+      {% for adj in sol.adjuntos %}
+      <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+        <div class="flex items-center gap-3">
+          <span class="text-2xl">📎</span>
+          <div>
+            <p class="text-sm font-medium text-gray-800 dark:text-gray-200">{{ adj.nombre_original }}</p>
+            <p class="text-xs text-gray-400">{{ (adj.tamano_bytes / 1024) | round(1) }} KB</p>
+          </div>
+        </div>
+        <a href="/static/uploads/{{ adj.nombre_almacenado }}" target="_blank"
+           class="text-xs text-walmart-blue hover:underline font-semibold">Descargar</a>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p class="text-center text-gray-400 text-sm py-6">Sin archivos adjuntos.</p>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

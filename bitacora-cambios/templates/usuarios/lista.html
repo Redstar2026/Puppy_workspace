@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block title %}Usuarios{% endblock %}
+{% block breadcrumb %}
+  <a href="/" class="hover:text-wm-blue">Home</a>
+  <span class="material-icons-round text-base text-gray-300">chevron_right</span>
+  <span>Usuarios</span>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto" x-data="{showForm: false}">
+  <div class="flex items-center justify-between mb-6">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900">Usuarios del Departamento</h1>
+      <p class="text-sm text-gray-500 mt-0.5">{{ usuarios | length }} usuario(s) registrado(s)</p>
+    </div>
+    <button @click="showForm = !showForm"
+            class="flex items-center gap-2 bg-wm-blue hover:bg-wm-blue140 text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-colors shadow-sm">
+      <span class="material-icons-round text-base" x-text="showForm ? 'close' : 'person_add'"></span>
+      <span x-text="showForm ? 'Cancelar' : 'Nuevo Usuario'"></span>
+    </button>
+  </div>
+
+  {# Formulario nuevo usuario #}
+  <div x-show="showForm" x-transition class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
+    <h2 class="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+      <span class="material-icons-round text-wm-blue">person_add</span>Registrar Nuevo Usuario
+    </h2>
+    <form method="post" action="/usuarios/nuevo" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div>
+        <label class="block text-xs font-semibold text-gray-600 mb-1">Nombre completo *</label>
+        <input name="nombre" type="text" required placeholder="Juan Pérez"
+               class="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-wm-blue outline-none"/>
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-gray-600 mb-1">Correo electrónico *</label>
+        <input name="email" type="email" required placeholder="juan@walmart.com"
+               class="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-wm-blue outline-none"/>
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-gray-600 mb-1">Contraseña *</label>
+        <input name="password" type="password" required placeholder="Mínimo 6 caracteres"
+               class="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-wm-blue outline-none"/>
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-gray-600 mb-1">Cargo</label>
+        <input name="cargo" type="text" placeholder="Ej: Analista de Precios"
+               class="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-wm-blue outline-none"/>
+      </div>
+      <div class="sm:col-span-2">
+        <label class="block text-xs font-semibold text-gray-600 mb-1">Departamento</label>
+        <input name="departamento" type="text" placeholder="Ej: Pricing & Analytics"
+               class="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-wm-blue outline-none"/>
+      </div>
+      <div class="sm:col-span-2 flex gap-3">
+        <button type="submit"
+                class="flex items-center gap-2 bg-wm-blue hover:bg-wm-blue140 text-white px-6 py-2.5 rounded-xl text-sm font-bold transition-colors">
+          <span class="material-icons-round text-base">save</span>Guardar Usuario
+        </button>
+        <button type="button" @click="showForm=false"
+                class="px-4 py-2.5 border border-gray-200 rounded-xl text-sm text-gray-600 hover:bg-gray-50 transition-colors">
+          Cancelar
+        </button>
+      </div>
+    </form>
+  </div>
+
+  {# Lista de usuarios #}
+  <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+    <div class="grid grid-cols-1 divide-y divide-gray-50">
+      {% for u in usuarios %}
+      <div class="flex items-center gap-4 px-6 py-4 hover:bg-gray-50 transition-colors">
+        <div class="w-12 h-12 rounded-xl bg-wm-blue flex items-center justify-center flex-shrink-0">
+          <span class="text-white font-bold text-lg">{{ u.nombre[0].upper() }}</span>
+        </div>
+        <div class="flex-1 min-w-0">
+          <p class="font-semibold text-gray-900">{{ u.nombre }}</p>
+          <p class="text-sm text-gray-500">{{ u.cargo or '—' }}</p>
+        </div>
+        <div class="text-right hidden sm:block">
+          <p class="text-sm text-gray-600">{{ u.email }}</p>
+          <p class="text-xs text-gray-400">{{ u.departamento or '—' }}</p>
+        </div>
+        <div class="flex-shrink-0 ml-4">
+          <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold
+            {% if u.activo %}bg-green-100 text-green-700{% else %}bg-gray-100 text-gray-500{% endif %}">
+            <span class="w-1.5 h-1.5 rounded-full {% if u.activo %}bg-green-500{% else %}bg-gray-400{% endif %}"></span>
+            {% if u.activo %}Activo{% else %}Inactivo{% endif %}
+          </span>
+        </div>
+      </div>
+      {% else %}
+      <div class="text-center py-16 text-gray-400">
+        <span class="material-icons-round text-5xl block mb-3">group_off</span>
+        <p class="font-medium">Sin usuarios registrados</p>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

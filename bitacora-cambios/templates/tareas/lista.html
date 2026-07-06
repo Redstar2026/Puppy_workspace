@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+{% block title %}Tareas y Cambios{% endblock %}
+{% block breadcrumb %}
+  <a href="/" class="hover:text-wm-blue">Home</a>
+  <span class="material-icons-round text-base text-gray-300">chevron_right</span>
+  <span>Tareas y Cambios</span>
+{% endblock %}
+
+{% macro estado_badge(est) %}
+{% set m = {
+  'borrador':             ('bg-gray-100 text-gray-600',   'Borrador'),
+  'pendiente_aprobacion': ('bg-yellow-100 text-yellow-700','Pend. Aprobación'),
+  'aprobada':             ('bg-green-100 text-green-700', 'Aprobada'),
+  'rechazada':            ('bg-red-100 text-red-700',     'Rechazada'),
+  'en_progreso':          ('bg-blue-100 text-blue-700',   'En Progreso'),
+  'en_revision':          ('bg-purple-100 text-purple-700','En Revisión'),
+  'completada':           ('bg-green-200 text-green-800', 'Completada'),
+  'cancelada':            ('bg-gray-200 text-gray-500',   'Cancelada'),
+} %}
+{% set cls, label = m.get(est, ('bg-gray-100 text-gray-600', est)) %}
+<span class="badge-estado {{ cls }}">{{ label }}</span>
+{% endmacro %}
+
+{% macro prioridad_dot(p) %}
+{% set m = {'critica':'bg-red-500','alta':'bg-orange-500','media':'bg-yellow-400','baja':'bg-blue-400'} %}
+<span class="inline-block w-2 h-2 rounded-full {{ m.get(p,'bg-gray-300') }} mr-1"></span>
+{{ p.capitalize() }}
+{% endmacro %}
+
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+  <div>
+    <h1 class="text-2xl font-bold text-gray-900">Tareas y Cambios</h1>
+    <p class="text-sm text-gray-500 mt-0.5">{{ tareas|length }} registro(s) encontrado(s)</p>
+  </div>
+  <a href="/tareas/nueva"
+     class="flex items-center gap-2 bg-wm-blue hover:bg-wm-blue140 text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-colors shadow-sm">
+    <span class="material-icons-round text-base">add</span>Nueva Tarea
+  </a>
+</div>
+
+{# Filtros #}
+<form method="get" action="/tareas"
+      class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6 flex flex-wrap gap-3 items-end">
+  <div class="flex-1 min-w-[180px]">
+    <label class="block text-xs font-semibold text-gray-500 mb-1">Buscar</label>
+    <div class="relative">
+      <span class="absolute inset-y-0 left-3 flex items-center text-gray-400">
+        <span class="material-icons-round text-base">search</span>
+      </span>
+      <input name="q" value="{{ filtro_q }}" placeholder="Buscar por título…"
+             class="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-wm-blue focus:border-wm-blue outline-none"/>
+    </div>
+  </div>
+  <div class="min-w-[140px]">
+    <label class="block text-xs font-semibold text-gray-500 mb-1">Estado</label>
+    <select name="estado" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-wm-blue outline-none">
+      <option value="">Todos</option>
+      {% for v,l in [('borrador','Borrador'),('pendiente_aprobacion','Pend. Aprobación'),
+                     ('aprobada','Aprobada'),('en_progreso','En Progreso'),
+                     ('en_revision','En Revisión'),('completada','Completada'),
+                     ('rechazada','Rechazada'),('cancelada','Cancelada')] %}
+      <option value="{{ v }}" {% if filtro_estado==v %}selected{% endif %}>{{ l }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="min-w-[130px]">
+    <label class="block text-xs font-semibold text-gray-500 mb-1">Tipo</label>
+    <select name="tipo" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-wm-blue outline-none">
+      <option value="">Todos</option>
+      {% for v,l in [('cambio','Cambio'),('tarea','Tarea'),('incidente','Incidente'),('mejora','Mejora')] %}
+      <option value="{{ v }}" {% if filtro_tipo==v %}selected{% endif %}>{{ l }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="min-w-[130px]">
+    <label class="block text-xs font-semibold text-gray-500 mb-1">Prioridad</label>
+    <select name="prioridad" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-wm-blue outline-none">
+      <option value="">Todas</option>
+      {% for v,l in [('critica','Crítica'),('alta','Alta'),('media','Media'),('baja','Baja')] %}
+      <option value="{{ v }}" {% if filtro_prioridad==v %}selected{% endif %}>{{ l }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <button type="submit" class="bg-wm-blue text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-wm-blue140 transition-colors">
+    Filtrar
+  </button>
+  {% if filtro_estado or filtro_tipo or filtro_prioridad or filtro_q %}
+  <a href="/tareas" class="text-gray-500 hover:text-wm-blue text-sm px-3 py-2 rounded-lg border border-gray-200 hover:border-wm-blue transition-colors">
+    Limpiar
+  </a>
+  {% endif %}
+</form>
+
+{# Tabla #}
+<div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+  <table class="w-full text-sm">
+    <thead class="bg-gray-50 border-b border-gray-100">
+      <tr>
+        <th class="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">ID</th>
+        <th class="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Tarea / Cambio</th>
+        <th class="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Tipo</th>
+        <th class="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Prioridad</th>
+        <th class="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Encargado</th>
+        <th class="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Fecha Inicio</th>
+        <th class="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Estado</th>
+        <th class="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Acciones</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-gray-50">
+      {% set tipo_icon = {'cambio':'swap_horiz','tarea':'task','incidente':'warning','mejora':'trending_up'} %}
+      {% set tipo_color = {'cambio':'text-blue-600 bg-blue-50','tarea':'text-gray-600 bg-gray-100','incidente':'text-red-600 bg-red-50','mejora':'text-green-600 bg-green-50'} %}
+      {% for t in tareas %}
+      <tr class="hover:bg-gray-50 transition-colors">
+        <td class="px-5 py-3.5 text-gray-400 font-mono text-xs">#{{ t.id }}</td>
+        <td class="px-5 py-3.5">
+          <a href="/tareas/{{ t.id }}" class="font-semibold text-gray-800 hover:text-wm-blue transition-colors line-clamp-1">
+            {{ t.titulo }}
+          </a>
+          {% if t.requiere_autorizacion %}
+          <span class="inline-flex items-center gap-0.5 text-xs text-yellow-600 mt-0.5">
+            <span class="material-icons-round text-xs">verified_user</span>Requiere autorización
+          </span>
+          {% endif %}
+        </td>
+        <td class="px-5 py-3.5">
+          <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium {{ tipo_color.get(t.tipo.value,'bg-gray-100 text-gray-600') }}">
+            <span class="material-icons-round text-sm">{{ tipo_icon.get(t.tipo.value,'task') }}</span>
+            {{ t.tipo.value.capitalize() }}
+          </span>
+        </td>
+        <td class="px-5 py-3.5 text-gray-600 text-xs">{{ prioridad_dot(t.prioridad.value) }}</td>
+        <td class="px-5 py-3.5">
+          {% if t.encargado %}
+          <div class="flex items-center gap-2">
+            <div class="w-6 h-6 rounded-full bg-wm-blue flex items-center justify-center flex-shrink-0">
+              <span class="text-white text-xs font-bold">{{ t.encargado.nombre[0].upper() }}</span>
+            </div>
+            <span class="text-gray-700 text-xs">{{ t.encargado.nombre }}</span>
+          </div>
+          {% else %}<span class="text-gray-400 text-xs">Sin asignar</span>{% endif %}
+        </td>
+        <td class="px-5 py-3.5 text-gray-500 text-xs">
+          {{ t.fecha_inicio.strftime('%d/%m/%Y') if t.fecha_inicio else '—' }}
+        </td>
+        <td class="px-5 py-3.5">{{ estado_badge(t.estado.value) }}</td>
+        <td class="px-5 py-3.5">
+          <div class="flex items-center gap-1">
+            <a href="/tareas/{{ t.id }}" class="p-1.5 rounded-lg text-gray-400 hover:text-wm-blue hover:bg-wm-blue10 transition-colors" title="Ver detalle">
+              <span class="material-icons-round text-base">visibility</span>
+            </a>
+            <a href="/tareas/{{ t.id }}/editar" class="p-1.5 rounded-lg text-gray-400 hover:text-yellow-600 hover:bg-yellow-50 transition-colors" title="Editar">
+              <span class="material-icons-round text-base">edit</span>
+            </a>
+            <form method="post" action="/tareas/{{ t.id }}/eliminar"
+                  onsubmit="return confirm('¿Eliminar «{{ t.titulo }}»? Esta acción no se puede deshacer.')">
+              <button type="submit" class="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors" title="Eliminar">
+                <span class="material-icons-round text-base">delete</span>
+              </button>
+            </form>
+          </div>
+        </td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="8" class="text-center py-16 text-gray-400">
+          <span class="material-icons-round text-5xl block mb-3">inbox</span>
+          <p class="text-base font-medium">No se encontraron tareas</p>
+          <a href="/tareas/nueva" class="text-wm-blue hover:underline text-sm mt-1 inline-block">Crear la primera →</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

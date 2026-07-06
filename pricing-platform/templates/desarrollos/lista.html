@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% block title %}Desarrollos — {{ app_name }}{% endblock %}
+{% block breadcrumb %}
+  <span class="text-gray-400">Inicio /</span>
+  <span class="font-semibold text-walmart-blue">⚙️ Tracking de Desarrollos</span>
+{% endblock %}
+
+{% block content %}
+<div class="space-y-5">
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-xl font-bold text-gray-900 dark:text-white">Tracking de Desarrollos</h1>
+      <p class="text-sm text-gray-500 dark:text-gray-400">{{ total }} desarrollo{{ 's' if total != 1 else '' }}</p>
+    </div>
+    <a href="/desarrollos/nuevo"
+       class="inline-flex items-center gap-2 bg-indigo-600 text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors shadow-sm">
+      + Nuevo Desarrollo
+    </a>
+  </div>
+
+  {# Filtros #}
+  <div class="card p-4">
+    <form method="GET" class="flex flex-wrap items-end gap-3">
+      <div class="flex-1 min-w-[160px]">
+        <label class="form-label">Buscar</label>
+        <input type="text" name="buscar" value="{{ filtros.buscar }}" placeholder="Folio, nombre..." class="form-input" />
+      </div>
+      <div class="w-40">
+        <label class="form-label">Estado</label>
+        <select name="estado" class="form-input">
+          <option value="">Todos</option>
+          {% for e in ['pendiente','en_analisis','en_desarrollo','qa','aprobacion','implementado'] %}
+          <option value="{{ e }}" {% if filtros.estado == e %}selected{% endif %}>{{ label_estado(e).label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="w-32">
+        <label class="form-label">QA</label>
+        <select name="qa" class="form-input">
+          <option value="">Todos</option>
+          {% for q in ['pendiente','aprobado','rechazado','con_observaciones'] %}
+          <option value="{{ q }}" {% if filtros.qa == q %}selected{% endif %}>{{ q.replace('_',' ').capitalize() }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="w-40">
+        <label class="form-label">Responsable</label>
+        <select name="responsable" class="form-input">
+          <option value="">Todos</option>
+          {% for u in usuarios %}
+          <option value="{{ u.id }}" {% if filtros.responsable == u.id|string %}selected{% endif %}>{{ u.nombre }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <button type="submit" class="bg-walmart-blue text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">Filtrar</button>
+      <a href="/desarrollos" class="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-sm font-semibold px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors">Limpiar</a>
+    </form>
+  </div>
+
+  {# Tabla #}
+  <div class="card overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm min-w-[850px]">
+        <thead class="bg-gray-50 dark:bg-gray-700/50">
+          <tr>
+            {% for col in ['Folio','Nombre','Estado','Avance','Responsable Dev','QA','Riesgo','Fecha','GitHub'] %}
+            <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">{{ col }}</th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+          {% for d in desarrollos %}
+          {% set ep = label_estado(d.estado.value) %}
+          <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30 cursor-pointer transition-colors"
+              onclick="location.href='/desarrollos/{{ d.id }}'">
+            <td class="px-4 py-3"><span class="font-mono text-xs font-bold text-indigo-600">{{ d.folio }}</span></td>
+            <td class="px-4 py-3 max-w-[250px]">
+              <p class="font-medium text-gray-900 dark:text-white truncate">{{ d.nombre }}</p>
+              {% if d.solicitud %}<p class="text-xs text-gray-400">SOL: {{ d.solicitud.folio }}</p>{% endif %}
+            </td>
+            <td class="px-4 py-3"><span class="badge {{ ep.css }}">{{ ep.label }}</span></td>
+            <td class="px-4 py-3 w-28">
+              <div class="flex items-center gap-2">
+                <div class="progress-bar flex-1"><div class="progress-fill" style="width:{{ d.porcentaje_avance }}%"></div></div>
+                <span class="text-xs text-gray-500">{{ d.porcentaje_avance | int }}%</span>
+              </div>
+            </td>
+            <td class="px-4 py-3 text-xs text-gray-600 dark:text-gray-400">{{ d.responsable_dev.nombre if d.responsable_dev else '—' }}</td>
+            <td class="px-4 py-3">
+              {% set qa_colors = {'pendiente':'badge-gray','aprobado':'badge-green','rechazado':'badge-red','con_observaciones':'badge-yellow'} %}
+              <span class="badge {{ qa_colors.get(d.resultado_qa.value, 'badge-gray') }}">
+                {{ d.resultado_qa.value.replace('_',' ').capitalize() }}
+              </span>
+            </td>
+            <td class="px-4 py-3">
+              {% set rr = label_riesgo(d.riesgo_cambio.value if d.riesgo_cambio else 'bajo') %}
+              <span class="text-xs font-semibold {{ rr.css }}">{{ rr.label }}</span>
+            </td>
+            <td class="px-4 py-3 text-xs text-gray-500 whitespace-nowrap">{{ d.fecha_ingreso.strftime('%d/%m/%Y') }}</td>
+            <td class="px-4 py-3">
+              {% if d.github_commit %}
+              <span class="font-mono text-xs text-gray-500 bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded"
+                    title="{{ d.github_commit }}">{{ d.github_commit[:7] }}</span>
+              {% else %}<span class="text-xs text-gray-300">—</span>{% endif %}
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="9" class="px-4 py-12 text-center text-gray-400 text-sm">
+            No hay desarrollos. <a href="/desarrollos/nuevo" class="text-walmart-blue hover:underline">+ Crear el primero</a>
+          </td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

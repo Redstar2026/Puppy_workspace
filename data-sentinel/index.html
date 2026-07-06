@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DataSentinel – Catálogo de Datos</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            wblue: { 100: '#0053e2', 110: '#0047c5' },
+            wspark: { 100: '#ffc220' }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: 'Segoe UI', system-ui, sans-serif; }
+    .badge { display: inline-flex; align-items: center; padding: 2px 10px; border-radius: 9999px; font-size: 0.72rem; font-weight: 600; white-space: nowrap; }
+    .modal-backdrop { background: rgba(0,0,0,0.45); }
+    tr:hover td { background: #f0f5ff; }
+    th { position: sticky; top: 0; z-index: 1; }
+  </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+<!-- ═══════════════════════════ HEADER ═══════════════════════════ -->
+<header class="bg-wblue-100 text-white px-6 py-4 flex items-center justify-between shadow-lg">
+  <div class="flex items-center gap-3">
+    <svg class="w-8 h-8 text-wspark-100" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round"
+        d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+    </svg>
+    <div>
+      <h1 class="text-xl font-bold tracking-tight">DataSentinel</h1>
+      <p class="text-blue-200 text-xs">Catálogo de Gobernanza de Datos</p>
+    </div>
+  </div>
+  <div class="flex gap-2">
+    <button onclick="exportCSV()"
+      class="bg-white text-wblue-100 text-sm font-semibold px-4 py-2 rounded-lg hover:bg-blue-50 transition flex items-center gap-2">
+      ⬇️ Exportar CSV
+    </button>
+    <button onclick="openModal()"
+      class="bg-wspark-100 text-gray-900 text-sm font-semibold px-4 py-2 rounded-lg hover:bg-yellow-400 transition flex items-center gap-2">
+      ＋ Nuevo Activo
+    </button>
+  </div>
+</header>
+
+<!-- ═══════════════════════════ KPIs ═════════════════════════════ -->
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4 px-6 py-5" id="kpis"></div>
+
+<!-- ═══════════════════════════ FILTROS ══════════════════════════ -->
+<div class="px-6 pb-4 flex flex-wrap gap-3 items-center">
+  <input id="fSearch" type="text" placeholder="🔍  Buscar por nombre, área, responsable…"
+    oninput="render()"
+    class="border border-gray-300 rounded-lg px-4 py-2 text-sm w-72 focus:outline-none focus:ring-2 focus:ring-wblue-100" />
+
+  <select id="fTipo" onchange="render()"
+    class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-wblue-100">
+    <option value="">Todos los tipos</option>
+    <option>Tabla BigQuery</option>
+    <option>Dashboard</option>
+    <option>Reporte</option>
+    <option>Vista (View)</option>
+    <option>API</option>
+    <option>Archivo</option>
+    <option>Otro</option>
+  </select>
+
+  <select id="fSensibilidad" onchange="render()"
+    class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-wblue-100">
+    <option value="">Toda sensibilidad</option>
+    <option>Pública</option>
+    <option>Interna</option>
+    <option>Confidencial</option>
+    <option>Restringida</option>
+  </select>
+
+  <select id="fEstado" onchange="render()"
+    class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-wblue-100">
+    <option value="">Todos los estados</option>
+    <option>Validado</option>
+    <option>Pendiente</option>
+    <option>En revisión</option>
+    <option>No cumple</option>
+  </select>
+
+  <button onclick="clearFilters()"
+    class="text-sm text-gray-500 hover:text-wblue-100 underline">Limpiar filtros</button>
+
+  <span id="countLabel" class="ml-auto text-sm text-gray-400 font-medium"></span>
+</div>
+
+<!-- ═══════════════════════════ TABLA ════════════════════════════ -->
+<div class="px-6 pb-10 overflow-x-auto">
+  <table class="w-full bg-white rounded-xl shadow-sm border border-gray-200 text-sm">
+    <thead class="bg-gray-100 text-gray-600 uppercase text-xs">
+      <tr>
+        <th class="px-4 py-3 text-left rounded-tl-xl">Nombre / Descripción</th>
+        <th class="px-4 py-3 text-left">Tipo</th>
+        <th class="px-4 py-3 text-left">Plataforma</th>
+        <th class="px-4 py-3 text-left">Área / Dueño</th>
+        <th class="px-4 py-3 text-left">Sensibilidad</th>
+        <th class="px-4 py-3 text-left">Estado</th>
+        <th class="px-4 py-3 text-left">PII</th>
+        <th class="px-4 py-3 text-left rounded-tr-xl">Acciones</th>
+      </tr>
+    </thead>
+    <tbody id="tableBody"></tbody>
+  </table>
+  <p id="emptyMsg" class="hidden text-center text-gray-400 py-12 text-sm">
+    Sin resultados. Ajusta los filtros o agrega un nuevo activo.
+  </p>
+</div>
+
+<!-- ═══════════════════════════ MODAL ════════════════════════════ -->
+<div id="modal" class="fixed inset-0 modal-backdrop z-50 hidden flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-screen overflow-y-auto">
+
+    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+      <h2 class="text-lg font-bold text-gray-800" id="modalTitle">Nuevo Activo de Datos</h2>
+      <button onclick="closeModal()" class="text-gray-400 hover:text-gray-700 text-2xl leading-none">&times;</button>
+    </div>
+
+    <form id="assetForm" class="px-6 py-5 grid grid-cols-1 md:grid-cols-2 gap-4">
+      <input type="hidden" id="fId" />
+
+      <!-- Nombre -->
+      <div class="md:col-span-2">
+        <label class="block text-xs font-semibold text-gray-600 mb-1">Nombre del Activo *</label>
+        <input id="fNombre" type="text" required placeholder="ej. walmart_mx.analytics.ventas_diarias"
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-wblue-100" />
+      </div>
+
+      <!-- Tipo -->
+      <div>
+        <label class="block text-xs font-semibold text-gray-600 mb-1">Tipo *</label>
+        <select id="fTipoForm" required
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-wblue-100">
+          <option value="">Seleccionar…</option>
+          <option>Tabla BigQuery</option>
+          <option>Dashboard</option>
+          <option>Reporte</option>
+          <option>Vista (View)</option>
+          <option>API</option>
+          <option>Archivo</option>
+          <option>Otro</option>
+        </select>
+      </div>
+
+      <!-- Plataforma -->
+      <div>
+        <label class="block text-xs font-semibold text-gray-600 mb-1">Plataforma *</label>
+        <select id="fPlataforma" required
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-wblue-100">
+          <option value="">Seleccionar…</option>
+          <option>BigQuery</option>
+          <option>Looker</option>
+          <option>Power BI</option>
+          <option>Tableau</option>
+          <option>SharePoint</option>
+          <option>GCS</option>
+          <option>Hive</option>
+          <option>Teradata</option>
+          <option>Otro</option>
+        </select>
+      </div>
+
+      <!-- Descripción -->
+      <div class="md:col-span-2">
+        <label class="block text-xs font-semibold text-gray-600 mb-1">Descripción *</label>
+        <textarea id="fDescripcion" rows="3" required placeholder="¿Qué contiene este activo? ¿Para qué se usa?"
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-wblue-100 resize-none"></textarea>
+      </div>
+
+      <!-- Link / Ubicación -->
+      <div class="md:col-span-2">
+        <label class="block text-xs font-semibold text-gray-600 mb-1">Link / Ubicación</label>
+        <input id="fLink" type="url" placeholder="https://lookerstudio.google.com/... o project.dataset.table"
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-wblue-100" />
+      </div>
+
+      <!-- Responsable -->
+      <div>
+        <label class="block text-xs font-semibold text-gray-600 mb-1">Responsable *</label>
+        <input id="fResponsable" type="text" required placeholder="Nombre completo"
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-wblue-100" />
+      </div>
+
+      <!-- Área -->
+      <div>
+        <label class="block text-xs font-semibold text-gray-600 mb-1">Área / Departamento *</label>
+        <input id="fArea" type="text" required placeholder="ej. Data &amp; Analytics"
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-wblue-100" />
+      </div>
+
+      <!-- Sensibilidad -->
+      <div>
+        <label class="block text-xs font-semibold text-gray-600 mb-1">Nivel de Sensibilidad *</label>
+        <select id="fSensibilidadForm" required
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-wblue-100">
+          <option value="">Seleccionar…</option>
+          <option>Pública</option>
+          <option>Interna</option>
+          <option>Confidencial</option>
+          <option>Restringida</option>
+        </select>
+      </div>
+
+      <!-- Estado estandarización -->
+      <div>
+        <label class="block text-xs font-semibold text-gray-600 mb-1">Estado de Estandarización *</label>
+        <select id="fEstadoForm" required
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-wblue-100">
+          <option value="">Seleccionar…</option>
+          <option>Validado</option>
+          <option>Pendiente</option>
+          <option>En revisión</option>
+          <option>No cumple</option>
+        </select>
+      </div>
+
+      <!-- Flags PII / Financiero -->
+      <div class="flex items-center gap-6 md:col-span-2">
+        <label class="flex items-center gap-2 text-sm cursor-pointer">
+          <input id="fPII" type="checkbox" class="w-4 h-4 accent-wblue-100" />
+          Contiene datos <strong>PII</strong>
+        </label>
+        <label class="flex items-center gap-2 text-sm cursor-pointer">
+          <input id="fFinanciero" type="checkbox" class="w-4 h-4 accent-wblue-100" />
+          Contiene datos <strong>Financieros</strong>
+        </label>
+      </div>
+
+      <!-- Notas -->
+      <div class="md:col-span-2">
+        <label class="block text-xs font-semibold text-gray-600 mb-1">Notas / Restricciones de acceso</label>
+        <textarea id="fNotas" rows="2" placeholder="Grupo de acceso, política de retención, notas de auditoría…"
+          class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-wblue-100 resize-none"></textarea>
+      </div>
+
+      <!-- Botones -->
+      <div class="md:col-span-2 flex justify-end gap-3 pt-2">
+        <button type="button" onclick="closeModal()"
+          class="px-5 py-2 rounded-lg border border-gray-300 text-sm font-medium hover:bg-gray-50">Cancelar</button>
+        <button type="submit"
+          class="px-5 py-2 rounded-lg bg-wblue-100 text-white text-sm font-semibold hover:bg-wblue-110 transition">
+          Guardar Activo
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ═══════════════════════════ SCRIPT ═══════════════════════════ -->
+<script>
+// ── Helpers de badge ──────────────────────────────────────────────
+const SENS_BADGE = {
+  'Pública':       'bg-green-100 text-green-800',
+  'Interna':       'bg-blue-100 text-blue-800',
+  'Confidencial':  'bg-amber-100 text-amber-800',
+  'Restringida':   'bg-red-100 text-red-800',
+};
+const STATUS_BADGE = {
+  'Validado':    'bg-green-100 text-green-800',
+  'Pendiente':   'bg-yellow-100 text-yellow-800',
+  'En revisión': 'bg-blue-100 text-blue-800',
+  'No cumple':   'bg-red-100 text-red-800',
+};
+const TYPE_ICON = {
+  'Tabla BigQuery': '🗄️', 'Dashboard': '📊', 'Reporte': '📄',
+  'Vista (View)': '👁️', 'API': '🔌', 'Archivo': '📁', 'Otro': '📦',
+};
+const badge = (text, map) =>
+  `<span class="badge ${map[text] || 'bg-gray-100 text-gray-700'}">${text}</span>`;
+
+// ── Storage ───────────────────────────────────────────────────────
+const STORE_KEY = 'datasentinel_v1';
+const load  = () => JSON.parse(localStorage.getItem(STORE_KEY) || '[]');
+const save  = d  => localStorage.setItem(STORE_KEY, JSON.stringify(d));
+
+// ── Datos de muestra (sólo primera vez) ───────────────────────────
+function seedIfEmpty() {
+  if (load().length) return;
+  save([
+    {
+      id: 1, nombre: 'walmart_mx.analytics.ventas_diarias',
+      tipo: 'Tabla BigQuery', plataforma: 'BigQuery',
+      descripcion: 'Ventas por tienda, categoría y SKU actualizadas diariamente. Fuente: POS + OMS.',
+      link: '', responsable: 'Carlos Mendoza', area: 'Comercial',
+      sensibilidad: 'Confidencial', estado: 'Validado', pii: false, financiero: true,
+      notas: 'Acceso: grupo bq-ventas-comercial. Retención: 3 años.',
+      creado: new Date().toLocaleDateString('es-MX')
+    },
+    {
+      id: 2, nombre: 'Dashboard Kpis Semanales – Looker',
+      tipo: 'Dashboard', plataforma: 'Looker',
+      descripcion: 'KPIs de sell-through, margen y tráfico por formato de tienda.',
+      link: 'https://looker.walmart.com/dashboards/kpi-semanal',
+      responsable: 'Ana García', area: 'Data & Analytics',
+      sensibilidad: 'Interna', estado: 'Validado', pii: false, financiero: false,
+      notas: 'Visible para todos los empleados con cuenta Walmart.',
+      creado: new Date().toLocaleDateString('es-MX')
+    },
+    {
+      id: 3, nombre: 'Reporte RH – Nómina y Ausencias',
+      tipo: 'Reporte', plataforma: 'Power BI',
+      descripcion: 'Nómina, absentismo y evaluaciones de desempeño del personal activo.',
+      link: '', responsable: 'Patricia Ruiz', area: 'Recursos Humanos',
+      sensibilidad: 'Restringida', estado: 'En revisión', pii: true, financiero: true,
+      notas: '⚠️ Pendiente encriptación a nivel columna. Deadline: 31-ene-2025.',
+      creado: new Date().toLocaleDateString('es-MX')
+    },
+  ]);
+}
+
+// ── KPIs ──────────────────────────────────────────────────────────
+function renderKPIs() {
+  const data = load();
+  const pii       = data.filter(d => d.pii).length;
+  const validado  = data.filter(d => d.estado === 'Validado').length;
+  const pendiente = data.filter(d => d.estado === 'Pendiente' || d.estado === 'No cumple').length;
+  const restrin   = data.filter(d => d.sensibilidad === 'Restringida').length;
+
+  const kpis = [
+    { label: 'Total Activos',    value: data.length,  color: 'bg-blue-600',  icon: '🗂️' },
+    { label: 'Contienen PII',    value: pii,          color: 'bg-amber-500', icon: '🔐' },
+    { label: 'Validados',        value: validado,     color: 'bg-green-600', icon: '✅' },
+    { label: 'Atención requerida', value: pendiente,  color: 'bg-red-500',   icon: '⚠️' },
+  ];
+
+  document.getElementById('kpis').innerHTML = kpis.map(k => `
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 px-5 py-4 flex items-center gap-4">
+      <div class="${k.color} text-white text-2xl w-12 h-12 rounded-lg flex items-center justify-center">${k.icon}</div>
+      <div>
+        <p class="text-2xl font-bold text-gray-800">${k.value}</p>
+        <p class="text-xs text-gray-500 font-medium">${k.label}</p>
+      </div>
+    </div>`).join('');
+}
+
+// ── Tabla ─────────────────────────────────────────────────────────
+function render() {
+  const data  = load();
+  const q     = document.getElementById('fSearch').value.toLowerCase();
+  const tipo  = document.getElementById('fTipo').value;
+  const sens  = document.getElementById('fSensibilidad').value;
+  const est   = document.getElementById('fEstado').value;
+
+  const filtered = data.filter(d => {
+    const matchQ = !q || [d.nombre, d.area, d.responsable, d.descripcion]
+      .some(f => f && f.toLowerCase().includes(q));
+    return matchQ
+      && (!tipo || d.tipo === tipo)
+      && (!sens || d.sensibilidad === sens)
+      && (!est  || d.estado === est);
+  });
+
+  document.getElementById('countLabel').textContent =
+    `${filtered.length} de ${data.length} activo${data.length !== 1 ? 's' : ''}`;
+
+  const tbody = document.getElementById('tableBody');
+  const empty = document.getElementById('emptyMsg');
+
+  if (!filtered.length) {
+    tbody.innerHTML = '';
+    empty.classList.remove('hidden');
+    return;
+  }
+  empty.classList.add('hidden');
+
+  tbody.innerHTML = filtered.map(d => {
+    const icon = TYPE_ICON[d.tipo] || '📦';
+    const link = d.link
+      ? `<a href="${d.link}" target="_blank"
+           class="text-wblue-100 underline hover:text-wblue-110 break-all text-xs"
+           title="${d.link}">🔗 Abrir</a>`
+      : '<span class="text-gray-300 text-xs">—</span>';
+    const piiBadge = d.pii
+      ? '<span class="badge bg-amber-100 text-amber-800 ml-1">PII</span>' : '';
+    const finBadge = d.financiero
+      ? '<span class="badge bg-purple-100 text-purple-800 ml-1">FIN</span>' : '';
+
+    return `<tr class="border-t border-gray-100">
+      <td class="px-4 py-3 max-w-xs">
+        <p class="font-semibold text-gray-800 text-sm break-all">${icon} ${d.nombre}</p>
+        <p class="text-xs text-gray-400 mt-0.5 line-clamp-2">${d.descripcion}</p>
+        <div class="mt-1">${link}</div>
+      </td>
+      <td class="px-4 py-3 text-xs text-gray-600 whitespace-nowrap">${d.tipo}</td>
+      <td class="px-4 py-3 text-xs text-gray-600 whitespace-nowrap">${d.plataforma}</td>
+      <td class="px-4 py-3">
+        <p class="text-sm font-medium text-gray-700">${d.responsable}</p>
+        <p class="text-xs text-gray-400">${d.area}</p>
+      </td>
+      <td class="px-4 py-3">${badge(d.sensibilidad, SENS_BADGE)}</td>
+      <td class="px-4 py-3">${badge(d.estado, STATUS_BADGE)}</td>
+      <td class="px-4 py-3 text-center">${d.pii ? '🔐' : ''}${d.financiero ? '💰' : ''}
+        ${!d.pii && !d.financiero ? '<span class="text-gray-300">—</span>' : ''}
+      </td>
+      <td class="px-4 py-3 whitespace-nowrap">
+        <button onclick="editAsset(${d.id})"
+          class="text-wblue-100 hover:underline text-xs font-semibold mr-3">✏️ Editar</button>
+        <button onclick="deleteAsset(${d.id})"
+          class="text-red-500 hover:underline text-xs font-semibold">🗑️ Eliminar</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+// ── Modal ─────────────────────────────────────────────────────────
+function openModal(asset = null) {
+  document.getElementById('assetForm').reset();
+  document.getElementById('fId').value = '';
+  document.getElementById('modalTitle').textContent = asset
+    ? 'Editar Activo de Datos' : 'Nuevo Activo de Datos';
+
+  if (asset) {
+    document.getElementById('fId').value          = asset.id;
+    document.getElementById('fNombre').value      = asset.nombre;
+    document.getElementById('fTipoForm').value    = asset.tipo;
+    document.getElementById('fPlataforma').value  = asset.plataforma;
+    document.getElementById('fDescripcion').value = asset.descripcion;
+    document.getElementById('fLink').value        = asset.link || '';
+    document.getElementById('fResponsable').value = asset.responsable;
+    document.getElementById('fArea').value        = asset.area;
+    document.getElementById('fSensibilidadForm').value = asset.sensibilidad;
+    document.getElementById('fEstadoForm').value  = asset.estado;
+    document.getElementById('fPII').checked       = asset.pii;
+    document.getElementById('fFinanciero').checked = asset.financiero;
+    document.getElementById('fNotas').value       = asset.notas || '';
+  }
+  document.getElementById('modal').classList.remove('hidden');
+}
+
+function closeModal() {
+  document.getElementById('modal').classList.add('hidden');
+}
+
+function editAsset(id) {
+  const asset = load().find(d => d.id === id);
+  if (asset) openModal(asset);
+}
+
+function deleteAsset(id) {
+  const data = load();
+  const asset = data.find(d => d.id === id);
+  if (!asset) return;
+  if (!confirm(`¿Eliminar "${asset.nombre}"?\nEsta acción no se puede deshacer.`)) return;
+  save(data.filter(d => d.id !== id));
+  renderKPIs();
+  render();
+}
+
+// ── Submit ────────────────────────────────────────────────────────
+document.getElementById('assetForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const data = load();
+  const editId = parseInt(document.getElementById('fId').value);
+  const entry = {
+    id:           editId || Date.now(),
+    nombre:       document.getElementById('fNombre').value.trim(),
+    tipo:         document.getElementById('fTipoForm').value,
+    plataforma:   document.getElementById('fPlataforma').value,
+    descripcion:  document.getElementById('fDescripcion').value.trim(),
+    link:         document.getElementById('fLink').value.trim(),
+    responsable:  document.getElementById('fResponsable').value.trim(),
+    area:         document.getElementById('fArea').value.trim(),
+    sensibilidad: document.getElementById('fSensibilidadForm').value,
+    estado:       document.getElementById('fEstadoForm').value,
+    pii:          document.getElementById('fPII').checked,
+    financiero:   document.getElementById('fFinanciero').checked,
+    notas:        document.getElementById('fNotas').value.trim(),
+    creado:       editId
+      ? (data.find(d => d.id === editId)?.creado || new Date().toLocaleDateString('es-MX'))
+      : new Date().toLocaleDateString('es-MX'),
+  };
+
+  if (editId) {
+    save(data.map(d => d.id === editId ? entry : d));
+  } else {
+    save([...data, entry]);
+  }
+
+  closeModal();
+  renderKPIs();
+  render();
+});
+
+// ── Export CSV ────────────────────────────────────────────────────
+function exportCSV() {
+  const data = load();
+  const headers = ['ID','Nombre','Tipo','Plataforma','Descripción','Link',
+    'Responsable','Área','Sensibilidad','Estado','PII','Financiero','Notas','Creado'];
+  const esc = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
+  const rows = data.map(d => [
+    d.id, d.nombre, d.tipo, d.plataforma, d.descripcion, d.link,
+    d.responsable, d.area, d.sensibilidad, d.estado,
+    d.pii ? 'Sí' : 'No', d.financiero ? 'Sí' : 'No', d.notas, d.creado
+  ].map(esc).join(','));
+
+  const csv = '\uFEFF' + [headers.join(','), ...rows].join('\r\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const a = Object.assign(document.createElement('a'), {
+    href: URL.createObjectURL(blob),
+    download: `DataSentinel_${new Date().toISOString().slice(0,10)}.csv`
+  });
+  a.click();
+}
+
+// ── Filtros ───────────────────────────────────────────────────────
+function clearFilters() {
+  ['fSearch','fTipo','fSensibilidad','fEstado'].forEach(id => {
+    const el = document.getElementById(id);
+    el.value = el.tagName === 'INPUT' ? '' : '';
+  });
+  render();
+}
+
+// ── Cerrar modal al click en backdrop ─────────────────────────────
+document.getElementById('modal').addEventListener('click', e => {
+  if (e.target === document.getElementById('modal')) closeModal();
+});
+
+// ── Init ──────────────────────────────────────────────────────────
+seedIfEmpty();
+renderKPIs();
+render();
+</script>
+</body>
+</html>

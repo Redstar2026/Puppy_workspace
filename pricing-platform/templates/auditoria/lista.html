@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% block title %}Auditoría — {{ app_name }}{% endblock %}
+{% block breadcrumb %}
+  <span class="text-gray-400">Inicio /</span>
+  <span class="font-semibold text-walmart-blue">🔍 Auditoría del Sistema</span>
+{% endblock %}
+
+{% block content %}
+<div class="space-y-5">
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-xl font-bold text-gray-900 dark:text-white">Logs de Auditoría</h1>
+      <p class="text-sm text-gray-500 dark:text-gray-400">{{ total }} registros encontrados</p>
+    </div>
+    <div class="flex gap-2">
+      <a href="/auditoria/historial"
+         class="px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-semibold rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+        📜 Historial de Cambios
+      </a>
+    </div>
+  </div>
+
+  {# Filtros #}
+  <div class="card p-4">
+    <form method="GET" class="flex flex-wrap items-end gap-3">
+      <div class="flex-1 min-w-[160px]">
+        <label class="form-label">Buscar en descripción</label>
+        <input type="text" name="buscar" value="{{ filtros.buscar }}" placeholder="Buscar..." class="form-input" />
+      </div>
+      <div class="w-40">
+        <label class="form-label">Acción</label>
+        <select name="accion" class="form-input">
+          <option value="">Todas</option>
+          {% for a in acciones %}
+          <option value="{{ a }}" {% if filtros.accion == a %}selected{% endif %}>{{ a.replace('_',' ').capitalize() }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="w-36">
+        <label class="form-label">Tabla</label>
+        <select name="tabla" class="form-input">
+          <option value="">Todas</option>
+          {% for t in tablas %}
+          <option value="{{ t }}" {% if filtros.tabla == t %}selected{% endif %}>{{ t.capitalize() }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="w-44">
+        <label class="form-label">Usuario</label>
+        <select name="usuario_id" class="form-input">
+          <option value="">Todos</option>
+          {% for u in usuarios %}
+          <option value="{{ u.id }}" {% if filtros.usuario_id == u.id|string %}selected{% endif %}>{{ u.nombre }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <button type="submit" class="bg-walmart-blue text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-blue-700">Filtrar</button>
+      <a href="/auditoria" class="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-sm font-semibold px-4 py-2 rounded-lg">Limpiar</a>
+    </form>
+  </div>
+
+  {# Tabla de logs #}
+  <div class="card overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm min-w-[700px]">
+        <thead class="bg-gray-50 dark:bg-gray-700/50">
+          <tr>
+            {% for col in ['Fecha','Usuario','Acción','Tabla','Registro','Descripción','IP'] %}
+            <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">{{ col }}</th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+          {% for log in logs %}
+          <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
+            <td class="px-4 py-3 text-xs text-gray-500 whitespace-nowrap">{{ log.creado_en.strftime('%d/%m/%Y %H:%M:%S') }}</td>
+            <td class="px-4 py-3">
+              {% if log.usuario %}
+              <div class="flex items-center gap-2">
+                <div class="w-6 h-6 rounded-full bg-walmart-blue flex items-center justify-center text-white text-xs font-bold flex-shrink-0">{{ log.usuario.nombre[:1] }}</div>
+                <span class="text-xs font-medium text-gray-700 dark:text-gray-300">{{ log.usuario.nombre }}</span>
+              </div>
+              {% else %}<span class="text-xs text-gray-400">Sistema</span>{% endif %}
+            </td>
+            <td class="px-4 py-3">
+              {% set accion_colors = {
+                'creacion': 'badge-green', 'actualizacion': 'badge-blue',
+                'aprobacion': 'badge-green', 'rechazo': 'badge-red',
+                'login': 'badge-gray', 'estado_cambio': 'badge-yellow',
+                'comentario': 'badge-indigo', 'eliminacion': 'badge-red',
+              } %}
+              <span class="badge {{ accion_colors.get(log.accion.value, 'badge-gray') }}">
+                {{ log.accion.value.replace('_',' ').capitalize() }}
+              </span>
+            </td>
+            <td class="px-4 py-3 text-xs text-gray-500">{{ log.tabla_afectada or '—' }}</td>
+            <td class="px-4 py-3 text-xs font-mono text-gray-500">#{{ log.registro_id or '—' }}</td>
+            <td class="px-4 py-3 text-xs text-gray-600 dark:text-gray-400 max-w-[300px] truncate">{{ log.descripcion or '—' }}</td>
+            <td class="px-4 py-3 text-xs font-mono text-gray-400">{{ log.ip_address or '—' }}</td>
+          </tr>
+          {% else %}
+          <tr><td colspan="7" class="px-4 py-10 text-center text-gray-400 text-sm">Sin registros de auditoría.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {# Paginación #}
+    {% if total > per_page %}
+    <div class="flex items-center justify-between px-4 py-3 border-t border-gray-100 dark:border-gray-700">
+      <p class="text-xs text-gray-500">{{ logs|length }} de {{ total }}</p>
+      <div class="flex gap-2">
+        {% if pagina > 1 %}
+        <a href="?pagina={{ pagina-1 }}&usuario_id={{ filtros.usuario_id }}&accion={{ filtros.accion }}&tabla={{ filtros.tabla }}"
+           class="px-3 py-1.5 text-xs border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">← Anterior</a>
+        {% endif %}
+        {% if logs|length == per_page %}
+        <a href="?pagina={{ pagina+1 }}&usuario_id={{ filtros.usuario_id }}&accion={{ filtros.accion }}&tabla={{ filtros.tabla }}"
+           class="px-3 py-1.5 text-xs bg-walmart-blue text-white rounded-lg hover:bg-blue-700">Siguiente →</a>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

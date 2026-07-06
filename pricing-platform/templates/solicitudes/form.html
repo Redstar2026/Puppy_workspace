@@ -1,0 +1,229 @@
+{% extends "base.html" %}
+{% set is_edit = solicitud is not none %}
+{% block title %}{{ 'Editar' if is_edit else 'Nueva' }} Solicitud — {{ app_name }}{% endblock %}
+{% block breadcrumb %}
+  <a href="/solicitudes" class="text-gray-400 hover:text-walmart-blue">Solicitudes</a>
+  <span class="text-gray-400">/</span>
+  <span class="font-semibold text-walmart-blue">{{ 'Editar' if is_edit else 'Nueva Solicitud' }}</span>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-6">
+
+  <div class="flex items-center gap-4">
+    <a href="/solicitudes" class="text-sm text-gray-500 hover:text-walmart-blue flex items-center gap-1">
+      ← Volver
+    </a>
+    <h1 class="text-xl font-bold text-gray-900 dark:text-white">
+      {{ 'Editar Solicitud' if is_edit else '+ Nueva Solicitud' }}
+      {% if is_edit %}
+      <span class="font-mono text-walmart-blue text-base ml-2">{{ solicitud.folio }}</span>
+      {% endif %}
+    </h1>
+  </div>
+
+  <form method="POST" action="{{ '/solicitudes/'+solicitud.id|string+'/editar' if is_edit else '/solicitudes/nueva' }}"
+        class="space-y-6">
+
+    {# ── Sección 1: Identificación ────────────────── #}
+    <div class="card p-6 space-y-5">
+      <h2 class="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wide border-b border-gray-200 dark:border-gray-700 pb-3">
+        📋 Identificación y Clasificación
+      </h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div class="md:col-span-2">
+          <label class="form-label">Título de la Solicitud *</label>
+          <input type="text" name="titulo" required maxlength="300"
+                 value="{{ solicitud.titulo if is_edit else '' }}"
+                 placeholder="Describe brevemente qué se necesita..."
+                 class="form-input text-base font-medium" />
+        </div>
+        <div>
+          <label class="form-label">Tipo de Solicitud *</label>
+          <select name="tipo" required class="form-input">
+            {% for t in tipos %}
+            <option value="{{ t }}" {% if is_edit and solicitud.tipo.value == t %}selected{% endif %}>
+              {{ t.replace('_',' ').title() }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="form-label">Prioridad *</label>
+          <select name="prioridad" required class="form-input">
+            {% for p in prioridades %}
+            <option value="{{ p }}" {% if is_edit and solicitud.prioridad.value == p %}selected{% endif %}>
+              {{ p.capitalize() }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+        {% if is_edit %}
+        <div>
+          <label class="form-label">Estado Actual</label>
+          <select name="estado" class="form-input">
+            {% for e in estados %}
+            <option value="{{ e }}" {% if solicitud.estado.value == e %}selected{% endif %}>
+              {{ label_estado(e).label }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="form-label">% Avance</label>
+          <input type="number" name="porcentaje_avance" min="0" max="100" step="1"
+                 value="{{ solicitud.porcentaje_avance | int if is_edit else 0 }}"
+                 class="form-input" />
+        </div>
+        {% endif %}
+        <div>
+          <label class="form-label">Área Impactada</label>
+          <input type="text" name="area_impactada"
+                 value="{{ solicitud.area_impactada if is_edit else '' }}"
+                 placeholder="Ej: Precios, Comercial, Tech..." class="form-input" />
+        </div>
+        <div>
+          <label class="form-label">Área Solicitante</label>
+          <input type="text" name="area_solicitante"
+                 value="{{ solicitud.area_solicitante if is_edit else '' }}"
+                 placeholder="Ej: Pricing, Dirección Comercial..." class="form-input" />
+        </div>
+      </div>
+    </div>
+
+    {# ── Sección 2: Descripción ───────────────────── #}
+    <div class="card p-6 space-y-5">
+      <h2 class="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wide border-b border-gray-200 dark:border-gray-700 pb-3">
+        📝 Descripción y Contexto
+      </h2>
+      <div>
+        <label class="form-label">Descripción Detallada</label>
+        <textarea name="descripcion" rows="5"
+                  placeholder="Describe el problema, necesidad u oportunidad de mejora con el mayor detalle posible..."
+                  class="form-input resize-none">{{ solicitud.descripcion if is_edit else '' }}</textarea>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div>
+          <label class="form-label">Impacto Esperado</label>
+          <textarea name="impacto_esperado" rows="3"
+                    placeholder="¿Qué efecto tendrá este cambio en el negocio?"
+                    class="form-input resize-none">{{ solicitud.impacto_esperado if is_edit else '' }}</textarea>
+        </div>
+        <div>
+          <label class="form-label">Beneficios Esperados</label>
+          <textarea name="beneficios_esperados" rows="3"
+                    placeholder="Ahorro en tiempo, reducción de errores, eficiencia..."
+                    class="form-input resize-none">{{ solicitud.beneficios_esperados if is_edit else '' }}</textarea>
+        </div>
+        <div>
+          <label class="form-label">KPI Asociado</label>
+          <input type="text" name="kpi_asociado"
+                 value="{{ solicitud.kpi_asociado if is_edit else '' }}"
+                 placeholder="Ej: Reducir error de precio en 15%" class="form-input" />
+        </div>
+        <div>
+          <label class="form-label">Dependencias Relacionadas</label>
+          <input type="text" name="dependencias"
+                 value="{{ solicitud.dependencias if is_edit else '' }}"
+                 placeholder="Sistemas, proyectos o áreas dependientes" class="form-input" />
+        </div>
+      </div>
+    </div>
+
+    {# ── Sección 3: Responsables ──────────────────── #}
+    <div class="card p-6 space-y-5">
+      <h2 class="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wide border-b border-gray-200 dark:border-gray-700 pb-3">
+        👥 Responsables y Equipo
+      </h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div>
+          <label class="form-label">Encargado de Ejecución</label>
+          <select name="encargado_id" class="form-input">
+            <option value="">— Sin asignar —</option>
+            {% for u in usuarios %}
+            <option value="{{ u.id }}"
+                    {% if is_edit and solicitud.encargado_id == u.id %}selected{% endif %}>
+              {{ u.nombre }} ({{ u.departamento }})
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="form-label">Equipo Responsable</label>
+          <input type="text" name="equipo_responsable"
+                 value="{{ solicitud.equipo_responsable if is_edit else '' }}"
+                 placeholder="Ej: Squad Pricing Tech" class="form-input" />
+        </div>
+        <div>
+          <label class="form-label">Fecha Estimada de Finalización</label>
+          <input type="date" name="fecha_estimada_fin"
+                 value="{{ solicitud.fecha_estimada_fin.strftime('%Y-%m-%d') if is_edit and solicitud.fecha_estimada_fin else '' }}"
+                 class="form-input" />
+        </div>
+        <div>
+          <label class="form-label">Riesgo Operativo</label>
+          <select name="riesgo_operativo" class="form-input">
+            {% for r in riesgos %}
+            <option value="{{ r }}"
+                    {% if is_edit and solicitud.riesgo_operativo.value == r %}selected{% endif %}>
+              {{ r.capitalize() }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+    </div>
+
+    {# ── Sección 4: Aprobaciones ──────────────────── #}
+    <div class="card p-6 space-y-5">
+      <h2 class="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wide border-b border-gray-200 dark:border-gray-700 pb-3">
+        ✅ Flujo de Aprobaciones
+      </h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div>
+          <label class="form-label">¿Requiere Aprobación?</label>
+          <select name="requiere_aprobacion" class="form-input">
+            <option value="no" {% if not (is_edit and solicitud.requiere_aprobacion) %}selected{% endif %}>No</option>
+            <option value="si" {% if is_edit and solicitud.requiere_aprobacion %}selected{% endif %}>Sí</option>
+          </select>
+        </div>
+        {% if not is_edit %}
+        <div>
+          <label class="form-label">Aprobadores (selección múltiple)</label>
+          <select name="aprobadores_ids" multiple class="form-input h-32">
+            {% for u in aprobadores %}
+            <option value="{{ u.id }}">{{ u.nombre }} — {{ u.cargo }}</option>
+            {% endfor %}
+          </select>
+          <p class="text-xs text-gray-400 mt-1">Ctrl+Click para seleccionar múltiples. El orden importa.</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    {# ── Sección 5: Comentarios internos ─────────── #}
+    <div class="card p-6">
+      <h2 class="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wide border-b border-gray-200 dark:border-gray-700 pb-3 mb-4">
+        💬 Notas Internas
+      </h2>
+      <textarea name="comentarios_internos" rows="3"
+                placeholder="Notas internas para el equipo (no visibles para el solicitante)..."
+                class="form-input resize-none">{{ solicitud.comentarios_internos if is_edit else '' }}</textarea>
+    </div>
+
+    {# Botones #}
+    <div class="flex justify-end gap-3 pb-6">
+      <a href="{{ '/solicitudes/'+solicitud.id|string if is_edit else '/solicitudes' }}"
+         class="px-6 py-2.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300
+                text-sm font-semibold rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+        Cancelar
+      </a>
+      <button type="submit"
+              class="px-6 py-2.5 bg-walmart-blue text-white text-sm font-bold rounded-lg
+                     hover:bg-blue-700 active:bg-blue-800 transition-all shadow-md hover:shadow-lg">
+        {{ '💾 Guardar Cambios' if is_edit else '✅ Crear Solicitud' }}
+      </button>
+    </div>
+  </form>
+</div>
+{% endblock %}

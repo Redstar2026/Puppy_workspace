@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Solicitudes — Walmart Pricing</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <style>body{font-family:'Inter',sans-serif}</style>
+</head>
+<body class="bg-gray-50 min-h-screen flex">
+  <aside class="w-60 bg-blue-700 text-white flex flex-col flex-shrink-0 min-h-screen">
+    <div class="flex items-center gap-3 px-5 py-5 border-b border-blue-600">
+      <div class="w-8 h-8 bg-yellow-400 rounded-lg flex items-center justify-center font-black text-blue-900 text-lg">W</div>
+      <div><p class="font-bold text-sm">Pricing Platform</p><p class="text-blue-300 text-xs">Walmart México</p></div>
+    </div>
+    <nav class="flex-1 p-3 space-y-1">
+      <a href="/"             class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/10 text-sm transition-colors">📊 Dashboard</a>
+      <a href="/solicitudes"  class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-white/20 font-semibold text-sm">📋 Solicitudes</a>
+      <a href="/solicitudes/nueva" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/10 text-sm transition-colors">➕ Nueva Solicitud</a>
+    </nav>
+    <div class="p-4 border-t border-blue-600">
+      <p class="text-xs font-semibold truncate text-white">{{ user.nombre }}</p>
+      <p class="text-blue-300 text-xs mb-2">{{ user.rol }}</p>
+      <a href="/logout" class="block text-center text-xs text-blue-300 hover:text-white py-1 rounded hover:bg-white/10 transition-colors">Cerrar sesión</a>
+    </div>
+  </aside>
+
+  <main class="flex-1 p-8 overflow-y-auto">
+    <div class="flex items-center justify-between mb-6">
+      <div>
+        <h1 class="text-2xl font-black text-gray-900">📋 Bitácora de Solicitudes</h1>
+        <p class="text-gray-500 text-sm mt-1">{{ total }} solicitud{{ 'es' if total != 1 else '' }} encontrada{{ 's' if total != 1 else '' }}</p>
+      </div>
+      <a href="/solicitudes/nueva" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-5 py-2.5 rounded-lg text-sm transition-colors shadow">+ Nueva</a>
+    </div>
+
+    <!-- Filtros -->
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4 mb-6">
+      <form method="GET" class="flex flex-wrap gap-3 items-end">
+        <div class="flex-1 min-w-[180px]">
+          <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Buscar</label>
+          <input type="text" name="buscar" value="{{ filtros.buscar }}" placeholder="Folio o título..."
+                 class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+        </div>
+        <div class="w-36">
+          <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Estado</label>
+          <select name="estado" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <option value="">Todos</option>
+            {% for e in estados %}
+            <option value="{{ e }}" {% if filtros.estado==e %}selected{% endif %}>{{ estado_label(e) }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="w-32">
+          <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Prioridad</label>
+          <select name="prioridad" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <option value="">Todas</option>
+            {% for p in prioridades %}
+            <option value="{{ p }}" {% if filtros.prioridad==p %}selected{% endif %}>{{ p.capitalize() }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="flex gap-2">
+          <button type="submit" class="bg-blue-600 text-white font-semibold px-4 py-2 rounded-lg text-sm hover:bg-blue-700 transition-colors">Filtrar</button>
+          <a href="/solicitudes" class="bg-gray-100 text-gray-600 font-semibold px-4 py-2 rounded-lg text-sm hover:bg-gray-200 transition-colors">Limpiar</a>
+        </div>
+      </form>
+    </div>
+
+    <!-- Tabla -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm min-w-[900px]">
+          <thead class="bg-gray-50 border-b border-gray-200">
+            <tr>
+              {% for col in ['Folio','Título','Tipo','Prioridad','Estado','Avance','Encargado','Riesgo'] %}
+              <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">{{ col }}</th>
+              {% endfor %}
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-50">
+            {% for s in items %}
+            <tr class="hover:bg-blue-50 cursor-pointer transition-colors" onclick="location.href='/solicitudes/{{ s.id }}'">
+              <td class="px-4 py-3 font-mono text-xs font-bold text-blue-600">{{ s.folio }}</td>
+              <td class="px-4 py-3 max-w-[240px]">
+                <p class="font-medium text-gray-900 truncate">{{ s.titulo }}</p>
+                {% if s.area_impactada %}<p class="text-xs text-gray-400 truncate">{{ s.area_impactada }}</p>{% endif %}
+              </td>
+              <td class="px-4 py-3 text-xs text-gray-500">{{ s.tipo.replace('_',' ').capitalize() }}</td>
+              <td class="px-4 py-3">
+                <span class="px-2 py-0.5 rounded-full text-xs font-semibold {{ prio_css(s.prioridad) }}">{{ s.prioridad.capitalize() }}</span>
+              </td>
+              <td class="px-4 py-3">
+                <span class="px-2 py-0.5 rounded-full text-xs font-semibold {{ estado_css(s.estado) }}">{{ estado_label(s.estado) }}</span>
+              </td>
+              <td class="px-4 py-3 w-28">
+                <div class="flex items-center gap-2">
+                  <div class="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                    <div class="h-full bg-blue-600 rounded-full" style="width:{{ s.porcentaje_avance }}%"></div>
+                  </div>
+                  <span class="text-xs text-gray-500 w-7">{{ s.porcentaje_avance|int }}%</span>
+                </div>
+              </td>
+              <td class="px-4 py-3 text-xs text-gray-600">{{ s.encargado or '—' }}</td>
+              <td class="px-4 py-3">
+                {% set rc = {'bajo':'text-green-600','medio':'text-yellow-600','alto':'text-orange-600','critico':'text-red-600'} %}
+                <span class="text-xs font-semibold {{ rc.get(s.riesgo,'text-gray-600') }}">{{ s.riesgo.capitalize() }}</span>
+              </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="8" class="px-4 py-12 text-center text-gray-400">
+              No hay solicitudes.<br>
+              <a href="/solicitudes/nueva" class="text-blue-600 hover:underline text-sm mt-1 inline-block">+ Crear la primera</a>
+            </td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</body>
+</html>

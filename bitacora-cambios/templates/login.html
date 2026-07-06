@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full bg-gray-50">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Iniciar Sesión · Bitácora de Cambios</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config={theme:{extend:{colors:{wm:{blue:'#0053e2',blue140:'#003494',spark:'#ffc220'}}}}}</script>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet"/>
+</head>
+<body class="h-full flex items-center justify-center bg-gradient-to-br from-wm-blue to-wm-blue140">
+  <div class="w-full max-w-sm">
+    <div class="text-center mb-8">
+      <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-wm-spark mb-4 shadow-lg">
+        <span class="material-icons-round text-wm-blue text-3xl">assignment</span>
+      </div>
+      <h1 class="text-2xl font-bold text-white">Bitácora de Cambios</h1>
+      <p class="text-blue-200 text-sm mt-1">Walmart · Gestión de Tareas</p>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-2xl p-8">
+      {% if error %}
+      <div class="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm flex items-center gap-2">
+        <span class="material-icons-round text-base">error</span>{{ error }}
+      </div>
+      {% endif %}
+
+      <form method="post" action="/login" class="space-y-5">
+        <div>
+          <label for="email" class="block text-sm font-semibold text-gray-700 mb-1">Correo electrónico</label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-3 flex items-center text-gray-400">
+              <span class="material-icons-round text-lg">mail</span>
+            </span>
+            <input id="email" name="email" type="email" required autofocus
+                   class="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-wm-blue focus:border-wm-blue outline-none transition"
+                   placeholder="usuario@walmart.com"/>
+          </div>
+        </div>
+        <div>
+          <label for="password" class="block text-sm font-semibold text-gray-700 mb-1">Contraseña</label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-3 flex items-center text-gray-400">
+              <span class="material-icons-round text-lg">lock</span>
+            </span>
+            <input id="password" name="password" type="password" required
+                   class="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-wm-blue focus:border-wm-blue outline-none transition"
+                   placeholder="••••••••"/>
+          </div>
+        </div>
+        <button type="submit"
+                class="w-full bg-wm-blue hover:bg-blue-700 text-white font-bold py-2.5 rounded-lg text-sm transition-colors flex items-center justify-center gap-2">
+          <span class="material-icons-round text-base">login</span>Iniciar Sesión
+        </button>
+      </form>
+
+      <p class="mt-6 text-center text-xs text-gray-400">
+        Demo: <strong>admin@walmart.com</strong> / <strong>admin123</strong>
+      </p>
+    </div>
+  </div>
+</body>
+</html>

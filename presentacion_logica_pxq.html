@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Nueva Metodología – Precio AUR · PxQ</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* ─── Tokens ─── */
+    :root {
+      --blue:   #0053e2;
+      --blue-d: #003aa0;
+      --spark:  #ffc220;
+      --spark-t:#995213;
+      --green:  #2a8703;
+      --red:    #ea1100;
+      --gray-d: #1a1a1a;
+      --gray-m: #555;
+      --gray-l: #f5f5f5;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; overflow: hidden; font-family: 'Segoe UI', Arial, sans-serif; background:#e8edf5; }
+
+    /* ─── Deck ─── */
+    #deck { width:100vw; height:100vh; position:relative; overflow:hidden; }
+    .slide {
+      position:absolute; inset:0;
+      display:none; flex-direction:column;
+      padding: 52px 72px 80px;
+      opacity:0; transition: opacity .4s ease;
+    }
+    .slide.active { display:flex; opacity:1; }
+
+    /* ─── Nav bar ─── */
+    #nav {
+      position:fixed; bottom:22px; left:50%; transform:translateX(-50%);
+      display:flex; align-items:center; gap:14px; z-index:200;
+      background:rgba(255,255,255,.9); backdrop-filter:blur(10px);
+      border-radius:50px; padding:9px 22px;
+      box-shadow: 0 4px 28px rgba(0,83,226,.18);
+    }
+    #nav button {
+      width:36px; height:36px; border-radius:50%; border:none; cursor:pointer;
+      background:var(--blue); color:white; font-size:17px; font-weight:700;
+      display:flex; align-items:center; justify-content:center;
+      transition:background .2s;
+    }
+    #nav button:hover  { background:var(--blue-d); }
+    #nav button:disabled { background:#c2c2c2; cursor:default; }
+    #dots { display:flex; gap:6px; align-items:center; }
+    .dot { width:8px; height:8px; border-radius:50%; background:#c2c2c2; cursor:pointer; transition:all .25s; }
+    .dot.on { background:var(--blue); width:22px; border-radius:4px; }
+    #counter { font-size:12px; font-weight:700; color:#333; min-width:52px; text-align:center; }
+
+    /* ─── Reusable ─── */
+    .tag   { font-size:11px; font-weight:800; letter-spacing:1.5px; text-transform:uppercase; color:var(--blue); }
+    .h1    { font-size:48px; font-weight:900; color:var(--blue); line-height:1.05; }
+    .h2    { font-size:34px; font-weight:900; color:var(--blue); line-height:1.1; }
+    .h3    { font-size:18px; font-weight:800; color:var(--gray-d); }
+    .lead  { font-size:16px; color:var(--gray-m); line-height:1.6; }
+    .small { font-size:13px; color:var(--gray-m); line-height:1.55; }
+
+    .card  { background:#fff; border-radius:18px; box-shadow:0 2px 16px rgba(0,0,0,.07); padding:24px; }
+    .pill  { display:inline-block; padding:3px 14px; border-radius:999px; font-size:11px; font-weight:800; letter-spacing:.5px; }
+
+    .accent-line { width:48px; height:5px; border-radius:3px; background:var(--spark); margin:12px 0 20px; }
+
+    /* ─── Slide 1 – Hero ─── */
+    #s1 {
+      background: linear-gradient(140deg, #001f6e 0%, #0053e2 55%, #0069ff 100%);
+      color:#fff; justify-content:center; align-items:flex-start; padding:72px 100px;
+    }
+    #s1 .eyebrow { background:var(--spark); color:#1a1a1a; border-radius:999px; padding:5px 18px; font-size:12px; font-weight:800; letter-spacing:1px; display:inline-block; margin-bottom:28px; }
+    #s1 .title   { font-size:58px; font-weight:900; line-height:1.03; margin-bottom:20px; }
+    #s1 .sub     { font-size:18px; opacity:.8; max-width:560px; line-height:1.6; margin-bottom:40px; }
+    #s1 .chips   { display:flex; gap:16px; flex-wrap:wrap; }
+    #s1 .chip    { background:rgba(255,255,255,.15); backdrop-filter:blur(6px); border-radius:12px; padding:12px 24px; font-size:14px; font-weight:600; }
+    #s1 .chip span { display:block; font-size:22px; font-weight:900; color:var(--spark); }
+    #s1 .wm-logo { position:absolute; top:32px; right:48px; font-size:13px; font-weight:800; color:rgba(255,255,255,.5); letter-spacing:2px; }
+
+    /* ─── Flow arrow ─── */
+    .arrow-h { font-size:24px; color:var(--blue); padding:0 6px; flex-shrink:0; align-self:center; }
+
+    /* ─── Scenario cards (slide 4) ─── */
+    .scen {
+      flex:1; background:#fff; border-radius:18px;
+      box-shadow:0 2px 16px rgba(0,0,0,.08);
+      padding:22px 18px; border-top:5px solid;
+      display:flex; flex-direction:column; gap:10px;
+    }
+    .scen-icon { font-size:32px; }
+    .scen-title { font-size:15px; font-weight:800; color:var(--gray-d); }
+    .scen-body  { font-size:13px; color:var(--gray-m); line-height:1.55; flex:1; }
+    .scen-badge { margin-top:auto; align-self:flex-start; }
+
+    /* ─── Weight bar (slide 5) ─── */
+    .bar-wrap  { height:40px; border-radius:999px; overflow:hidden; display:flex; width:100%; }
+    .bar-seg   { display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:800; color:#fff; transition:width .6s ease; }
+
+    /* ─── 50/50 donut visual ─── */
+    .donut-ring { width:160px; height:160px; border-radius:50%; flex-shrink:0;
+      background: conic-gradient(var(--blue) 0% 50%, var(--spark) 50% 100%);
+      box-shadow:0 4px 24px rgba(0,83,226,.2);
+      position:relative; display:flex; align-items:center; justify-content:center;
+    }
+    .donut-hole { width:100px; height:100px; border-radius:50%; background:#fff;
+      display:flex; align-items:center; justify-content:center;
+      font-size:13px; font-weight:900; color:var(--gray-d); text-align:center; line-height:1.3;
+    }
+
+    /* ─── Price AUR boxes ─── */
+    .price-box {
+      flex:1; border-radius:18px; padding:20px; text-align:center;
+      display:flex; flex-direction:column; align-items:center; gap:8px;
+    }
+    .price-label { font-size:11px; font-weight:800; letter-spacing:1px; }
+    .price-val   { font-size:28px; font-weight:900; }
+    .price-eq    { font-size:13px; color:var(--gray-m); }
+    .times-badge { width:44px; height:44px; border-radius:50%; background:var(--gray-l);
+      display:flex; align-items:center; justify-content:center; font-size:20px; font-weight:900; color:var(--gray-m); flex-shrink:0; align-self:center; }
+
+    /* ─── Table (slide 8) ─── */
+    .pg-table { width:100%; border-collapse:collapse; font-size:13px; }
+    .pg-table th { background:var(--blue); color:#fff; padding:10px 14px; text-align:left; font-weight:700; font-size:12px; letter-spacing:.5px; }
+    .pg-table th:first-child { border-radius:12px 0 0 0; }
+    .pg-table th:last-child  { border-radius:0 12px 0 0; }
+    .pg-table td { padding:10px 14px; border-bottom:1px solid #eee; color:var(--gray-d); }
+    .pg-table tr:nth-child(even) td { background:#f8faff; }
+    .pg-table tr:last-child td { border-bottom:none; }
+
+    /* ─── Consideration cards ─── */
+    .cons-card { flex:1; background:#fff; border-radius:18px; box-shadow:0 2px 16px rgba(0,0,0,.08); padding:22px; border-left:5px solid; }
+    .cons-icon { font-size:30px; margin-bottom:10px; }
+    .cons-title{ font-size:15px; font-weight:800; color:var(--gray-d); margin-bottom:8px; }
+    .cons-body { font-size:13px; color:var(--gray-m); line-height:1.6; }
+
+    /* ─── Cierre ─── */
+    #s9 {
+      background: linear-gradient(140deg, #001f6e 0%, #0053e2 60%, #0069ff 100%);
+      color:#fff; justify-content:center; align-items:center; text-align:center;
+    }
+  </style>
+</head>
+<body>
+<div id="deck">
+
+<!-- ════════════════════════════════════════════
+     SLIDE 1 · PORTADA
+════════════════════════════════════════════ -->
+<div class="slide active" id="s1">
+  <div class="wm-logo">WALMART · PRICING</div>
+  <div class="eyebrow">📐 Nueva Metodología · Pricing Intelligence CA</div>
+  <div class="title">Precio AUR<br/>Ponderado por<br/>Comportamiento</div>
+  <p class="sub">Cómo calculamos un precio más justo y representativo usando rotaciones y transacciones reales del ítem.</p>
+  <div class="chips">
+    <div class="chip"><span>3</span>Metodologías</div>
+    <div class="chip"><span>Diario</span>Granularidad</div>
+    <div class="chip"><span>AUR</span>Avg. Unit Retail</div>
+    <div class="chip"><span>PxQ</span>Precio × Cantidad</div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════
+     SLIDE 2 · ¿QUÉ PROBLEMA RESOLVEMOS?
+════════════════════════════════════════════ -->
+<div class="slide" id="s2" style="background:#fff;">
+  <div class="tag">El problema</div>
+  <div class="h2 mt-1">¿Por qué no alcanza con el precio del día?</div>
+  <div class="accent-line"></div>
+
+  <div class="flex gap-6 flex-1">
+    <!-- Left: problem -->
+    <div class="flex-1 flex flex-col gap-4">
+      <div class="card" style="border-left:5px solid #ea1100; flex:1;">
+        <div style="font-size:28px; margin-bottom:8px;">❌</div>
+        <div class="h3" style="color:#ea1100; margin-bottom:8px;">Precio Plano (antes)</div>
+        <p class="small">Un precio promedio simple trata todos los días de la semana como iguales. No importa si el ítem vende 500 unidades el lunes y 10 el viernes — ambos días pesan lo mismo.</p>
+        <div class="mt-4 p-3 rounded-xl text-center" style="background:#fff5f5;">
+          <div style="font-size:13px; color:#ea1100; font-weight:700;">Distorsión del Price Gap real</div>
+          <div style="font-size:12px; color:#777; margin-top:4px;">El precio que el cliente "siente" no queda reflejado</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Center arrow -->
+    <div class="flex flex-col items-center justify-center" style="font-size:36px; color:var(--blue); font-weight:900; flex-shrink:0;">→</div>
+
+    <!-- Right: solution -->
+    <div class="flex-1 flex flex-col gap-4">
+      <div class="card" style="border-left:5px solid var(--green); flex:1;">
+        <div style="font-size:28px; margin-bottom:8px;">✅</div>
+        <div class="h3" style="color:var(--green); margin-bottom:8px;">Precio AUR (nuevo)</div>
+        <p class="small">Ponderamos el precio de cada día por el volumen real de ventas (rotaciones) o frecuencia de compra (transacciones). Los días de mayor actividad tienen más peso en el precio final.</p>
+        <div class="mt-4 p-3 rounded-xl text-center" style="background:#f0fff4;">
+          <div style="font-size:13px; color:var(--green); font-weight:700;">Price Gap más preciso y representativo</div>
+          <div style="font-size:12px; color:#777; margin-top:4px;">Refleja el precio que el cliente realmente experimenta</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mt-4 p-4 rounded-2xl text-center small font-semibold" style="background:#f0f5ff; color:var(--blue);">
+    💡 <strong>AUR = Average Unit Retail</strong> — precio promedio ponderado por unidades vendidas o transacciones por día
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════
+     SLIDE 3 · VISIÓN GENERAL DEL PROCESO
+════════════════════════════════════════════ -->
+<div class="slide" id="s3" style="background:var(--gray-l);">
+  <div class="tag">Visión general</div>
+  <div class="h2 mt-1">El proceso en 3 pasos</div>
+  <div class="accent-line"></div>
+
+  <div class="flex gap-4 flex-1 items-stretch">
+
+    <div class="card flex flex-col gap-3" style="flex:1; border-top:6px solid var(--blue);">
+      <div style="background:#f0f5ff; border-radius:12px; width:48px; height:48px; display:flex; align-items:center; justify-content:center; font-size:22px; font-weight:900; color:var(--blue);">1</div>
+      <div class="h3">Calcular el peso diario</div>
+      <p class="small flex-1">Determinar qué proporción representa cada día de la semana usando <strong>rotaciones</strong> (unidades vendidas) o <strong>transacciones</strong> (nº de compras). Se aplican reglas para días sin dato.</p>
+      <div class="pill" style="background:#f0f5ff; color:var(--blue);">Rot / Trns por día</div>
+    </div>
+
+    <div class="arrow-h">→</div>
+
+    <div class="card flex flex-col gap-3" style="flex:1; border-top:6px solid var(--spark);">
+      <div style="background:#fff8e7; border-radius:12px; width:48px; height:48px; display:flex; align-items:center; justify-content:center; font-size:22px; font-weight:900; color:var(--spark-t);">2</div>
+      <div class="h3">Construir el peso compuesto</div>
+      <p class="small flex-1">El peso final de cada día combina <strong>50% del peso rot/trns</strong> + <strong>50% de la recurrencia</strong> del precio. Esto balancea volumen con frecuencia de aparición del precio.</p>
+      <div class="pill" style="background:#fff8e7; color:var(--spark-t);">50% + 50%</div>
+    </div>
+
+    <div class="arrow-h">→</div>
+
+    <div class="card flex flex-col gap-3" style="flex:1; border-top:6px solid var(--green);">
+      <div style="background:#f0fff4; border-radius:12px; width:48px; height:48px; display:flex; align-items:center; justify-content:center; font-size:22px; font-weight:900; color:var(--green);">3</div>
+      <div class="h3">Calcular el Precio AUR</div>
+      <p class="small flex-1">Multiplicar el precio de cada día (WM y COMP) por el peso compuesto. El resultado es un <strong>precio único por ítem-competidor-zona</strong>, más representativo que el precio de línea.</p>
+      <div class="pill" style="background:#f0fff4; color:var(--green);">Precio AUR Final</div>
+    </div>
+
+  </div>
+
+  <div class="mt-4 p-3 rounded-2xl text-center small" style="background:white;">
+    🔁 Este proceso se ejecuta <strong>para cada competidor</strong> de manera independiente · La salida alimenta la <strong>Tabla Oficial de Price Gap</strong>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════
+     SLIDE 4 · PASO 1 – PESO DIARIO: 3 ESCENARIOS
+════════════════════════════════════════════ -->
+<div class="slide" id="s4" style="background:#fff;">
+  <div class="tag">Paso 1 · Peso diario</div>
+  <div class="h2 mt-1">¿Cómo obtenemos el peso de cada día?</div>
+  <div class="accent-line"></div>
+
+  <div class="flex gap-5 flex-1">
+
+    <div class="scen" style="border-color:var(--green);">
+      <div class="scen-icon">📅</div>
+      <div class="scen-title">Escenario A · Semana actual con datos</div>
+      <div class="scen-body">La semana en curso (<strong>TW</strong>) tiene registro de rotaciones y/o transacciones por día.<br/><br/>→ Se usan directamente los datos de la semana actual.</div>
+      <div class="scen-badge">
+        <span class="pill" style="background:#f0fff4; color:var(--green);">Usa TW</span>
+      </div>
+    </div>
+
+    <div class="scen" style="border-color:var(--spark);">
+      <div class="scen-icon">🔄</div>
+      <div class="scen-title">Escenario B · TW sin dato, LW sí tiene</div>
+      <div class="scen-body">La semana actual (<strong>TW</strong>) no registra información, pero la semana anterior (<strong>LW</strong>) sí tiene datos históricos.<br/><br/>→ Se toman las rotaciones/transacciones diarias de la semana anterior como proxy.</div>
+      <div class="scen-badge">
+        <span class="pill" style="background:#fff8e7; color:var(--spark-t);">Usa LW como proxy</span>
+      </div>
+    </div>
+
+    <div class="scen" style="border-color:var(--blue);">
+      <div class="scen-icon">📦</div>
+      <div class="scen-title">Escenario C · Sin ventas, pero con inventario</div>
+      <div class="scen-body">El ítem no registra rotaciones ni transacciones en ninguna semana, pero <strong>sí tiene inventario disponible</strong>.<br/><br/>→ Se asigna por defecto <strong>1 transacción/rotación semanal</strong> y el peso se distribuye proporcionalmente en todos los días.</div>
+      <div class="scen-badge">
+        <span class="pill" style="background:#f0f5ff; color:var(--blue);">Default: 1 rot/trns</span>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="mt-4 p-3 rounded-2xl small" style="background:var(--gray-l);">
+    ⚡ <strong>Regla adicional:</strong> Si dentro de una semana un día específico no tiene datos, ese día recibe un peso mínimo de <strong>2%</strong> y el restante <strong>98%</strong> se distribuye entre los días que sí tienen información.
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════
+     SLIDE 5 · REGLA DEL 2%
+════════════════════════════════════════════ -->
+<div class="slide" id="s5" style="background:var(--gray-l);">
+  <div class="tag">Paso 1 · Detalle</div>
+  <div class="h2 mt-1">La regla del 2% — días sin ventas</div>
+  <div class="accent-line"></div>
+
+  <div class="flex gap-6 flex-1">
+
+    <!-- Left: explanation -->
+    <div class="flex flex-col gap-4" style="flex:1;">
+      <div class="card" style="flex:1;">
+        <div class="h3 mb-3">¿Por qué necesitamos esta regla?</div>
+        <p class="small mb-3">Si un día de la semana tiene cero ventas, no podemos asignarle peso 0 — eso ignoraría completamente el precio de ese día, aunque el producto estuviera disponible.</p>
+        <p class="small">La solución es asignar un <strong>mínimo garantizado del 2%</strong> a cada día sin datos, y redistribuir el 98% restante entre los días que sí registraron actividad.</p>
+      </div>
+      <div class="card" style="background:#f0f5ff; border:2px solid #ddeaff;">
+        <div class="small font-semibold mb-2" style="color:var(--blue);">📌 Objetivo de esta regla</div>
+        <p class="small">Ningún día queda completamente excluido del cálculo. Así garantizamos que el precio AUR refleje toda la semana, aunque algunos días tengan actividad mínima.</p>
+      </div>
+    </div>
+
+    <!-- Right: visual example -->
+    <div class="flex flex-col gap-4" style="flex:1.4;">
+      <div class="card flex-1">
+        <div class="h3 mb-4">Ejemplo visual — Semana típica</div>
+
+        <!-- Day bars -->
+        <div class="flex flex-col gap-3">
+          <!-- Days with data -->
+          <div>
+            <div class="flex justify-between mb-1" style="font-size:12px; font-weight:700; color:var(--gray-m);">
+              <span>Lunes</span><span style="color:var(--blue);">28%</span>
+            </div>
+            <div class="bar-wrap" style="height:28px;">
+              <div class="bar-seg" style="width:28%; background:var(--blue);">28%</div>
+              <div style="flex:1; background:#eee;"></div>
+            </div>
+          </div>
+          <div>
+            <div class="flex justify-between mb-1" style="font-size:12px; font-weight:700; color:var(--gray-m);">
+              <span>Martes</span><span style="color:var(--blue);">32%</span>
+            </div>
+            <div class="bar-wrap" style="height:28px;">
+              <div class="bar-seg" style="width:32%; background:var(--blue);">32%</div>
+              <div style="flex:1; background:#eee;"></div>
+            </div>
+          </div>
+          <div>
+            <div class="flex justify-between mb-1" style="font-size:12px; font-weight:700; color:var(--gray-m);">
+              <span>Miércoles</span><span style="color:var(--blue);">22%</span>
+            </div>
+            <div class="bar-wrap" style="height:28px;">
+              <div class="bar-seg" style="width:22%; background:var(--blue);">22%</div>
+              <div style="flex:1; background:#eee;"></div>
+            </div>
+          </div>
+          <div>
+            <div class="flex justify-between mb-1" style="font-size:12px; font-weight:700; color:var(--gray-m);">
+              <span>Jueves</span><span style="color:var(--blue);">16%</span>
+            </div>
+            <div class="bar-wrap" style="height:28px;">
+              <div class="bar-seg" style="width:16%; background:var(--blue);">16%</div>
+              <div style="flex:1; background:#eee;"></div>
+            </div>
+          </div>
+          <!-- Day without data -->
+          <div>
+            <div class="flex justify-between mb-1" style="font-size:12px; font-weight:700; color:var(--gray-m);">
+              <span>Viernes <span style="color:#ea1100; font-size:10px;">SIN DATOS</span></span>
+              <span style="color:#ea1100;">2% ← mínimo</span>
+            </div>
+            <div class="bar-wrap" style="height:28px;">
+              <div class="bar-seg" style="width:2%; background:#ea1100; min-width:28px;">2%</div>
+              <div style="flex:1; background:#fde8e8;"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-3 p-2 rounded-xl text-center" style="background:var(--gray-l); font-size:11px; color:var(--gray-m); font-weight:600;">
+          Suma total = 100% ✅ · El peso está siempre balanceado
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════
+     SLIDE 6 · PASO 2 – PESO COMPUESTO 50/50
+════════════════════════════════════════════ -->
+<div class="slide" id="s6" style="background:#fff;">
+  <div class="tag">Paso 2 · Peso compuesto</div>
+  <div class="h2 mt-1">El peso final combina dos factores</div>
+  <div class="accent-line"></div>
+
+  <div class="flex gap-8 flex-1 items-center">
+
+    <!-- Donut visual -->
+    <div class="flex flex-col items-center gap-4 flex-shrink-0">
+      <div class="donut-ring">
+        <div class="donut-hole">Peso<br/>Compuesto</div>
+      </div>
+      <div class="flex gap-4" style="font-size:12px; font-weight:700;">
+        <div class="flex items-center gap-2"><div style="width:14px;height:14px;border-radius:3px;background:var(--blue);"></div>50% Rot / Trns</div>
+        <div class="flex items-center gap-2"><div style="width:14px;height:14px;border-radius:3px;background:var(--spark);"></div>50% Recurrencia</div>
+      </div>
+    </div>
+
+    <!-- Breakdown -->
+    <div class="flex flex-col gap-5 flex-1">
+
+      <div class="card" style="border-left:6px solid var(--blue);">
+        <div class="flex items-start gap-4">
+          <div style="background:#f0f5ff; border-radius:10px; padding:10px 16px; font-size:24px; font-weight:900; color:var(--blue); flex-shrink:0;">50%</div>
+          <div>
+            <div class="h3 mb-1">Peso Rotaciones o Transacciones</div>
+            <p class="small">El porcentaje que representa cada día dentro de la semana según el volumen de rotaciones o número de transacciones registradas. Es el componente de <strong>comportamiento de compra</strong>.</p>
+          </div>
+        </div>
+      </div>
+
+      <div style="text-align:center; font-size:22px; font-weight:900; color:var(--gray-m);">+</div>
+
+      <div class="card" style="border-left:6px solid var(--spark);">
+        <div class="flex items-start gap-4">
+          <div style="background:#fff8e7; border-radius:10px; padding:10px 16px; font-size:24px; font-weight:900; color:var(--spark-t); flex-shrink:0;">50%</div>
+          <div>
+            <div class="h3 mb-1">Recurrencia del Precio</div>
+            <p class="small">Qué tan frecuentemente aparece un precio determinado en la semana. Aporta el componente de <strong>estabilidad del precio</strong> registrado para ese ítem en el período evaluado.</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="mt-3 p-3 rounded-2xl small font-semibold text-center" style="background:var(--gray-l); color:var(--gray-m);">
+    🎯 Este peso compuesto se aplica <strong>por igual</strong> al Precio WM y al Precio COMP para mantener la comparabilidad del Price Gap
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════
+     SLIDE 7 · PASO 3 – PRECIO AUR
+════════════════════════════════════════════ -->
+<div class="slide" id="s7" style="background:var(--gray-l);">
+  <div class="tag">Paso 3 · Precio AUR</div>
+  <div class="h2 mt-1">Del peso al precio ponderado final</div>
+  <div class="accent-line"></div>
+
+  <div class="flex gap-4 mb-5 items-center">
+    <!-- WM price -->
+    <div class="price-box" style="background:#f0f5ff; border:2px solid #ddeaff;">
+      <div class="price-label" style="color:var(--blue);">PRECIO WM</div>
+      <div style="font-size:40px;">🏪</div>
+      <div class="price-eq small">Precio diario de Walmart</div>
+    </div>
+
+    <div class="times-badge">×</div>
+
+    <!-- Weight -->
+    <div class="price-box" style="background:#fff8e7; border:2px solid #ffe5a0;">
+      <div class="price-label" style="color:var(--spark-t);">PESO COMPUESTO</div>
+      <div style="font-size:40px;">⚖️</div>
+      <div class="price-eq small">50% Rot/Trns + 50% Recurrencia</div>
+    </div>
+
+    <div class="arrow-h" style="font-size:32px;">→</div>
+
+    <!-- AUR WM -->
+    <div class="price-box" style="background:#fff; border:3px solid var(--blue); box-shadow:0 4px 20px rgba(0,83,226,.15);">
+      <div class="price-label" style="color:var(--blue);">AUR WM</div>
+      <div class="price-val" style="color:var(--blue);">💰</div>
+      <div class="price-eq small">Precio Walmart ponderado</div>
+    </div>
+  </div>
+
+  <div class="flex gap-4 items-center mb-5">
+    <!-- COMP price -->
+    <div class="price-box" style="background:#f5f5f5; border:2px solid #ddd;">
+      <div class="price-label" style="color:#555;">PRECIO COMP</div>
+      <div style="font-size:40px;">🏬</div>
+      <div class="price-eq small">Precio diario del competidor</div>
+    </div>
+
+    <div class="times-badge">×</div>
+
+    <!-- Same weight -->
+    <div class="price-box" style="background:#fff8e7; border:2px solid #ffe5a0;">
+      <div class="price-label" style="color:var(--spark-t);">MISMO PESO</div>
+      <div style="font-size:40px;">⚖️</div>
+      <div class="price-eq small">El mismo peso compuesto</div>
+    </div>
+
+    <div class="arrow-h" style="font-size:32px;">→</div>
+
+    <!-- AUR COMP -->
+    <div class="price-box" style="background:#fff; border:3px solid #555; box-shadow:0 4px 20px rgba(0,0,0,.08);">
+      <div class="price-label" style="color:#555;">AUR COMP</div>
+      <div class="price-val" style="color:#555;">🏷️</div>
+      <div class="price-eq small">Precio competidor ponderado</div>
+    </div>
+  </div>
+
+  <div class="card" style="border-left:6px solid var(--green);">
+    <div class="flex items-center gap-4">
+      <div style="font-size:36px;">📊</div>
+      <div>
+        <div class="h3 mb-1" style="color:var(--green);">Price Gap = 1 − (AUR WM ÷ AUR COMP)</div>
+        <p class="small">Con ambos precios ponderados por el mismo comportamiento de compra, el Price Gap refleja la <strong>diferencia real de precio que percibe el cliente</strong>, no una diferencia de catálogo.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════
+     SLIDE 8 · TABLA OFICIAL PRICE GAP
+════════════════════════════════════════════ -->
+<div class="slide" id="s8" style="background:#fff;">
+  <div class="tag">Salida del proceso</div>
+  <div class="h2 mt-1">Tabla oficial de Price Gap</div>
+  <div class="accent-line"></div>
+
+  <div class="flex gap-6 flex-1">
+    <div class="flex flex-col gap-4" style="flex:1;">
+      <p class="small">La tabla de salida consolida todo el proceso en una estructura limpia de <strong>una fila por ítem–competidor–zona</strong>. Los precios ya son AUR, no precios diarios.</p>
+
+      <div class="card" style="flex:1; overflow:auto;">
+        <table class="pg-table">
+          <thead>
+            <tr>
+              <th>Ítem</th>
+              <th>Competidor</th>
+              <th>Zona</th>
+              <th>Precio WM AUR</th>
+              <th>Precio COMP AUR</th>
+              <th>Peso CAM</th>
+              <th>Peso MB</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>001234</td><td>Competidor A</td><td>CR-01</td>
+              <td><strong style="color:var(--blue);">₡1,850</strong></td>
+              <td>₡1,920</td>
+              <td>33%</td><td>100%</td>
+            </tr>
+            <tr>
+              <td>001234</td><td>Competidor B</td><td>CR-01</td>
+              <td><strong style="color:var(--blue);">₡1,850</strong></td>
+              <td>₡1,890</td>
+              <td>33%</td><td>—</td>
+            </tr>
+            <tr>
+              <td>001234</td><td>Competidor C</td><td>CR-01</td>
+              <td><strong style="color:var(--blue);">₡1,850</strong></td>
+              <td>₡1,780</td>
+              <td>34%</td><td>—</td>
+            </tr>
+            <tr>
+              <td>005678</td><td>Competidor A</td><td>GT-02</td>
+              <td><strong style="color:var(--blue);">Q48.50</strong></td>
+              <td>Q50.00</td>
+              <td>100%</td><td>100%</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="flex flex-col gap-4" style="width:280px; flex-shrink:0;">
+      <div class="card" style="border-top:4px solid var(--blue);">
+        <div style="font-size:18px; margin-bottom:6px;">🧮</div>
+        <div class="h3" style="font-size:14px; margin-bottom:6px;">Peso CAM</div>
+        <p class="small">Se distribuye de forma <strong>particionada</strong> entre los competidores del ítem. Si hay 3 competidores, cada uno recibe aproximadamente ⅓ del peso total.</p>
+      </div>
+      <div class="card" style="border-top:4px solid var(--spark);">
+        <div style="font-size:18px; margin-bottom:6px;">💰</div>
+        <div class="h3" style="font-size:14px; margin-bottom:6px;">Peso MB</div>
+        <p class="small">Para el cálculo de <strong>margen</strong>, se usa el <strong>100%</strong> de las rotaciones o transacciones del ítem — sin partir entre competidores.</p>
+      </div>
+      <div class="card" style="border-top:4px solid var(--green); background:#f0fff4;">
+        <div style="font-size:18px; margin-bottom:6px;">✅</div>
+        <div class="h3" style="font-size:14px; margin-bottom:6px;">Precio = AUR, no diario</div>
+        <p class="small">Los precios en esta tabla <strong>nunca son de un día específico</strong>. Siempre son el AUR calculado con el peso compuesto de toda la semana.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════
+     SLIDE 9 · CONSIDERACIONES / IMPACTO
+════════════════════════════════════════════ -->
+<div class="slide" id="s9b" style="background:var(--gray-l);">
+  <div class="tag">Consideraciones</div>
+  <div class="h2 mt-1">Impacto en sistemas y procesos</div>
+  <div class="accent-line"></div>
+
+  <div class="flex gap-5 flex-1">
+
+    <div class="cons-card" style="border-color:var(--red);">
+      <div class="cons-icon">⚠️</div>
+      <div class="cons-title">Ajuste de Price Builders (PB)</div>
+      <p class="cons-body">Todos los <strong>Price Builders</strong> que consuman las tablas de Price Gap deberán actualizarse para trabajar con el nuevo esquema de precio AUR y la nueva estructura de peso CAM y peso MB.</p>
+      <div class="mt-3">
+        <span class="pill" style="background:#fff5f5; color:var(--red);">Acción requerida</span>
+      </div>
+    </div>
+
+    <div class="cons-card" style="border-color:var(--spark);">
+      <div class="cons-icon">🔁</div>
+      <div class="cons-title">Lógica de Reacción de Precio</div>
+      <p class="cons-body">Debe redefinirse cómo se calcula el <strong>precio de reacción</strong> bajo la nueva metodología. El cambio en los precios AUR afecta directamente las reglas de reacción competitiva que hoy existen.</p>
+      <div class="mt-3">
+        <span class="pill" style="background:#fff8e7; color:var(--spark-t);">Revisión necesaria</span>
+      </div>
+    </div>
+
+    <div class="cons-card" style="border-color:var(--blue);">
+      <div class="cons-icon">🐝</div>
+      <div class="cons-title">Cálculo de Colmena (externos)</div>
+      <p class="cons-body">La lógica de <strong>Colmena para competidores externos</strong> también se ve impactada. El cálculo de colmena debe alinearse con la nueva forma en que se generan los precios AUR por competidor.</p>
+      <div class="mt-3">
+        <span class="pill" style="background:#f0f5ff; color:var(--blue);">Evaluar alcance</span>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="mt-4 p-4 rounded-2xl" style="background:#fff; border-left:5px solid var(--blue);">
+    <div class="flex items-center gap-3">
+      <div style="font-size:24px;">💡</div>
+      <p class="small"><strong>Recomendación:</strong> Definir un plan de implementación por fases — primero validar que los resultados AUR son consistentes con la realidad de mercado, luego actualizar PB y lógicas de reacción coordinadamente.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════
+     SLIDE 10 · CIERRE
+════════════════════════════════════════════ -->
+<div class="slide" id="s10" style="background:linear-gradient(140deg,#001f6e 0%,#0053e2 60%,#0069ff 100%); color:#fff; justify-content:center; align-items:center; text-align:center;">
+  <div style="font-size:64px; margin-bottom:16px;">✅</div>
+  <div style="font-size:42px; font-weight:900; line-height:1.1; margin-bottom:16px;">Una metodología más precisa<br/>para precios más inteligentes</div>
+  <p style="font-size:16px; opacity:.8; max-width:600px; line-height:1.7; margin-bottom:40px;">
+    El Precio AUR ponderado por rotaciones o transacciones nos permite calcular el Price Gap y el Margen de forma más fiel a la realidad de compra del cliente — ítem por ítem, día a día.
+  </p>
+  <div style="display:flex; gap:20px; justify-content:center; flex-wrap:wrap;">
+    <div style="background:rgba(255,255,255,.15); backdrop-filter:blur(6px); border-radius:14px; padding:18px 30px;">
+      <div style="font-size:11px; opacity:.7; font-weight:700; letter-spacing:1px; margin-bottom:6px;">METODOLOGÍA</div>
+      <div style="font-size:20px; font-weight:900; color:var(--spark);">AUR Ponderado</div>
+    </div>
+    <div style="background:rgba(255,255,255,.15); backdrop-filter:blur(6px); border-radius:14px; padding:18px 30px;">
+      <div style="font-size:11px; opacity:.7; font-weight:700; letter-spacing:1px; margin-bottom:6px;">PESO COMPUESTO</div>
+      <div style="font-size:20px; font-weight:900; color:var(--spark);">50% + 50%</div>
+    </div>
+    <div style="background:rgba(255,255,255,.15); backdrop-filter:blur(6px); border-radius:14px; padding:18px 30px;">
+      <div style="font-size:11px; opacity:.7; font-weight:700; letter-spacing:1px; margin-bottom:6px;">SALIDA</div>
+      <div style="font-size:20px; font-weight:900; color:var(--spark);">1 fila / ítem-comp-zona</div>
+    </div>
+  </div>
+  <div style="margin-top:48px; font-size:11px; opacity:.4; letter-spacing:1px;">PRICING INTELLIGENCE · CENTROAMÉRICA · 2026</div>
+</div>
+
+</div><!-- /deck -->
+
+<!-- ══ Navigation ══ -->
+<div id="nav">
+  <button id="btnPrev" onclick="go(-1)" disabled>‹</button>
+  <div id="dots"></div>
+  <span id="counter">1 / 10</span>
+  <button id="btnNext" onclick="go(1)">›</button>
+</div>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  const total  = slides.length;
+  let cur = 0;
+
+  const dotsEl   = document.getElementById('dots');
+  const counter  = document.getElementById('counter');
+  const btnPrev  = document.getElementById('btnPrev');
+  const btnNext  = document.getElementById('btnNext');
+
+  slides.forEach((_, i) => {
+    const d = document.createElement('div');
+    d.className = 'dot' + (i === 0 ? ' on' : '');
+    d.onclick = () => goTo(i);
+    dotsEl.appendChild(d);
+  });
+
+  function goTo(n) {
+    slides[cur].classList.remove('active');
+    dotsEl.children[cur].classList.remove('on');
+    cur = n;
+    slides[cur].classList.add('active');
+    dotsEl.children[cur].classList.add('on');
+    counter.textContent = `${cur + 1} / ${total}`;
+    btnPrev.disabled = cur === 0;
+    btnNext.disabled = cur === total - 1;
+  }
+
+  function go(d) {
+    if (cur + d >= 0 && cur + d < total) goTo(cur + d);
+  }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') go(1);
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   go(-1);
+  });
+</script>
+</body>
+</html>

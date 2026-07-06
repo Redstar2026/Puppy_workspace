@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+{% set is_edit = desarrollo is not none %}
+{% block title %}{{ 'Editar' if is_edit else 'Nuevo' }} Desarrollo — {{ app_name }}{% endblock %}
+{% block breadcrumb %}
+  <a href="/desarrollos" class="text-gray-400 hover:text-walmart-blue">Desarrollos</a>
+  <span class="text-gray-400">/</span>
+  <span class="font-semibold text-walmart-blue">{{ 'Editar' if is_edit else 'Nuevo Desarrollo' }}</span>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-6">
+  <div class="flex items-center gap-4">
+    <a href="/desarrollos" class="text-sm text-gray-500 hover:text-walmart-blue">← Volver</a>
+    <h1 class="text-xl font-bold text-gray-900 dark:text-white">
+      {{ 'Editar Desarrollo' if is_edit else '+ Nuevo Desarrollo' }}
+    </h1>
+  </div>
+
+  <form method="POST" action="{{ '/desarrollos/'+desarrollo.id|string+'/editar' if is_edit else '/desarrollos/nuevo' }}"
+        class="space-y-6">
+
+    {# Identificación #}
+    <div class="card p-6 space-y-5">
+      <h2 class="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wide border-b border-gray-200 dark:border-gray-700 pb-3">
+        ⚙️ Identificación del Desarrollo
+      </h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div class="md:col-span-2">
+          <label class="form-label">Nombre del Desarrollo *</label>
+          <input type="text" name="nombre" required maxlength="300"
+                 value="{{ desarrollo.nombre if is_edit else '' }}"
+                 placeholder="Nombre técnico del desarrollo..." class="form-input text-base font-medium" />
+        </div>
+        <div>
+          <label class="form-label">Solicitud Relacionada</label>
+          <select name="solicitud_id" class="form-input">
+            <option value="">— Sin solicitud relacionada —</option>
+            {% for s in solicitudes %}
+            <option value="{{ s.id }}" {% if is_edit and desarrollo.solicitud_id == s.id %}selected{% endif %}>
+              {{ s.folio }} — {{ s.titulo[:60] }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="form-label">Tipo de Implementación</label>
+          <input type="text" name="tipo_implementacion"
+                 value="{{ desarrollo.tipo_implementacion if is_edit else '' }}"
+                 placeholder="Ej: Backend, ETL, Regla de negocio..." class="form-input" />
+        </div>
+        <div>
+          <label class="form-label">Estado</label>
+          <select name="estado" class="form-input">
+            {% for e in estados %}
+            <option value="{{ e }}" {% if is_edit and desarrollo.estado.value == e %}selected{% endif %}>
+              {{ label_estado(e).label }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="form-label">% Avance</label>
+          <input type="number" name="porcentaje_avance" min="0" max="100"
+                 value="{{ desarrollo.porcentaje_avance | int if is_edit else 0 }}" class="form-input" />
+        </div>
+        <div>
+          <label class="form-label">Ambiente</label>
+          <select name="ambiente" class="form-input">
+            {% for amb in ['desarrollo','qa','produccion'] %}
+            <option value="{{ amb }}" {% if is_edit and desarrollo.ambiente == amb %}selected{% endif %}>{{ amb.capitalize() }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="form-label">Fecha Estimada</label>
+          <input type="date" name="fecha_estimada"
+                 value="{{ desarrollo.fecha_estimada.strftime('%Y-%m-%d') if is_edit and desarrollo.fecha_estimada else '' }}"
+                 class="form-input" />
+        </div>
+      </div>
+    </div>
+
+    {# Descripción técnica #}
+    <div class="card p-6 space-y-5">
+      <h2 class="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wide border-b border-gray-200 dark:border-gray-700 pb-3">📝 Descripción Técnica</h2>
+      <div>
+        <label class="form-label">Descripción Técnica</label>
+        <textarea name="descripcion_tecnica" rows="4" placeholder="Detalles técnicos del desarrollo..." class="form-input resize-none">{{ desarrollo.descripcion_tecnica if is_edit else '' }}</textarea>
+      </div>
+      <div>
+        <label class="form-label">Objetivo del Cambio</label>
+        <textarea name="objetivo_cambio" rows="3" placeholder="¿Qué problema resuelve este desarrollo?" class="form-input resize-none">{{ desarrollo.objetivo_cambio if is_edit else '' }}</textarea>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div>
+          <label class="form-label">Resultado Esperado</label>
+          <textarea name="resultado_esperado" rows="3" class="form-input resize-none">{{ desarrollo.resultado_esperado if is_edit else '' }}</textarea>
+        </div>
+        <div>
+          <label class="form-label">Plan de Rollback</label>
+          <textarea name="rollback_plan" rows="3" placeholder="Pasos para revertir si algo falla..." class="form-input resize-none">{{ desarrollo.rollback_plan if is_edit else '' }}</textarea>
+        </div>
+        <div>
+          <label class="form-label">Dependencias Técnicas</label>
+          <textarea name="dependencias_tecnicas" rows="2" class="form-input resize-none">{{ desarrollo.dependencias_tecnicas if is_edit else '' }}</textarea>
+        </div>
+        <div>
+          <label class="form-label">Impacto Operativo</label>
+          <textarea name="impacto_operativo" rows="2" class="form-input resize-none">{{ desarrollo.impacto_operativo if is_edit else '' }}</textarea>
+        </div>
+        <div>
+          <label class="form-label">Riesgo del Cambio</label>
+          <select name="riesgo_cambio" class="form-input">
+            {% for r in riesgos %}
+            <option value="{{ r }}" {% if is_edit and desarrollo.riesgo_cambio.value == r %}selected{% endif %}>{{ r.capitalize() }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="form-label">Resultado QA</label>
+          <select name="resultado_qa" class="form-input">
+            {% for rqa in resultados_qa %}
+            <option value="{{ rqa }}" {% if is_edit and desarrollo.resultado_qa.value == rqa %}selected{% endif %}>{{ rqa.replace('_',' ').capitalize() }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+    </div>
+
+    {# Responsables #}
+    <div class="card p-6 space-y-5">
+      <h2 class="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wide border-b border-gray-200 dark:border-gray-700 pb-3">👥 Responsables</h2>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+        {% for field, lbl in [('responsable_dev_id','Desarrollador'),('responsable_qa_id','QA'),('responsable_negocio_id','Negocio')] %}
+        <div>
+          <label class="form-label">{{ lbl }}</label>
+          <select name="{{ field }}" class="form-input">
+            <option value="">— Sin asignar —</option>
+            {% for u in usuarios %}
+            <option value="{{ u.id }}" {% if is_edit and getattr(desarrollo, field.replace('_id','_id')) == u.id %}selected{% endif %}>{{ u.nombre }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    {# GitHub Integration #}
+    <div class="card p-6 space-y-5">
+      <h2 class="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wide border-b border-gray-200 dark:border-gray-700 pb-3">
+        🐙 Integración GitHub
+      </h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div>
+          <label class="form-label">Repositorio</label>
+          <input type="text" name="github_repo" value="{{ desarrollo.github_repo if is_edit else '' }}"
+                 placeholder="org/repo" class="form-input font-mono text-sm" />
+        </div>
+        <div>
+          <label class="form-label">Branch</label>
+          <input type="text" name="github_branch" value="{{ desarrollo.github_branch if is_edit else '' }}"
+                 placeholder="feature/pricing-..." class="form-input font-mono text-sm" />
+        </div>
+        <div>
+          <label class="form-label">Commit SHA</label>
+          <input type="text" name="github_commit" value="{{ desarrollo.github_commit if is_edit else '' }}"
+                 placeholder="abc1234..." class="form-input font-mono text-sm" />
+        </div>
+        <div>
+          <label class="form-label">Pull Request URL</label>
+          <input type="url" name="github_pr" value="{{ desarrollo.github_pr if is_edit else '' }}"
+                 placeholder="https://github.com/.../pull/..." class="form-input text-sm" />
+        </div>
+      </div>
+    </div>
+
+    <div class="flex justify-end gap-3 pb-6">
+      <a href="/desarrollos" class="px-6 py-2.5 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-sm font-semibold rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">Cancelar</a>
+      <button type="submit" class="px-6 py-2.5 bg-indigo-600 text-white text-sm font-bold rounded-lg hover:bg-indigo-700 transition-all shadow-md hover:shadow-lg">
+        {{ '💾 Guardar Cambios' if is_edit else '✅ Crear Desarrollo' }}
+      </button>
+    </div>
+  </form>
+</div>
+{% endblock %}

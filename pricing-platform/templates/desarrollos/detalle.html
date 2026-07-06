@@ -1,0 +1,227 @@
+{% extends "base.html" %}
+{% block title %}{{ dev.folio }} — {{ app_name }}{% endblock %}
+{% block breadcrumb %}
+  <a href="/desarrollos" class="text-gray-400 hover:text-walmart-blue">Desarrollos</a>
+  <span class="text-gray-400">/</span>
+  <span class="font-semibold text-walmart-blue">{{ dev.folio }}</span>
+{% endblock %}
+
+{% block content %}
+{% set ep = label_estado(dev.estado.value) %}
+<div class="space-y-5" x-data="{ tabActivo: 'detalle' }">
+
+  {# Header #}
+  <div class="card p-6">
+    <div class="flex flex-col md:flex-row md:items-start justify-between gap-4">
+      <div>
+        <div class="flex flex-wrap items-center gap-2 mb-2">
+          <span class="font-mono text-sm font-bold text-indigo-600 bg-indigo-50 dark:bg-indigo-900/30 px-2 py-1 rounded">{{ dev.folio }}</span>
+          <span class="badge {{ ep.css }}">{{ ep.label }}</span>
+          {% if dev.solicitud %}
+          <a href="/solicitudes/{{ dev.solicitud.id }}" class="text-xs text-walmart-blue hover:underline bg-blue-50 dark:bg-blue-900/20 px-2 py-1 rounded">
+            SOL: {{ dev.solicitud.folio }}
+          </a>
+          {% endif %}
+        </div>
+        <h1 class="text-xl font-bold text-gray-900 dark:text-white">{{ dev.nombre }}</h1>
+        <div class="flex flex-wrap gap-4 mt-2 text-xs text-gray-500">
+          {% if dev.responsable_dev %}<span>👨‍💻 Dev: {{ dev.responsable_dev.nombre }}</span>{% endif %}
+          {% if dev.responsable_qa %}<span>🧪 QA: {{ dev.responsable_qa.nombre }}</span>{% endif %}
+          <span>📅 {{ dev.fecha_ingreso.strftime('%d/%m/%Y') }}</span>
+          {% set rr = label_riesgo(dev.riesgo_cambio.value if dev.riesgo_cambio else 'bajo') %}
+          <span class="{{ rr.css }} font-semibold">⚡ Riesgo: {{ rr.label }}</span>
+        </div>
+      </div>
+      <div class="flex gap-2">
+        <a href="/desarrollos/{{ dev.id }}/editar" class="px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-semibold rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">✏️ Editar</a>
+      </div>
+    </div>
+    <div class="mt-4">
+      <div class="flex justify-between text-xs text-gray-500 mb-1">
+        <span>Progreso técnico</span>
+        <span class="font-bold text-indigo-600">{{ dev.porcentaje_avance | int }}%</span>
+      </div>
+      <div class="h-3 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
+        <div class="h-full rounded-full bg-indigo-600 transition-all duration-700" style="width:{{ dev.porcentaje_avance }}%"></div>
+      </div>
+    </div>
+    {# Quick update #}
+    <form method="POST" action="/desarrollos/{{ dev.id }}/estado"
+          class="flex flex-wrap items-center gap-3 mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
+      <select name="estado" class="form-input w-44 text-xs">
+        {% for e in estados %}
+        <option value="{{ e }}" {% if dev.estado.value == e %}selected{% endif %}>{{ label_estado(e).label }}</option>
+        {% endfor %}
+      </select>
+      <input type="number" name="porcentaje_avance" min="0" max="100" value="{{ dev.porcentaje_avance | int }}" class="form-input w-24 text-xs" />
+      <select name="resultado_qa" class="form-input w-44 text-xs">
+        {% for rqa in resultados_qa %}
+        <option value="{{ rqa }}" {% if dev.resultado_qa.value == rqa %}selected{% endif %}>QA: {{ rqa.replace('_',' ').capitalize() }}</option>
+        {% endfor %}
+      </select>
+      <button type="submit" class="px-4 py-2 bg-indigo-600 text-white text-xs font-bold rounded-lg hover:bg-indigo-700 transition-colors">Actualizar</button>
+    </form>
+  </div>
+
+  {# Tabs #}
+  <div class="flex border-b border-gray-200 dark:border-gray-700 gap-0 overflow-x-auto">
+    {% for tab, ico, lbl in [('detalle','📋','Detalle'),('github','🐙','GitHub & Logs'),('comentarios','💬','Comentarios'),('historial','📜','Historial'),('aprobaciones','✅','Aprobaciones')] %}
+    <button @click="tabActivo='{{ tab }}'"
+            :class="tabActivo==='{{ tab }}' ? 'border-b-2 border-indigo-600 text-indigo-600 font-semibold' : 'text-gray-500 hover:text-gray-700'"
+            class="px-5 py-3 text-sm transition-all -mb-px whitespace-nowrap">{{ ico }} {{ lbl }}</button>
+    {% endfor %}
+  </div>
+
+  {# TAB: Detalle #}
+  <div x-show="tabActivo==='detalle'" class="grid grid-cols-1 md:grid-cols-3 gap-5">
+    <div class="md:col-span-2 space-y-5">
+      <div class="card p-6">
+        <h3 class="text-sm font-bold text-gray-500 uppercase tracking-wide mb-3">Descripción Técnica</h3>
+        <p class="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-line leading-relaxed">{{ dev.descripcion_tecnica or 'Sin descripción.' }}</p>
+      </div>
+      <div class="card p-6">
+        <h3 class="text-sm font-bold text-gray-500 uppercase tracking-wide mb-3">Objetivo del Cambio</h3>
+        <p class="text-sm text-gray-700 dark:text-gray-300">{{ dev.objetivo_cambio or '—' }}</p>
+      </div>
+      {% if dev.resultado_esperado or dev.resultado_real %}
+      <div class="card p-6 grid grid-cols-2 gap-4">
+        <div>
+          <h3 class="text-xs font-bold text-gray-500 uppercase mb-2">Resultado Esperado</h3>
+          <p class="text-sm text-gray-700 dark:text-gray-300">{{ dev.resultado_esperado or '—' }}</p>
+        </div>
+        <div>
+          <h3 class="text-xs font-bold text-gray-500 uppercase mb-2">Resultado Real</h3>
+          <p class="text-sm text-gray-700 dark:text-gray-300">{{ dev.resultado_real or 'Pendiente.' }}</p>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+    <div class="space-y-4">
+      <div class="card p-4 space-y-3">
+        <h3 class="text-xs font-bold text-gray-500 uppercase">Validación QA</h3>
+        {% set qa_colors = {'pendiente':'badge-gray','aprobado':'badge-green','rechazado':'badge-red','con_observaciones':'badge-yellow'} %}
+        <span class="badge {{ qa_colors.get(dev.resultado_qa.value,'badge-gray') }} text-sm">{{ dev.resultado_qa.value.replace('_',' ').capitalize() }}</span>
+        {% if dev.evidencia_pruebas %}
+        <div class="mt-2">
+          <p class="text-xs text-gray-400 mb-1">Evidencia:</p>
+          <p class="text-xs text-gray-600 dark:text-gray-400">{{ dev.evidencia_pruebas }}</p>
+        </div>
+        {% endif %}
+      </div>
+      <div class="card p-4 space-y-2">
+        <h3 class="text-xs font-bold text-gray-500 uppercase">Rollback Plan</h3>
+        <p class="text-xs text-gray-600 dark:text-gray-400">{{ dev.rollback_plan or 'No definido.' }}</p>
+      </div>
+    </div>
+  </div>
+
+  {# TAB: GitHub #}
+  <div x-show="tabActivo==='github'" class="space-y-5">
+    <div class="card p-6 space-y-4">
+      <h3 class="text-sm font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wide">🐙 Integración GitHub</h3>
+      <div class="grid grid-cols-2 gap-4">
+        {% for lbl, val, href in [('Repositorio', dev.github_repo, 'https://github.com/'+dev.github_repo if dev.github_repo else ''), ('Branch', dev.github_branch, ''), ('Commit', dev.github_commit, ''), ('Pull Request', dev.github_pr, dev.github_pr)] %}
+        <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
+          <p class="text-xs text-gray-400 mb-1">{{ lbl }}</p>
+          {% if href and val %}
+          <a href="{{ href }}" target="_blank" class="font-mono text-xs text-indigo-600 hover:underline">{{ val }}</a>
+          {% else %}
+          <p class="font-mono text-xs text-gray-700 dark:text-gray-300">{{ val or '—' }}</p>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+      {# Actualizar GitHub #}
+      <details class="mt-4">
+        <summary class="text-sm text-walmart-blue cursor-pointer hover:underline">✏️ Actualizar datos GitHub</summary>
+        <form method="POST" action="/desarrollos/{{ dev.id }}/github" class="mt-4 grid grid-cols-2 gap-4">
+          <div><label class="form-label">Repositorio</label><input type="text" name="github_repo" value="{{ dev.github_repo }}" class="form-input font-mono text-sm" /></div>
+          <div><label class="form-label">Branch</label><input type="text" name="github_branch" value="{{ dev.github_branch }}" class="form-input font-mono text-sm" /></div>
+          <div><label class="form-label">Commit SHA</label><input type="text" name="github_commit" value="{{ dev.github_commit }}" class="form-input font-mono text-sm" /></div>
+          <div><label class="form-label">Pull Request URL</label><input type="url" name="github_pr" value="{{ dev.github_pr }}" class="form-input text-sm" /></div>
+          <div class="col-span-2"><label class="form-label">Logs de Implementación</label><textarea name="logs_implementacion" rows="4" class="form-input resize-none font-mono text-xs">{{ dev.logs_implementacion }}</textarea></div>
+          <div class="col-span-2 flex justify-end"><button type="submit" class="px-5 py-2 bg-gray-800 text-white text-sm font-bold rounded-lg hover:bg-gray-700">💾 Guardar GitHub</button></div>
+        </form>
+      </details>
+    </div>
+    {% if dev.logs_implementacion %}
+    <div class="card p-6">
+      <h3 class="text-sm font-bold text-gray-500 uppercase tracking-wide mb-3">📋 Logs de Implementación</h3>
+      <pre class="bg-gray-900 text-green-400 text-xs rounded-lg p-4 overflow-x-auto whitespace-pre-wrap">{{ dev.logs_implementacion }}</pre>
+    </div>
+    {% endif %}
+  </div>
+
+  {# TAB: Comentarios #}
+  <div x-show="tabActivo==='comentarios'" class="space-y-4" id="comentarios">
+    <div class="card p-6 space-y-4">
+      {% for com in dev.comentarios | sort(attribute='creado_en') %}
+      <div class="flex gap-3">
+        <div class="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">{{ com.autor.nombre[:1] }}</div>
+        <div class="flex-1">
+          <div class="flex items-center gap-2 mb-1">
+            <span class="text-sm font-semibold text-gray-800 dark:text-gray-200">{{ com.autor.nombre }}</span>
+            <span class="text-xs text-gray-400">{{ com.creado_en.strftime('%d/%m/%Y %H:%M') }}</span>
+          </div>
+          <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 text-sm text-gray-700 dark:text-gray-300">{{ com.contenido }}</div>
+        </div>
+      </div>
+      {% else %}
+      <p class="text-center text-gray-400 text-sm py-4">Sin comentarios aún.</p>
+      {% endfor %}
+    </div>
+    <div class="card p-5">
+      <form method="POST" action="/desarrollos/{{ dev.id }}/comentario" class="space-y-3">
+        <textarea name="contenido" required rows="3" placeholder="Comentario técnico..." class="form-input resize-none"></textarea>
+        <div class="flex justify-end">
+          <button type="submit" class="px-5 py-2 bg-indigo-600 text-white text-sm font-bold rounded-lg hover:bg-indigo-700">💬 Comentar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  {# TAB: Historial #}
+  <div x-show="tabActivo==='historial'" class="card p-6">
+    <div class="space-y-0">
+      {% for h in dev.historial | sort(attribute='creado_en', reverse=True) %}
+      <div class="timeline-item">
+        <div class="timeline-dot bg-indigo-600"></div>
+        <div class="mb-0.5 flex items-center gap-2">
+          <span class="text-xs font-bold text-gray-800 dark:text-gray-200">{{ h.accion }}</span>
+          {% if h.campo_modificado %}<span class="text-xs text-gray-400 bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded">{{ h.campo_modificado }}</span>{% endif %}
+        </div>
+        {% if h.valor_anterior and h.valor_nuevo %}<p class="text-xs text-gray-500"><span class="line-through text-red-500">{{ h.valor_anterior }}</span> → <span class="text-green-600">{{ h.valor_nuevo }}</span></p>{% endif %}
+        {% if h.detalle %}<p class="text-xs text-gray-500 mt-0.5">{{ h.detalle }}</p>{% endif %}
+        <p class="text-xs text-gray-400 mt-1">{{ h.usuario.nombre if h.usuario else 'Sistema' }} · {{ h.creado_en.strftime('%d/%m/%Y %H:%M') }}</p>
+      </div>
+      {% else %}
+      <p class="text-gray-400 text-sm text-center py-4">Sin historial.</p>
+      {% endfor %}
+    </div>
+  </div>
+
+  {# TAB: Aprobaciones #}
+  <div x-show="tabActivo==='aprobaciones'" class="space-y-4">
+    {% for ap in dev.aprobaciones | sort(attribute='orden') %}
+    <div class="card p-5 flex items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center font-bold text-sm">{{ ap.aprobador.nombre[:2].upper() }}</div>
+        <div>
+          <p class="font-semibold text-sm">{{ ap.aprobador.nombre }}</p>
+          <p class="text-xs text-gray-400">Orden {{ ap.orden }}</p>
+          {% if ap.comentario %}<p class="text-xs text-gray-500 italic">"{{ ap.comentario }}"</p>{% endif %}
+        </div>
+      </div>
+      <div>
+        {% if ap.estado.value == 'pendiente' %}<span class="badge badge-yellow">⏳ Pendiente</span>
+        {% elif ap.estado.value == 'aprobado' %}<span class="badge badge-green">✅ Aprobado</span>
+        {% else %}<span class="badge badge-red">❌ Rechazado</span>{% endif %}
+      </div>
+    </div>
+    {% else %}
+    <div class="card p-8 text-center text-gray-400 text-sm">Sin aprobadores configurados.</div>
+    {% endfor %}
+  </div>
+
+</div>
+{% endblock %}

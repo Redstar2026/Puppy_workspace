@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>{% block title %}Bitácora de Cambios{% endblock %} · Walmart</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            wm: {
+              blue:    '#0053e2',
+              blue10:  '#eff6ff',
+              blue140: '#003494',
+              spark:   '#ffc220',
+              spark10: '#fffbeb',
+              red:     '#ea1100',
+              green:   '#2a8703',
+              warn:    '#995213',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <script src="https://unpkg.com/htmx.org@1.9.12/dist/htmx.min.js"></script>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet"/>
+  <style>
+    [x-cloak]{display:none!important}
+    .nav-link{@apply flex items-center gap-3 px-4 py-2.5 rounded-lg text-blue-100 text-sm font-medium transition-all duration-150 hover:bg-wm-blue140 hover:text-white;}
+    .nav-link.active{@apply bg-wm-blue140 text-white;}
+    .badge-estado{@apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold;}
+  </style>
+</head>
+<body class="h-full bg-gray-50 flex" x-data="{sideOpen:true}">
+
+  {# ── SIDEBAR ─────────────────────────────────────────────────────────── #}
+  <aside class="flex-shrink-0 w-64 bg-wm-blue flex flex-col shadow-xl transition-all duration-300"
+         :class="sideOpen ? 'w-64' : 'w-16'">
+    {# Logo #}
+    <div class="flex items-center gap-3 px-5 py-5 border-b border-wm-blue140">
+      <div class="w-8 h-8 bg-wm-spark rounded-lg flex items-center justify-center flex-shrink-0">
+        <span class="material-icons-round text-wm-blue text-lg">assignment</span>
+      </div>
+      <div x-show="sideOpen" x-cloak>
+        <p class="text-white font-bold text-sm leading-tight">Bitácora</p>
+        <p class="text-blue-300 text-xs">de Cambios</p>
+      </div>
+    </div>
+
+    {# Nav #}
+    <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+      <a href="/" class="nav-link {% if request.url.path == '/' %}active{% endif %}">
+        <span class="material-icons-round text-xl flex-shrink-0">dashboard</span>
+        <span x-show="sideOpen" x-cloak>Dashboard</span>
+      </a>
+      <a href="/tareas" class="nav-link {% if '/tareas' in request.url.path %}active{% endif %}">
+        <span class="material-icons-round text-xl flex-shrink-0">list_alt</span>
+        <span x-show="sideOpen" x-cloak>Tareas y Cambios</span>
+      </a>
+      <a href="/tareas/nueva" class="nav-link {% if request.url.path == '/tareas/nueva' %}active{% endif %}">
+        <span class="material-icons-round text-xl flex-shrink-0">add_circle</span>
+        <span x-show="sideOpen" x-cloak>Nueva Tarea</span>
+      </a>
+      <a href="/aprobaciones" class="nav-link {% if '/aprobaciones' in request.url.path %}active{% endif %}">
+        <span class="material-icons-round text-xl flex-shrink-0">verified</span>
+        <span x-show="sideOpen" x-cloak class="flex items-center gap-2">
+          Aprobaciones
+          {% if pendientes > 0 %}
+          <span class="bg-wm-spark text-wm-blue text-xs font-bold px-1.5 py-0.5 rounded-full">
+            {{pendientes}}
+          </span>
+          {% endif %}
+        </span>
+      </a>
+      <a href="/historial" class="nav-link {% if request.url.path == '/historial' %}active{% endif %}">
+        <span class="material-icons-round text-xl flex-shrink-0">history</span>
+        <span x-show="sideOpen" x-cloak>Historial</span>
+      </a>
+      <a href="/usuarios" class="nav-link {% if request.url.path == '/usuarios' %}active{% endif %}">
+        <span class="material-icons-round text-xl flex-shrink-0">group</span>
+        <span x-show="sideOpen" x-cloak>Usuarios</span>
+      </a>
+    </nav>
+
+    {# User info #}
+    <div class="px-3 py-4 border-t border-wm-blue140">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-full bg-wm-spark flex items-center justify-center flex-shrink-0">
+          <span class="text-wm-blue font-bold text-sm">
+            {{ current_user.nombre[0].upper() if current_user else '?' }}
+          </span>
+        </div>
+        <div x-show="sideOpen" x-cloak class="min-w-0">
+          <p class="text-white text-sm font-semibold truncate">{{ current_user.nombre if current_user else '' }}</p>
+          <p class="text-blue-300 text-xs truncate">{{ current_user.cargo if current_user else '' }}</p>
+        </div>
+      </div>
+      <a href="/logout" x-show="sideOpen" x-cloak
+         class="mt-3 flex items-center gap-2 text-blue-300 hover:text-white text-xs transition-colors">
+        <span class="material-icons-round text-base">logout</span>Salir
+      </a>
+    </div>
+  </aside>
+
+  {# ── MAIN ────────────────────────────────────────────────────────────── #}
+  <div class="flex-1 flex flex-col min-h-0 overflow-hidden">
+    {# Topbar #}
+    <header class="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between flex-shrink-0">
+      <div class="flex items-center gap-4">
+        <button @click="sideOpen=!sideOpen" class="text-gray-500 hover:text-wm-blue transition-colors">
+          <span class="material-icons-round">menu</span>
+        </button>
+        <nav class="text-sm text-gray-500 flex items-center gap-2" aria-label="breadcrumb">
+          {% block breadcrumb %}<span>Dashboard</span>{% endblock %}
+        </nav>
+      </div>
+      <div class="flex items-center gap-3">
+        <a href="/tareas/nueva"
+           class="flex items-center gap-1.5 bg-wm-blue text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-wm-blue140 transition-colors">
+          <span class="material-icons-round text-base">add</span>Nueva Tarea
+        </a>
+      </div>
+    </header>
+
+    {# Flash toast #}
+    {% if flash %}
+    <div x-data="{show:true}" x-init="setTimeout(()=>show=false,4000)" x-show="show" x-transition
+         class="mx-6 mt-4 flex-shrink-0 {% if flash.tipo == 'ok' %}bg-green-50 border-green-400 text-green-800{% elif flash.tipo == 'warn' %}bg-yellow-50 border-yellow-400 text-yellow-800{% else %}bg-red-50 border-red-400 text-red-800{% endif %} border rounded-lg px-4 py-3 flex items-center gap-3 shadow-sm">
+      <span class="material-icons-round text-xl">
+        {% if flash.tipo == 'ok' %}check_circle{% elif flash.tipo == 'warn' %}warning{% else %}error{% endif %}
+      </span>
+      <p class="text-sm font-medium">{{ flash.msg }}</p>
+      <button @click="show=false" class="ml-auto opacity-60 hover:opacity-100">
+        <span class="material-icons-round text-base">close</span>
+      </button>
+    </div>
+    {% endif %}
+
+    {# Page content #}
+    <main class="flex-1 overflow-y-auto p-6">
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+
+</body>
+</html>

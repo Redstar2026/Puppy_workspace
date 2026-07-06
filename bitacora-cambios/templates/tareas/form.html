@@ -1,0 +1,349 @@
+{% extends "base.html" %}
+{% block title %}{{ accion }} Tarea{% endblock %}
+{% block breadcrumb %}
+  <a href="/" class="hover:text-wm-blue">Home</a>
+  <span class="material-icons-round text-base text-gray-300">chevron_right</span>
+  <a href="/tareas" class="hover:text-wm-blue">Tareas</a>
+  <span class="material-icons-round text-base text-gray-300">chevron_right</span>
+  <span>{{ accion }} Tarea</span>
+{% endblock %}
+
+{% set roles_dict = roles_dict if roles_dict is defined else {} %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto" x-data="{
+  tab: 'general',
+  requiereAuth: {{ 'true' if tarea and tarea.requiere_autorizacion else 'false' }}
+}">
+
+  <div class="flex items-center justify-between mb-6">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900">
+        {{ '✏️ Editar Tarea' if accion == 'Editar' else '➕ Nueva Tarea / Cambio' }}
+      </h1>
+      {% if tarea %}
+      <p class="text-sm text-gray-500 mt-1">ID #{{ tarea.id }} · Creada {{ tarea.creado_en.strftime('%d/%m/%Y') }}</p>
+      {% endif %}
+    </div>
+    <a href="{{ '/tareas/' + tarea.id|string if tarea else '/tareas' }}"
+       class="flex items-center gap-1 text-gray-500 hover:text-wm-blue text-sm transition-colors">
+      <span class="material-icons-round text-base">arrow_back</span>Cancelar
+    </a>
+  </div>
+
+  {# Tabs de navegación #}
+  <div class="flex gap-1 bg-gray-100 p-1 rounded-xl mb-6 overflow-x-auto">
+    {% for key, label, icon in [
+      ('general',    'General',       'info'),
+      ('fechas',     'Fechas',        'calendar_today'),
+      ('roles',      'Roles',         'people'),
+      ('aprobacion', 'Autorización',  'verified_user'),
+      ('adicional',  'Adicional',     'tune'),
+    ] %}
+    <button @click="tab='{{ key }}'"
+            :class="tab==='{{ key }}' ? 'bg-white shadow text-wm-blue font-semibold' : 'text-gray-500 hover:text-gray-700'"
+            class="flex items-cent px-4 py-2 rounded-lg text-sm transition-all whitespace-nowrap">
+      <span class="material-icons-round text-base">{{ icon }}</span>{{ label }}
+    </button>
+    {% endfor %}
+  </div>
+
+  <form method="post"
+        action="{{ '/tareas/' + tarea.id|string + '/editar' if accion == 'Editar' else '/tareas/nueva' }}"
+        class="space-y-6">
+
+    {# ── TAB: GENERAL ─────────────────────────────────────────────────────── #}
+    <div x-show="tab==='general'" class="space-y-5">
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <h2 class="text-base font-semibold text-gray-800 mb-5 flex items-center gap-2">
+          <span class="material-icons-round text-wm-blue">info</span>Información General
+        </h2>
+
+        {# Tipo - radio cards #}
+        <div class="mb-5">
+          <label class="block text-sm font-semibold text-gray-700 mb-2">Tipo *</label>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {% for val, label, icon, color in [
+              ('cambio',   'Cambio',   'swap_horiz', 'border-blue-400 bg-blue-50 text-blue-700'),
+              ('tarea',    'Tarea',    'task',        'border-gray-400 bg-gray-50 text-gray-700'),
+              ('incidente','Incidente','warning',     'border-red-400 bg-red-50 text-red-700'),
+              ('mejora',   'Mejora',   'trending_up', 'border-green-400 bg-green-50 text-green-700'),
+            ] %}
+            <label class="cursor-pointer">
+              <input type="radio" name="tipo" value="{{ val }}" class="peer sr-only"
+                     {{ 'checked' if (tarea and tarea.tipo.value == val) or (not tarea and val == 'tarea') }}>
+              <div class="border-2 rounded-xl p-3 text-center transition-all peer-checked:{{ color }} peer-checked:border-current border-gray-200 hover:border-gray-300">
+                <span class="material-icons-round text-2xl block mb-1">{{ icon }}</span>
+                <span class="text-sm font-semibold">{{ label }}</span>
+              </div>
+            </label>
+            {% endfor %}
+          </div>
+        </div>
+
+        {# Título #}
+        <div class="mb-5">
+          <label for="titulo" class="block text-sm font-semibold text-gray-700 mb-1">Título *</label>
+          <input id="titulo" name="titulo" type="text" required maxlength="200"
+                 value="{{ tarea.titulo if tarea else '' }}"
+                 placeholder="Ej: Implementación de nueva política de precios…"
+                 class="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-wm-blue focus:border-wm-blue outline-none"/>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          {# Prioridad #}
+          <div>
+            <label for="prioridad" class="block text-sm font-semibold text-gray-700 mb-1">Prioridad *</label>
+            <select id="prioridad" name="prioridad"
+                    class="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-wm-blue outline-none">
+              {% for val, label in [('critica','🔴 Crítica'),('alta','🟠 Alta'),('media','🟡 Media'),('baja','🔵 Baja')] %}
+              <option value="{{ val }}" {{ 'selected' if tarea and tarea.prioridad.value == val else ('selected' if not tarea and val == 'media' else '') }}>
+                {{ label }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+
+          {# Encargado #}
+          <div>
+            <label for="encargado_id" class="block text-sm font-semibold text-gray-700 mb-1">Encargado Principal</label>
+            <select id="encargado_id" name="encargado_id"
+                    class="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-wm-blue outline-none">
+              <option value="">— Sin asignar —</option>
+              {% for u in usuarios %}
+              <option value="{{ u.id }}" {{ 'selected' if tarea and tarea.encargado_id == u.id }}>
+                {{ u.nombre }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        {% if accion == 'Editar' %}
+        <div class="mt-5">
+          <label for="estado" class="block text-sm font-semibold text-gray-700 mb-1">Estado</label>
+          <select id="estado" name="estado"
+                  class="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-wm-blue outline-none">
+            {% for val, label in [
+              ('borrador','Borrador'),('pendiente_aprobacion','Pendiente Aprobación'),
+              ('aprobada','Aprobada'),('en_progreso','En Progreso'),
+              ('en_revision','En Revisión'),('completada','Completada'),
+              ('rechazada','Rechazada'),('cancelada','Cancelada')
+            ] %}
+            <option value="{{ val }}" {{ 'selected' if tarea and tarea.estado.value == val }}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        {% endif %}
+
+        {# Descripción #}
+        <div class="mt-5">
+          <label for="descripcion" class="block text-sm font-semibold text-gray-700 mb-1">Descripción de la Tarea</label>
+          <textarea id="descripcion" name="descripcion" rows="4"
+                    placeholder="Describe el cambio o tarea en detalle…"
+                    class="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-wm-blue outline-none resize-none">{{ tarea.descripcion if tarea else '' }}</textarea>
+        </div>
+      </div>
+    </div>
+
+    {# ── TAB: FECHAS ───────────────────────────────────────────────────────── #}
+    <div x-show="tab==='fechas'" class="space-y-5">
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <h2 class="text-base font-semibold text-gray-800 mb-5 flex items-center gap-2">
+          <span class="material-icons-round text-wm-blue">calendar_today</span>Fechas y Plazos
+        </h2>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
+          <div>
+            <label for="fecha_inicio" class="block text-sm font-semibold text-gray-700 mb-1">Fecha Inicio</label>
+            <input id="fecha_inicio" name="fecha_inicio" type="datetime-local"
+                   value="{{ tarea.fecha_inicio.strftime('%Y-%m-%dT%H:%M') if tarea and tarea.fecha_inicio else '' }}"
+                   class="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-wm-blue outline-none"/>
+          </div>
+          <div>
+            <label for="fecha_fin" class="block text-sm font-semibold text-gray-700 mb-1">Fecha Fin</label>
+            <input id="fecha_fin" name="fecha_fin" type="datetime-local"
+                   value="{{ tarea.fecha_fin.strftime('%Y-%m-%dT%H:%M') if tarea and tarea.fecha_fin else '' }}"
+                   class="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-wm-blue outline-none"/>
+          </div>
+          <div>
+            <label for="fecha_implementacion" class="block text-sm font-semibold text-gray-700 mb-1">
+              Fecha Implementación
+            </label>
+            <input id="fecha_implementacion" name="fecha_implementacion" type="datetime-local"
+                   value="{{ tarea.fecha_implementacion.strftime('%Y-%m-%dT%H:%M') if tarea and tarea.fecha_implementacion else '' }}"
+                   class="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-wm-blue outline-none"/>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {# ── TAB: ROLES ────────────────────────────────────────────────────────── #}
+    <div x-show="tab==='roles'" class="space-y-5">
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <h2 class="text-base font-semibold text-gray-800 mb-2 flex items-center gap-2">
+          <span class="material-icons-round text-wm-blue">people</span>Asignación de Roles
+        </h2>
+        <p class="text-xs text-gray-500 mb-6">Define quién es responsable de cada etapa del proceso.</p>
+        <div class="space-y-4">
+          {% for campo, label, icon, desc in [
+            ('rol_desarrollo',      'Responsable de Desarrollo',              'code',        'Encargado del desarrollo o trabajo técnico'),
+            ('rol_validacion',      'Responsable de Validación / QA',         'fact_check',  'Valida que el desarrollo esté correcto antes de implementar'),
+            ('rol_implementacion',  'Responsable de Implementación',          'rocket_launch','Ejecuta el despliegue o implementación del cambio'),
+            ('rol_verificacion_vivo','Responsable de Verificación en Vivo',   'monitor_heart','Verifica que funcione correctamente en el ambiente productivo'),
+            ('rol_presentacion',    'Responsable de Presentación / Indicadores','bar_chart',   'Presenta los resultados, efectos e indicadores del cambio'),
+          ] %}
+          {% set rol_key = campo.replace('rol_', '') %}
+          {% set asig = roles_dict.get(rol_key) if roles_dict else none %}
+          <div class="flex items-center gap-4 p-4 rounded-xl border border-gray-100 bg-gray-50 hover:bg-white hover:border-blue-100 transition-all">
+            <div class="w-10 h-10 rounded-xl bg-wm-blue10 flex items-center justify-center flex-shrink-0">
+              <span class="material-icons-round text-wm-blue text-xl">{{ icon }}</span>
+            </div>
+            <div class="flex-1 min-w-0">
+              <label for="{{ campo }}" class="block text-sm font-semibold text-gray-700">{{ label }}</label>
+              <p class="text-xs text-gray-400 mt-0.5">{{ desc }}</p>
+            </div>
+            <div class="w-52 flex-shrink-0">
+              <select id="{{ campo }}" name="{{ campo }}"
+                      class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-wm-blue outline-none">
+                <option value="">— Sin asignar —</option>
+                {% for u in usuarios %}
+                <option value="{{ u.id }}"
+                  {{ 'selected' if asig and asig.usuario_id == u.id }}>
+                  {{ u.nombre }}
+                </option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    {# ── TAB: APROBACIÓN ───────────────────────────────────────────────────── #}
+    <div x-show="tab==='aprobacion'" class="space-y-5">
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <h2 class="text-base font-semibold text-gray-800 mb-5 flex items-center gap-2">
+          <span class="material-icons-round text-wm-blue">verified_user</span>Autorización y Aprobación
+        </h2>
+        <label class="flex items-start gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all"
+               :class="requiereAuth ? 'border-wm-blue bg-wm-blue10' : 'border-gray-200 hover:border-gray-300'">
+          <input type="checkbox" name="requiere_autorizacion" value="on" class="mt-1 accent-blue-600"
+                 x-model="requiereAuth"
+                 {{ 'checked' if tarea and tarea.requiere_autorizacion }}>
+          <div>
+            <p class="text-sm font-semibold text-gray-800">Esta tarea requiere autorización previa</p>
+            <p class="text-xs text-gray-500 mt-0.5">Se notificará por correo a los aprobadores seleccionados</p>
+          </div>
+        </label>
+
+        <div x-show="requiereAuth" x-transition class="mt-5">
+          <label class="block text-sm font-semibold text-gray-700 mb-2">
+            Seleccionar Aprobadores
+            <span class="text-gray-400 font-normal">(puedes elegir varios)</span>
+          </label>
+          <div class="border border-gray-200 rounded-xl overflow-hidden divide-y divide-gray-100 max-h-64 overflow-y-auto">
+            {% for u in usuarios %}
+            <label class="flex items-center gap-3 px-4 py-3 hover:bg-wm-blue10 cursor-pointer transition-colors">
+              <input type="checkbox" name="aprobadores" value="{{ u.id }}" class="accent-blue-600"
+                     {{ 'checked' if tarea and tarea.aprobaciones and u.id in (tarea.aprobaciones | map(attribute='aprobador_id') | list) }}>
+              <div class="w-8 h-8 rounded-full bg-wm-blue flex items-center justify-center flex-shrink-0">
+                <span class="text-white text-xs font-bold">{{ u.nombre[0].upper() }}</span>
+              </div>
+              <div>
+                <p class="text-sm font-medium text-gray-800">{{ u.nombre }}</p>
+                <p class="text-xs text-gray-400">{{ u.cargo or u.email }}</p>
+              </div>
+            </label>
+            {% endfor %}
+          </div>
+          <p class="text-xs text-wm-blue mt-2 flex items-center gap-1">
+            <span class="material-icons-round text-sm">mail</span>
+            Se enviará un correo de solicitud a cada aprobador seleccionado
+          </p>
+        </div>
+      </div>
+    </div>
+
+    {# ── TAB: ADICIONAL ────────────────────────────────────────────────────── #}
+    <div x-show="tab==='adicional'" class="space-y-5">
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <h2 class="text-base font-semibold text-gray-800 mb-5 flex items-center gap-2">
+          <span class="material-icons-round text-wm-blue">tune</span>Información Adicional
+        </h2>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-5">
+          <div>
+            <label for="ambiente" class="block text-sm font-semibold text-gray-700 mb-1">Ambiente</label>
+            <select id="ambiente" name="ambiente"
+                    class="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-wm-blue outline-none">
+              {% for v,l in [('produccion','Producción'),('staging','Staging'),('desarrollo','Desarrollo'),('todos','Todos')] %}
+              <option value="{{ v }}" {{ 'selected' if tarea and tarea.ambiente == v }}>{{ l }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div>
+            <label for="riesgo" class="block text-sm font-semibold text-gray-700 mb-1">Nivel de Riesgo</label>
+            <select id="riesgo" name="riesgo"
+                    class="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-wm-blue outline-none">
+              {% for v,l in [('bajo','🟢 Bajo'),('medio','🟡 Medio'),('alto','🔴 Alto')] %}
+              <option value="{{ v }}" {{ 'selected' if tarea and tarea.riesgo == v }}>{{ l }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div>
+            <label for="categoria" class="block text-sm font-semibold text-gray-700 mb-1">Categoría</label>
+            <input id="categoria" name="categoria" type="text"
+                   value="{{ tarea.categoria if tarea else '' }}"
+                   placeholder="Ej: Precios, Inventario…"
+                   class="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-wm-blue outline-none"/>
+          </div>
+        </div>
+        <div class="mb-5">
+          <label for="dependencias" class="block text-sm font-semibold text-gray-700 mb-1">Dependencias</label>
+          <textarea id="dependencias" name="dependencias" rows="2"
+                    placeholder="¿De qué sistemas o tareas depende este cambio?"
+                    class="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-wm-blue outline-none resize-none">{{ tarea.dependencias if tarea else '' }}</textarea>
+        </div>
+        <div class="mb-5">
+          <label for="beneficio_afectacion" class="block text-sm font-semibold text-gray-700 mb-1">
+            Beneficio o Afectación
+          </label>
+          <textarea id="beneficio_afectacion" name="beneficio_afectacion" rows="3"
+                    placeholder="Describe el beneficio esperado o la afectación potencial al negocio…"
+                    class="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-wm-blue outline-none resize-none">{{ tarea.beneficio_afectacion if tarea else '' }}</textarea>
+        </div>
+        <div>
+          <label for="plan_rollback" class="block text-sm font-semibold text-gray-700 mb-1">Plan de Rollback</label>
+          <textarea id="plan_rollback" name="plan_rollback" rows="2"
+                    placeholder="¿Cómo se revierte el cambio si algo falla?"
+                    class="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-wm-blue outline-none resize-none">{{ tarea.plan_rollback if tarea else '' }}</textarea>
+        </div>
+      </div>
+    </div>
+
+    {# ── Botones acción ────────────────────────────────────────────────────── #}
+    <div class="flex items-center justify-between pt-2">
+      <div class="flex gap-3">
+        <button type="submit"
+                class="flex items-center gap-2 bg-wm-blue hover:bg-wm-blue140 text-white px-6 py-3 rounded-xl text-sm font-bold shadow-sm transition-colors">
+          <span class="material-icons-round text-base">save</span>
+          {{ 'Guardar Cambios' if accion == 'Editar' else 'Crear Tarea' }}
+        </button>
+        <a href="{{ '/tareas/' + tarea.id|string if tarea else '/tareas' }}"
+           class="flex items-center gap-2 bg-white text-gray-600 border border-gray-200 hover:bg-gray-50 px-6 py-3 rounded-xl text-sm font-semibold transition-colors">
+          Cancelar
+        </a>
+      </div>
+      {% if tarea %}
+      <form method="post" action="/tareas/{{ tarea.id }}/eliminar"
+            onsubmit="return confirm('¿Eliminar esta tarea permanentemente?')">
+        <button type="submit"
+                class="flex items-center gap-2 text-red-600 hover:bg-red-50 border border-red-200 px-4 py-3 rounded-xl text-sm font-semibold transition-colors">
+          <span class="material-icons-round text-base">delete</span>Eliminar
+        </button>
+      </form>
+      {% endif %}
+    </div>
+  </form>
+</div>
+{% endblock %}

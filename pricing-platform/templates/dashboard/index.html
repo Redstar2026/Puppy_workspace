@@ -1,0 +1,299 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — {{ app_name }}{% endblock %}
+{% block breadcrumb %}<span class="font-semibold text-walmart-blue">📊 Dashboard Ejecutivo</span>{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+  {# ── Bienvenida ──────────────────────────────────────── #}
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
+        Buenos días, {{ user.nombre.split()[0] }} 👋
+      </h1>
+      <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+        Vista ejecutiva del estado actual del equipo de Pricing
+      </p>
+    </div>
+    <div class="text-right text-sm text-gray-400 dark:text-gray-500 hidden md:block">
+      <p id="fecha-hora" class="font-medium"></p>
+      <p>Walmart México — Pricing</p>
+    </div>
+  </div>
+
+  {# ── KPI Cards ────────────────────────────────────────── #}
+  <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
+    {% set kpis = [
+      ("Solicitudes Totales", total_solicitudes, "📋", "blue", "/solicitudes"),
+      ("Activas", abiertas, "🔄", "indigo", "/solicitudes?estado=en_desarrollo"),
+      ("Implementadas (30d)", implementadas_mes, "✅", "green", "/solicitudes?estado=implementado"),
+      ("Pendientes Aprob.", pendientes_aprobacion, "⏳", "yellow", "/aprobaciones"),
+      ("Críticas", criticas, "⚠️", "red", "/solicitudes?prioridad=critica"),
+      ("En Riesgo", en_riesgo, "🚨", "orange", "/solicitudes?riesgo=alto"),
+    ] %}
+    {% for label, val, icon, color, href in kpis %}
+    <a href="{{ href }}" class="card p-4 hover:shadow-md transition-all hover:-translate-y-0.5 group">
+      <div class="flex items-center justify-between mb-3">
+        <span class="text-2xl">{{ icon }}</span>
+        <svg class="w-4 h-4 text-gray-300 dark:text-gray-600 group-hover:text-walmart-blue transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+        </svg>
+      </div>
+      <p class="text-3xl font-black text-gray-900 dark:text-white">{{ val }}</p>
+      <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 leading-tight">{{ label }}</p>
+    </a>
+    {% endfor %}
+  </div>
+
+  {# ── Fila 2: Charts ─────────────────────────────────── #}
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+    {# Por estado — Donut #}
+    <div class="card p-6">
+      <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Solicitudes por Estado</h3>
+      <div style="height:220px">
+        <canvas id="chartEstado"></canvas>
+      </div>
+    </div>
+
+    {# Tendencia — Line chart #}
+    <div class="card p-6 lg:col-span-2">
+      <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Tendencia 6 Meses</h3>
+      <div style="height:220px">
+        <canvas id="chartTendencia"></canvas>
+      </div>
+    </div>
+  </div>
+
+  {# ── Fila 3: Prioridad + QA ──────────────────────────── #}
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+    {# Por prioridad — Bar #}
+    <div class="card p-6">
+      <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Por Prioridad</h3>
+      <div style="height:200px">
+        <canvas id="chartPrioridad"></canvas>
+      </div>
+    </div>
+
+    {# QA Panel #}
+    <div class="card p-6">
+      <h3 class="font-semibold text-gray-900 dark:text-white mb-4">📊 Estado QA</h3>
+      <div class="space-y-4">
+        <div class="flex items-center justify-between">
+          <span class="text-sm text-gray-600 dark:text-gray-400">Total Desarrollos</span>
+          <span class="font-bold text-gray-900 dark:text-white">{{ total_dev }}</span>
+        </div>
+        <div class="flex items-center justify-between">
+          <span class="text-sm text-gray-600 dark:text-gray-400">QA Aprobados</span>
+          <span class="font-bold text-green-600">{{ dev_qa_ok }}</span>
+        </div>
+        <div class="flex items-center justify-between">
+          <span class="text-sm text-gray-600 dark:text-gray-400">En QA</span>
+          <span class="font-bold text-yellow-600">{{ dev_en_qa }}</span>
+        </div>
+        <div class="mt-4">
+          <div class="flex justify-between text-xs text-gray-500 mb-1">
+            <span>Tasa de aprobación QA</span>
+            <span>{{ ((dev_qa_ok / total_dev * 100) | round(0) | int) if total_dev > 0 else 0 }}%</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill bg-green-500"
+                 style="width:{{ ((dev_qa_ok / total_dev * 100)) if total_dev > 0 else 0 }}%"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {# Solicitudes recientes highlight #}
+    <div class="card p-6">
+      <h3 class="font-semibold text-gray-900 dark:text-white mb-4">⚠️ Métricas Críticas</h3>
+      <div class="space-y-3">
+        {% set criticas_count = por_prioridad.get('critica', 0) %}
+        {% set implementadas_total = por_estado.get('implementado', 0) %}
+        {% set total_no_cancelado = total_solicitudes - por_estado.get('cancelado', 0) - por_estado.get('rechazado', 0) %}
+
+        <div class="p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
+          <p class="text-xs font-semibold text-red-700 dark:text-red-400">Solicitudes Críticas Activas</p>
+          <p class="text-2xl font-black text-red-700 dark:text-red-400">{{ criticas }}</p>
+        </div>
+        <div class="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+          <p class="text-xs font-semibold text-blue-700 dark:text-blue-400">Tasa de Implementación</p>
+          <p class="text-2xl font-black text-blue-700 dark:text-blue-400">
+            {{ ((implementadas_total / total_no_cancelado * 100) | round(1)) if total_no_cancelado > 0 else 0 }}%
+          </p>
+        </div>
+        <div class="p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
+          <p class="text-xs font-semibold text-yellow-700 dark:text-yellow-400">Pend. Aprobación</p>
+          <p class="text-2xl font-black text-yellow-700 dark:text-yellow-400">{{ pendientes_aprobacion }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {# ── Tabla Recientes ──────────────────────────────────── #}
+  <div class="card">
+    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+      <h3 class="font-semibold text-gray-900 dark:text-white">Solicitudes Recientes</h3>
+      <a href="/solicitudes" class="text-sm text-walmart-blue hover:underline font-medium">Ver todas →</a>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b border-gray-100 dark:border-gray-700">
+            <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Folio</th>
+            <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Título</th>
+            <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Prioridad</th>
+            <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Estado</th>
+            <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Avance</th>
+            <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Responsable</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in recientes %}
+          {% set ep = label_estado(s.estado.value) %}
+          {% set pp = label_prioridad(s.prioridad.value) %}
+          <tr class="border-b border-gray-50 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer transition-colors"
+              onclick="location.href='/solicitudes/{{ s.id }}'">
+            <td class="px-6 py-3">
+              <span class="font-mono text-xs font-semibold text-walmart-blue">{{ s.folio }}</span>
+            </td>
+            <td class="px-6 py-3">
+              <span class="font-medium text-gray-900 dark:text-white line-clamp-1">{{ s.titulo }}</span>
+            </td>
+            <td class="px-6 py-3">
+              <span class="badge {{ pp.css }}">{{ pp.icon }} {{ pp.label }}</span>
+            </td>
+            <td class="px-6 py-3">
+              <span class="badge {{ ep.css }}">{{ ep.label }}</span>
+            </td>
+            <td class="px-6 py-3 w-32">
+              <div class="flex items-center gap-2">
+                <div class="progress-bar flex-1">
+                  <div class="progress-fill" style="width:{{ s.porcentaje_avance }}%"></div>
+                </div>
+                <span class="text-xs text-gray-500 w-8 text-right">{{ s.porcentaje_avance | int }}%</span>
+              </div>
+            </td>
+            <td class="px-6 py-3">
+              <span class="text-gray-600 dark:text-gray-400 text-xs">
+                {{ s.encargado.nombre if s.encargado else '—' }}
+              </span>
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="6" class="px-6 py-8 text-center text-gray-400">
+            No hay solicitudes aún. <a href="/solicitudes/nueva" class="text-walmart-blue hover:underline">Crear la primera →</a>
+          </td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Fecha/hora live
+  function updateClock() {
+    const el = document.getElementById('fecha-hora');
+    if (el) {
+      const now = new Date();
+      el.textContent = now.toLocaleDateString('es-MX', {
+        weekday:'long', year:'numeric', month:'long', day:'numeric'
+      });
+    }
+  }
+  updateClock(); setInterval(updateClock, 60000);
+
+  const isDark = document.documentElement.classList.contains('dark');
+  const gridColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
+  const textColor = isDark ? '#9ca3af' : '#6b7280';
+
+  // ── Chart: Por Estado ─────────────────────────────────
+  const estadoData = {{ por_estado | tojson }};
+  const estadoLabels = {
+    pendiente:'Pendiente', en_analisis:'En Análisis',
+    en_desarrollo:'En Desarrollo', qa:'QA',
+    aprobacion:'Aprobación', implementado:'Implementado',
+    rechazado:'Rechazado', cancelado:'Cancelado',
+  };
+  new Chart(document.getElementById('chartEstado'), {
+    type: 'doughnut',
+    data: {
+      labels: Object.keys(estadoData).map(k => estadoLabels[k] || k),
+      datasets: [{
+        data: Object.values(estadoData),
+        backgroundColor: ['#74767c','#0053e2','#4f46e5','#9333ea','#ffc220','#2a8703','#ea1100','#1f2937'],
+        borderWidth: 2,
+        borderColor: isDark ? '#1f2937' : '#ffffff',
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position:'right', labels:{ color:textColor, boxWidth:12, font:{size:11} } } },
+      cutout: '65%',
+    }
+  });
+
+  // ── Chart: Tendencia ──────────────────────────────────
+  const meses = {{ meses | tojson }};
+  const implMes = {{ implementaciones_mes | tojson }};
+  const solMes = {{ solicitudes_mes | tojson }};
+  new Chart(document.getElementById('chartTendencia'), {
+    type: 'line',
+    data: {
+      labels: meses,
+      datasets: [
+        {
+          label: 'Implementaciones',
+          data: implMes,
+          borderColor: '#2a8703',
+          backgroundColor: 'rgba(42,135,3,0.1)',
+          fill: true, tension: 0.4, pointRadius: 4,
+        },
+        {
+          label: 'Nuevas Solicitudes',
+          data: solMes,
+          borderColor: '#0053e2',
+          backgroundColor: 'rgba(0,83,226,0.1)',
+          fill: true, tension: 0.4, pointRadius: 4,
+        }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { labels:{ color:textColor, font:{size:11} } } },
+      scales: {
+        x: { grid:{ color:gridColor }, ticks:{ color:textColor } },
+        y: { grid:{ color:gridColor }, ticks:{ color:textColor, stepSize:1 }, beginAtZero:true },
+      }
+    }
+  });
+
+  // ── Chart: Por Prioridad ──────────────────────────────
+  const prioData = {{ por_prioridad | tojson }};
+  const prioColors = { baja:'#2a8703', media:'#0053e2', alta:'#ffc220', critica:'#ea1100' };
+  new Chart(document.getElementById('chartPrioridad'), {
+    type: 'bar',
+    data: {
+      labels: Object.keys(prioData).map(k => k.charAt(0).toUpperCase()+k.slice(1)),
+      datasets: [{
+        data: Object.values(prioData),
+        backgroundColor: Object.keys(prioData).map(k => prioColors[k] || '#74767c'),
+        borderRadius: 6, borderSkipped: false,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend:{ display:false } },
+      scales: {
+        x: { grid:{ display:false }, ticks:{ color:textColor } },
+        y: { grid:{ color:gridColor }, ticks:{ color:textColor, stepSize:1 }, beginAtZero:true },
+      }
+    }
+  });
+</script>
+{% endblock %}

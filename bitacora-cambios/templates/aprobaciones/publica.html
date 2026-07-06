@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full bg-gray-50">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Solicitud de Aprobación · Bitácora</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config={theme:{extend:{colors:{wm:{blue:'#0053e2',blue140:'#003494',spark:'#ffc220',green:'#2a8703',red:'#ea1100'}}}}}</script>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet"/>
+</head>
+<body class="min-h-full flex items-center justify-center p-6 bg-gradient-to-br from-gray-50 to-blue-50">
+  <div class="w-full max-w-lg">
+    {# Header #}
+    <div class="text-center mb-6">
+      <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-wm-blue mb-3">
+        <span class="material-icons-round text-white text-2xl">verified_user</span>
+      </div>
+      <h1 class="text-2xl font-bold text-gray-900">Solicitud de Aprobación</h1>
+      <p class="text-gray-500 text-sm mt-1">Bitácora de Cambios · Walmart</p>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+      {# Estado actual #}
+      {% if aprobacion.estado.value == 'aprobada' %}
+      <div class="bg-green-500 px-6 py-4 text-white flex items-center gap-3">
+        <span class="material-icons-round text-2xl">check_circle</span>
+        <div>
+          <p class="font-bold">¡Solicitud Aprobada!</p>
+          <p class="text-green-100 text-sm">Respondida el {{ aprobacion.respondida_en.strftime('%d/%m/%Y %H:%M') }}</p>
+        </div>
+      </div>
+      {% elif aprobacion.estado.value == 'rechazada' %}
+      <div class="bg-red-500 px-6 py-4 text-white flex items-center gap-3">
+        <span class="material-icons-round text-2xl">cancel</span>
+        <div>
+          <p class="font-bold">Solicitud Rechazada</p>
+          <p class="text-red-100 text-sm">Respondida el {{ aprobacion.respondida_en.strftime('%d/%m/%Y %H:%M') }}</p>
+        </div>
+      </div>
+      {% else %}
+      <div class="bg-yellow-400 px-6 py-4 text-yellow-900 flex items-center gap-3">
+        <span class="material-icons-round text-2xl">pending</span>
+        <div>
+          <p class="font-bold">Aprobación Pendiente</p>
+          <p class="text-yellow-800 text-sm">Solicitada el {{ aprobacion.solicitada_en.strftime('%d/%m/%Y %H:%M') }}</p>
+        </div>
+      </div>
+      {% endif %}
+
+      <div class="p-6">
+        {# Info de la tarea #}
+        <div class="bg-gray-50 rounded-xl p-4 mb-6">
+          <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Tarea a aprobar</p>
+          <p class="text-lg font-bold text-gray-900">{{ aprobacion.tarea.titulo }}</p>
+          <dis="mt-3 space-y-1 text-sm text-gray-600">
+            {% if aprobacion.tarea.descripcion %}
+            <p class="leading-relaxed">{{ aprobacion.tarea.descripcion }}</p>
+            {% endif %}
+            {% if aprobacion.tarea.beneficio_afectacion %}
+            <div class="mt-2 border-t border-gray-200 pt-2">
+              <p class="text-xs font-semibold text-gray-500 mb-1">Beneficio / Afectación:</p>
+              <p>{{ aprobacion.tarea.beneficio_afectacion }}</p>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+
+        {# Aprobador #}
+        <div class="flex items-center gap-3 mb-6">
+          <div class="w-10 h-10 rounded-full bg-wm-blue flex items-center justify-center">
+            <span class="text-white font-bold">{{ aprobacion.aprobador.nombre[0].upper() }}</span>
+          </div>
+          <div>
+            <p class="text-sm font-semibold text-gray-800">{{ aprobacion.aprobador.nombre }}</p>
+            <p class="text-xs text-gray-400">{{ aprobacion.aprobador.email }}</p>
+          </div>
+        </div>
+
+        {# Botones o comentario final #}
+        {% if aprobacion.estado.value == 'pendiente' %}
+        <div class="space-y-3">
+          <a href="/aprobaciones/responder/{{ aprobacion.token }}?accion=aprobada"
+             onclick="return confirm('¿Confirmas la APROBACIÓN?')"
+             class="w-full flex items-center justify-center gap-2 bg-wm-green hover:bg-green-700 text-white py-3 rounded-xl font-bold transition-colors">
+            <span class="material-icons-round">check_circle</span>Aprobar Solicitud
+          </a>
+          <a href="/aprobaciones/responder/{{ aprobacion.token }}?accion=rechazada"
+             onclick="return confirm('¿Confirmas el RECHAZO?')"
+             class="w-full flex items-center justify-center gap-2 bg-wm-red hover:bg-red-700 text-white py-3 rounded-xl font-bold transition-colors">
+            <span class="material-icons-round">cancel</span>Rechazar Solicitud
+          </a>
+          <p class="text-xs text-gray-400 text-center mt-2">
+            ¿Prefieres responder con comentario? <a href="/login" class="text-wm-blue hover:underline">Inicia sesión</a>
+          </p>
+        </div>
+        {% else %}
+        {% if aprobacion.comentario %}
+        <div class="bg-gray-50 rounded-xl p-4">
+          <p class="text-xs font-semibold text-gray-500 mb-1">Tu comentario:</p>
+          <p class="text-sm text-gray-700 italic">"{{ aprobacion.comentario }}"</p>
+        </div>
+        {% endif %}
+        <a href="/login" class="mt-4 block text-center text-wm-blue hover:underline text-sm">
+          Ir al panel → Iniciar sesión
+        </a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</body>
+</html>

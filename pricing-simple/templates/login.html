@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Login — Walmart Pricing Platform</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+  <style>body{font-family:'Inter',sans-serif}</style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-blue-900 via-blue-800 to-blue-700 flex items-center justify-center p-4">
+  <div class="w-full max-w-sm">
+    <!-- Logo -->
+    <div class="text-center mb-8">
+      <div class="inline-flex items-center justify-center w-16 h-16 bg-yellow-400 rounded-2xl shadow-lg mb-4">
+        <span class="text-3xl font-black text-blue-900">W</span>
+      </div>
+      <h1 class="text-2xl font-black text-white">Pricing Platform</h1>
+      <p class="text-blue-200 text-sm mt-1">Walmart México — Control de Cambios</p>
+    </div>
+    <!-- Card -->
+    <div class="bg-white rounded-2xl shadow-2xl p-8">
+      <h2 class="text-lg font-bold text-gray-800 mb-6">Iniciar Sesión</h2>
+      {% if error %}
+      <div class="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">{{ error }}</div>
+      {% endif %}
+      <form method="POST" action="/login" class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Email</label>
+          <input type="email" name="email" required placeholder="usuario@walmart.com"
+                 class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Contraseña</label>
+          <input type="password" name="password" required placeholder="••••••••"
+                 class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+        </div>
+        <button type="submit"
+                class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-lg transition-colors text-sm">
+          Entrar →
+        </button>
+      </form>
+      <!-- Credenciales demo -->
+      <div class="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+        <p class="text-xs font-bold text-gray-500 uppercase mb-2">Credenciales Demo</p>
+        <div class="space-y-1 text-xs text-gray-600">
+          <div class="flex justify-between"><span class="font-medium">Admin:</span><span>admin@walmart.com / admin123</span></div>
+          <div class="flex justify-between"><span class="font-medium">Manager:</span><span>ana@walmart.com / pass123</span></div>
+          <div class="flex justify-between"><span class="font-medium">Dev:</span><span>carlos@walmart.com / pass123</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

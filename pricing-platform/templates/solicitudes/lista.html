@@ -1,0 +1,251 @@
+{% extends "base.html" %}
+{% block title %}Solicitudes — {{ app_name }}{% endblock %}
+{% block breadcrumb %}
+  <span class="text-gray-400">Inicio</span>
+  <span class="text-gray-400">/</span>
+  <span class="font-semibold text-walmart-blue">📋 Bitácora de Solicitudes</span>
+{% endblock %}
+
+{% block content %}
+<div class="space-y-5" x-data="{ vistaLocal: '{{ vista }}' }">
+
+  {# ── Encabezado ──────────────────────────────────── #}
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <h1 class="text-xl font-bold text-gray-900 dark:text-white">Bitácora Central</h1>
+      <p class="text-sm text-gray-500 dark:text-gray-400">
+        {{ total }} solicitude{{ 's' if total != 1 else '' }} encontrada{{ 's' if total != 1 else '' }}
+      </p>
+    </div>
+    <div class="flex items-center gap-3">
+      {# Vista toggle #}
+      <div class="flex bg-gray-100 dark:bg-gray-700 rounded-lg p-1 gap-1">
+        <a href="{{ request.url | replace('vista=kanban','vista=tabla') | replace('&vista=kanban','') }}&vista=tabla"
+           class="px-3 py-1.5 rounded-md text-xs font-semibold transition-all
+                  {% if vista == 'tabla' %}bg-white dark:bg-gray-600 shadow text-walmart-blue{% else %}text-gray-500{% endif %}">
+          ☰ Tabla
+        </a>
+        <a href="{{ request.url | replace('vista=tabla','vista=kanban') | replace('&vista=tabla','') }}&vista=kanban"
+           class="px-3 py-1.5 rounded-md text-xs font-semibold transition-all
+                  {% if vista == 'kanban' %}bg-white dark:bg-gray-600 shadow text-walmart-blue{% else %}text-gray-500{% endif %}">
+          ▦ Kanban
+        </a>
+      </div>
+      <a href="/solicitudes/nueva"
+         class="inline-flex items-center gap-2 bg-walmart-blue text-white text-sm font-semibold
+                px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
+        + Nueva
+      </a>
+    </div>
+  </div>
+
+  {# ── Filtros ─────────────────────────────────────── #}
+  <div class="card p-4">
+    <form method="GET" class="flex flex-wrap items-end gap-3">
+      <input type="hidden" name="vista" value="{{ vista }}" />
+      <div class="flex-1 min-w-[180px]">
+        <label class="form-label">Buscar</label>
+        <input type="text" name="buscar" value="{{ filtros.buscar }}" placeholder="Folio, título, descripción..."
+               class="form-input" />
+      </div>
+      <div class="w-36">
+        <label class="form-label">Estado</label>
+        <select name="estado" class="form-input">
+          <option value="">Todos</option>
+          {% for est in ['pendiente','en_analisis','en_desarrollo','qa','aprobacion','implementado','rechazado','cancelado'] %}
+          <option value="{{ est }}" {% if filtros.estado == est %}selected{% endif %}>
+            {{ label_estado(est).label }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="w-32">
+        <label class="form-label">Prioridad</label>
+        <select name="prioridad" class="form-input">
+          <option value="">Todas</option>
+          {% for p in ['baja','media','alta','critica'] %}
+          <option value="{{ p }}" {% if filtros.prioridad == p %}selected{% endif %}>
+            {{ p.capitalize() }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="w-40">
+        <label class="form-label">Tipo</label>
+        <select name="tipo" class="form-input">
+          <option value="">Todos</option>
+          {% for t in ['nuevo_desarrollo','ajuste','correccion','mejora','incidencia','automatizacion'] %}
+          <option value="{{ t }}" {% if filtros.tipo == t %}selected{% endif %}>
+            {{ t.replace('_',' ').capitalize() }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="w-40">
+        <label class="form-label">Responsable</label>
+        <select name="responsable" class="form-input">
+          <option value="">Todos</option>
+          {% for u in usuarios %}
+          <option value="{{ u.id }}" {% if filtros.responsable == u.id|string %}selected{% endif %}>
+            {{ u.nombre }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="flex gap-2">
+        <button type="submit"
+                class="bg-walmart-blue text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+          Filtrar
+        </button>
+        <a href="/solicitudes?vista={{ vista }}"
+           class="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-sm font-semibold px-4 py-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+          Limpiar
+        </a>
+      </div>
+    </form>
+  </div>
+
+  {# ── VISTA TABLA ─────────────────────────────────── #}
+  {% if vista == 'tabla' %}
+  <div class="card overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm min-w-[900px]">
+        <thead class="bg-gray-50 dark:bg-gray-700/50">
+          <tr>
+            {% for col in ['Folio','Título','Tipo','Prioridad','Estado','Avance','Responsable','Fecha','Riesgo'] %}
+            <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{{ col }}</th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+          {% for s in solicitudes %}
+          {% set ep = label_estado(s.estado.value) %}
+          {% set pp = label_prioridad(s.prioridad.value) %}
+          <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30 cursor-pointer transition-colors"
+              onclick="location.href='/solicitudes/{{ s.id }}'">
+            <td class="px-4 py-3">
+              <span class="font-mono text-xs font-bold text-walmart-blue">{{ s.folio }}</span>
+            </td>
+            <td class="px-4 py-3 max-w-[280px]">
+              <p class="font-medium text-gray-900 dark:text-white truncate">{{ s.titulo }}</p>
+              {% if s.area_impactada %}
+              <p class="text-xs text-gray-400 truncate">{{ s.area_impactada }}</p>
+              {% endif %}
+            </td>
+            <td class="px-4 py-3">
+              <span class="text-xs text-gray-500 dark:text-gray-400">
+                {{ s.tipo.value.replace('_',' ').capitalize() }}
+              </span>
+            </td>
+            <td class="px-4 py-3">
+              <span class="badge {{ pp.css }}">{{ pp.icon }} {{ pp.label }}</span>
+            </td>
+            <td class="px-4 py-3">
+              <span class="badge {{ ep.css }}">{{ ep.label }}</span>
+            </td>
+            <td class="px-4 py-3 w-28">
+              <div class="flex items-center gap-2">
+                <div class="progress-bar flex-1">
+                  <div class="progress-fill" style="width:{{ s.porcentaje_avance }}%"></div>
+                </div>
+                <span class="text-xs text-gray-500 w-7 text-right">{{ s.porcentaje_avance | int }}%</span>
+              </div>
+            </td>
+            <td class="px-4 py-3 text-xs text-gray-600 dark:text-gray-400">
+              {{ s.encargado.nombre if s.encargado else '—' }}
+            </td>
+            <td class="px-4 py-3 text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
+              {{ s.fecha_ingreso.strftime('%d/%m/%Y') }}
+            </td>
+            <td class="px-4 py-3">
+              {% set rr = label_riesgo(s.riesgo_operativo.value if s.riesgo_operativo else 'bajo') %}
+              <span class="text-xs font-semibold {{ rr.css }}">{{ rr.label }}</span>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="9" class="px-4 py-12 text-center">
+              <p class="text-gray-400 text-sm">No hay solicitudes que coincidan con los filtros</p>
+              <a href="/solicitudes/nueva" class="mt-2 inline-block text-walmart-blue text-sm hover:underline">
+                + Crear nueva solicitud
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {# Paginación #}
+    {% if total > per_page %}
+    <div class="flex items-center justify-between px-4 py-3 border-t border-gray-100 dark:border-gray-700">
+      <p class="text-xs text-gray-500">Mostrando {{ solicitudes|length }} de {{ total }}</p>
+      <div class="flex gap-2">
+        {% if pagina > 1 %}
+        <a href="?pagina={{ pagina-1 }}&vista={{ vista }}&estado={{ filtros.estado }}&prioridad={{ filtros.prioridad }}&buscar={{ filtros.buscar }}"
+           class="px-3 py-1.5 text-xs border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">← Anterior</a>
+        {% endif %}
+        {% if solicitudes|length == per_page %}
+        <a href="?pagina={{ pagina+1 }}&vista={{ vista }}&estado={{ filtros.estado }}&prioridad={{ filtros.prioridad }}&buscar={{ filtros.buscar }}"
+           class="px-3 py-1.5 text-xs bg-walmart-blue text-white rounded-lg hover:bg-blue-700">Siguiente →</a>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  {# ── VISTA KANBAN ────────────────────────────────── #}
+  {% else %}
+  <div class="overflow-x-auto pb-4">
+    <div class="flex gap-4 min-w-max">
+      {% set col_config = {
+        'pendiente':    {'label':'⏸ Pendiente',      'bg':'bg-gray-50 dark:bg-gray-800',     'header':'bg-gray-200 dark:bg-gray-700'},
+        'en_analisis':  {'label':'🔎 En Análisis',    'bg':'bg-blue-50 dark:bg-blue-900/20',  'header':'bg-blue-200 dark:bg-blue-800/50'},
+        'en_desarrollo':{'label':'⚙️ Desarrollo',     'bg':'bg-indigo-50 dark:bg-indigo-900/20','header':'bg-indigo-200 dark:bg-indigo-800/50'},
+        'qa':           {'label':'🧪 QA',              'bg':'bg-purple-50 dark:bg-purple-900/20','header':'bg-purple-200 dark:bg-purple-800/50'},
+        'aprobacion':   {'label':'✍️ Aprobación',     'bg':'bg-yellow-50 dark:bg-yellow-900/20','header':'bg-yellow-200 dark:bg-yellow-800/50'},
+        'implementado': {'label':'✅ Implementado',   'bg':'bg-green-50 dark:bg-green-900/20',  'header':'bg-green-200 dark:bg-green-800/50'},
+      } %}
+      {% for est in estados_kanban %}
+      {% set cfg = col_config.get(est, {'label': est, 'bg':'bg-gray-50', 'header':'bg-gray-200'}) %}
+      {% set items = kanban_data.get(est, []) %}
+      <div class="w-72 flex-shrink-0">
+        <div class="flex items-center justify-between px-3 py-2 rounded-t-xl {{ cfg.header }} mb-1">
+          <span class="text-xs font-bold text-gray-700 dark:text-gray-200">{{ cfg.label }}</span>
+          <span class="text-xs font-bold text-gray-500 bg-white/50 dark:bg-black/20 rounded-full w-5 h-5 flex items-center justify-center">
+            {{ items | length }}
+          </span>
+        </div>
+        <div class="kanban-col {{ cfg.bg }}">
+          {% for s in items %}
+          {% set pp = label_prioridad(s.prioridad.value) %}
+          <a href="/solicitudes/{{ s.id }}" class="block bg-white dark:bg-gray-800 rounded-lg p-3 shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md hover:-translate-y-0.5 transition-all">
+            <div class="flex items-start justify-between gap-2 mb-2">
+              <span class="font-mono text-xs text-walmart-blue font-bold">{{ s.folio }}</span>
+              <span class="badge {{ pp.css }} flex-shrink-0">{{ pp.icon }}</span>
+            </div>
+            <p class="text-xs font-semibold text-gray-900 dark:text-white leading-tight mb-2 line-clamp-2">{{ s.titulo }}</p>
+            <div class="progress-bar mb-2">
+              <div class="progress-fill" style="width:{{ s.porcentaje_avance }}%"></div>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-xs text-gray-400">{{ s.porcentaje_avance | int }}%</span>
+              {% if s.encargado %}
+              <span class="w-6 h-6 rounded-full bg-walmart-blue flex items-center justify-center text-white text-xs font-bold"
+                    title="{{ s.encargado.nombre }}">
+                {{ s.encargado.nombre[:1] }}
+              </span>
+              {% endif %}
+            </div>
+          </a>
+          {% else %}
+          <div class="text-center py-8 text-xs text-gray-400 dark:text-gray-600">Sin solicitudes</div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

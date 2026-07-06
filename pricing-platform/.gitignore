@@ -1,0 +1,17 @@
+.env
+*.db
+*.db-wal
+*.db-shm
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+.pytest_cache/
+static/uploads/*
+!static/uploads/.gitkeep
+server.log
+*.log
+node_modules/
+dist/
+.DS_Store

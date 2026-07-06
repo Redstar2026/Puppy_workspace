@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manual y Presentación Técnica: Dashboard de Competitividad de Precios</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome para iconografía corporativa -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        walmart: {
+                            blue: '#0053e2',
+                            spark: '#ffc220',
+                            sparkDark: '#995213',
+                            success: '#2a8703',
+                            error: '#ea1100',
+                            text: '#1e293b',
+                            subtle: '#f8fafc',
+                            border: '#cbd5e1'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .slide {
+            display: none;
+        }
+        .slide.active {
+            display: block;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-walmart-text font-sans min-h-screen flex flex-col justify-between">
+
+    <!-- Encabezado Corporativo -->
+    <header class="bg-walmart-blue text-white px-8 py-5 flex justify-between items-center shadow-md border-b-4 border-walmart-spark">
+        <div class="flex items-center gap-4">
+            <span class="text-walmart-spark text-2xl"><i class="fa-solid fa-display"></i></span>
+            <div>
+                <h1 class="font-extrabold text-xl tracking-tight leading-none text-white">Alineación Estratégica de Precios</h1>
+                <span class="text-xs text-blue-100 font-medium">Análisis de la Estructura y Componentes del Dashboard de Power BI</span>
+            </div>
+        </div>
+        <div class="flex items-center gap-4">
+            <a href="https://app.powerbi.com/links/VzhhEM8tkT?ctid=3cbcc3d3-094d-4006-9849-0d11d61f484d&pbi_source=linkShare" target="_blank" class="bg-white hover:bg-slate-100 text-walmart-blue font-bold text-xs px-4 py-2.5 rounded border border-walmart-blue shadow transition-all flex items-center gap-2">
+                <i class="fa-solid fa-arrow-up-right-from-square"></i> Acceder a Power BI
+            </a>
+            <span class="text-sm font-semibold opacity-90 border-l border-blue-500 pl-4">
+                Diapositiva <span id="slide-index">1</span> de 5
+            </span>
+        </div>
+    </header>
+
+    <!-- Contenedor de Diapositivas -->
+    <main class="flex-grow max-w-7xl mx-auto w-full p-6 md:p-8 flex items-center justify-center">
+
+        <!-- SLIDE 1: Portada y Objetivo del Análisis -->
+        <div id="slide-1" class="slide active w-full space-y-6">
+            <div class="text-center max-w-3xl mx-auto space-y-4">
+                <span class="bg-blue-100 text-walmart-blue font-bold px-4 py-1.5 rounded-full text-xs uppercase tracking-wider">Presentación Ejecutiva para Directores</span>
+                <h2 class="text-3xl md:text-5xl font-black text-walmart-blue leading-tight">
+                    Estructura y Funcionamiento del Dashboard de Competitividad
+                </h2>
+                <p class="text-base md:text-lg text-slate-600">
+                    Explicación técnica detallada de cada componente visual (cuadro) de la vista y cómo interactúan bajo el filtro de <strong>Selección de Base</strong> para habilitar la toma de decisiones.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto pt-4">
+                <div class="bg-white p-5 rounded-lg border border-slate-200 shadow-sm space-y-3">
+                    <h4 class="font-bold text-walmart-blue text-sm uppercase flex items-center gap-2">
+                        <i class="fa-solid fa-bullseye"></i> Propósito de la Presentación
+                    </h4>
+                    <p class="text-xs text-slate-600 leading-relaxed">
+                        Desglosar de manera rigurosa y directa el valor de cada gráfico y tabla dentro del reporte de Power BI, asegurando que el equipo directivo comprenda qué buscar, qué filtros aplicar y cómo interpretar el estatus de competitividad del portafolio.
+                    </p>
+                </div>
+                <div class="bg-white p-5 rounded-lg border border-slate-200 shadow-sm space-y-3">
+                    <h4 class="font-bold text-walmart-sparkDark text-sm uppercase flex items-center gap-2">
+                        <i class="fa-solid fa-filter"></i> El Filtro Rector: Selección de Base
+                    </h4>
+                    <p class="text-xs text-slate-600 leading-relaxed">
+                        Todo el análisis parte de la Base seleccionada. Este filtro re-calcula instantáneamente los conteos de <strong>Más Barato</strong>, <strong>Igual</strong> y <strong>Más Caro</strong>, ignorando los registros N/A para mantener la consistencia matemática de los datos comparables.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 2: El Filtro Rector y los KPIs (Tarjetas de Resumen) -->
+        <div id="slide-2" class="slide w-full space-y-6">
+            <div>
+                <span class="text-walmart-blue font-bold uppercase tracking-wider text-xs">Filtro Principal e Indicadores</span>
+                <h3 class="text-2xl font-extrabold text-walmart-blue">1. Selección de Base e Indicadores Clave (Tarjetas KPI)</h3>
+                <p class="text-slate-500 text-sm">El punto de partida del reporte que define el benchmark de precios.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+                <!-- Columna Izquierda: Simulación Visual -->
+                <div class="md:col-span-5 bg-white p-5 rounded-lg border border-slate-200 shadow-sm space-y-4">
+                    <div class="bg-slate-50 p-3 rounded border border-slate-200 space-y-2">
+                        <span class="text-xs font-bold text-slate-400 block uppercase">Filtro de Entrada</span>
+                        <div class="bg-white border-2 border-walmart-blue p-2 rounded text-xs font-bold flex justify-between items-center text-walmart-blue">
+                            <span>SELECCIÓN DE BASE: Competidor A</span>
+                            <i class="fa-solid fa-chevron-down"></i>
+                        </div>
+                    </div>
+
+                    <div class="space-y-2">
+                        <span class="text-xs font-bold text-slate-400 block uppercase">Tarjetas de Indicadores (KPI Cards)</span>
+                        <div class="grid grid-cols-3 gap-2 text-center">
+                            <div class="bg-green-50 border border-green-200 p-2 rounded">
+                                <span class="text-[10px] text-walmart-success font-bold block">Más Barato</span>
+                                <span class="text-xs font-black text-walmart-success">1,250 SKUs</span>
+                            </div>
+                            <div class="bg-blue-50 border border-blue-200 p-2 rounded">
+                                <span class="text-[10px] text-walmart-blue font-bold block">Igual</span>
+                                <span class="text-xs font-black text-walmart-blue">1,800 SKUs</span>
+                            </div>
+                            <div class="bg-red-50 border border-red-200 p-2 rounded">
+                                <span class="text-[10px] text-walmart-error font-bold block">Más Caro</span>
+                                <span class="text-xs font-black text-walmart-error">450 SKUs</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Columna Derecha: Explicación Técnica -->
+                <div class="md:col-span-7 space-y-4 text-xs leading-relaxed text-slate-600">
+                    <div class="bg-slate-100 p-4 rounded border-l-4 border-walmart-blue">
+                        <h5 class="font-bold text-slate-800 text-sm mb-1 uppercase">¿Qué visualizamos en este bloque?</h5>
+                        <p>La **Selección de Base** determina contra qué cadena competidora o indicador promedio se compararán nuestros precios. Al cambiar este filtro, todas las tarjetas de indicadores se recalculan de forma dinámica.</p>
+                    </div>
+
+                    <div class="space-y-3">
+                        <div>
+                            <h6 class="font-bold text-slate-800"><i class="fa-solid fa-circle-check text-walmart-success mr-1"></i> Base Más Barato (Beat):</h6>
+                            <p>Muestra la cantidad de productos donde nuestro precio de venta al público está por debajo del competidor. Representa el motor de nuestra percepción de precios bajos.</p>
+                        </div>
+                        <div>
+                            <h6 class="font-bold text-slate-800"><i class="fa-solid fa-circle-check text-walmart-blue mr-1"></i> Igual (Match):</h6>
+                            <p>Muestra el volumen de productos que están alineados al centavo con el competidor seleccionado. Es el bloque de paridad de precios.</p>
+                        </div>
+                        <div>
+                            <h6 class="font-bold text-slate-800"><i class="fa-solid fa-circle-check text-walmart-error mr-1"></i> Base Más Caro (Hurt):</h6>
+                            <p>Muestra la cantidad de artículos donde estamos por encima de la competencia. Es el principal foco de atención para evitar pérdidas de margen y clientes.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 3: Gráficos de Distribución (Sensibilidad y Categoría) -->
+        <div id="slide-3" class="slide w-full space-y-6">
+            <div>
+                <span class="text-walmart-blue font-bold uppercase tracking-wider text-xs">Gráficos de Distribución</span>
+                <h3 class="text-2xl font-extrabold text-walmart-blue">2. Competitividad por Categoría y Sensibilidad (KVIs)</h3>
+                <p class="text-slate-500 text-sm">Cuadros intermedios diseñados para segmentar las decisiones comerciales.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs leading-relaxed">
+                <!-- Tarjeta 1: Sensibilidad KVI -->
+                <div class="bg-white p-5 rounded-lg border border-slate-200 shadow-sm space-y-3">
+                    <h4 class="font-extrabold text-slate-800 text-sm border-b border-slate-100 pb-2 uppercase text-walmart-blue flex justify-between items-center">
+                        <span>Cuadro: Segmentación por Sensibilidad (KVI)</span>
+                        <i class="fa-solid fa-ranking-star"></i>
+                    </h4>
+                    <p class="text-slate-600">
+                        Este cuadro en el Power BI distribuye los conteos (Más Barato, Igual, Más Caro) cruzándolos contra la clasificación de los artículos: **Super KVIs, KVIs, Artículos Normales y Productos de Fondo**.
+                    </p>
+                    <div class="bg-slate-50 p-3 rounded border border-slate-200 space-y-1">
+                        <span class="font-bold text-slate-800 block text-[11px]">Utilidad del Cuadro:</span>
+                        <p class="text-slate-500 text-[10px]">
+                            Permite asegurar que en los artículos de mayor sensibilidad (Super KVIs) el porcentaje de "Más Caro" sea cero o lo más cercano a cero posible. Los directores comerciales utilizan este cuadro para autorizar subsidios de precio en categorías de alta tracción de clientes.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Tarjeta 2: Por Categoría -->
+                <div class="bg-white p-5 rounded-lg border border-slate-200 shadow-sm space-y-3">
+                    <h4 class="font-extrabold text-slate-800 text-sm border-b border-slate-100 pb-2 uppercase text-walmart-blue flex justify-between items-center">
+                        <span>Cuadro: Desglose por Categoría / Negocio</span>
+                        <i class="fa-solid fa-tags"></i>
+                    </h4>
+                    <p class="text-slate-600">
+                        Este cuadro representa la estructura del portafolio dividida por Divisiones Comerciales (ej. Abarrotes, Higiene y Belleza, Mercancías Generales, Alimentos Frescos).
+                    </p>
+                    <div class="bg-slate-50 p-3 rounded border border-slate-200 space-y-1">
+                        <span class="font-bold text-slate-800 block text-[11px]">Utilidad del Cuadro:</span>
+                        <p class="text-slate-500 text-[10px]">
+                            Identifica qué comprador (comercial) o categoría de productos está arrastrando la desviación de competitividad. Si la división de Abarrotes muestra un incremento de "Más Caro" contra la base de descuento, el director puede citar al equipo comercial correspondiente para revisar las negociaciones de costo con proveedores.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 4: Tendencias Temporales e Históricos -->
+        <div id="slide-4" class="slide w-full space-y-6">
+            <div>
+                <span class="text-walmart-blue font-bold uppercase tracking-wider text-xs">Análisis de Tendencia</span>
+                <h3 class="text-2xl font-extrabold text-walmart-blue">3. Evolución de la Paridad e Históricos (Gráfico de Tendencia)</h3>
+                <p class="text-slate-500 text-sm">Cuadro temporal que mide la consistencia de nuestra estrategia de precios en el tiempo.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+                <!-- Simulación de tendencia -->
+                <div class="md:col-span-5 bg-white p-5 rounded-lg border border-slate-200 shadow-sm space-y-4">
+                    <span class="text-xs font-bold text-slate-400 block uppercase">Gráfico de Líneas: Historial de Competitividad (%)</span>
+                    <div class="h-40 flex items-end justify-between border-b border-l border-slate-300 p-2 text-[10px] text-slate-400">
+                        <div class="flex flex-col items-center w-1/4">
+                            <span class="text-walmart-success font-bold">88%</span>
+                            <div class="w-2 bg-walmart-blue h-24 rounded-t"></div>
+                            <span>Semana 21</span>
+                        </div>
+                        <div class="flex flex-col items-center w-1/4">
+                            <span class="text-walmart-success font-bold">89%</span>
+                            <div class="w-2 bg-walmart-blue h-26 rounded-t"></div>
+                            <span>Semana 22</span>
+                        </div>
+                        <div class="flex flex-col items-center w-1/4">
+                            <span class="text-walmart-success font-bold">85%</span>
+                            <div class="w-2 bg-walmart-blue h-20 rounded-t"></div>
+                            <span>Semana 23</span>
+                        </div>
+                        <div class="flex flex-col items-center w-1/4">
+                            <span class="text-walmart-success font-bold font-black">91%</span>
+                            <div class="w-2 bg-walmart-blue h-28 rounded-t"></div>
+                            <span>Semana 24</span>
+                        </div>
+                    </div>
+                    <p class="text-[10px] text-slate-500 text-center italic">* Muestra el % de Índice de Paridad (Más Barato + Igual)</p>
+                </div>
+
+                <!-- Explicación técnica -->
+                <div class="md:col-span-7 space-y-4 text-xs leading-relaxed text-slate-600">
+                    <div class="bg-slate-100 p-4 rounded border-l-4 border-walmart-sparkDark">
+                        <h5 class="font-bold text-slate-800 text-sm mb-1 uppercase">¿Qué visualizamos en este cuadro?</h5>
+                        <p>Este cuadro registra el histórico semanal de nuestra competitividad agregada contra la base de comparación seleccionada. Permite evaluar si las acciones comerciales tomadas en semanas previas dieron resultado o si la competencia reaccionó bajando sus precios.</p>
+                    </div>
+
+                    <div class="space-y-2">
+                        <h6 class="font-bold text-slate-800 uppercase text-[10px]">Criterio de Análisis de la Tendencia:</h6>
+                        <ul class="list-disc pl-4 space-y-1">
+                            <li><strong>Tendencia Estable / Al Alza:</strong> Indica que el equipo comercial está gestionando adecuadamente los costos y reaccionando a tiempo ante las alertas de la base.</li>
+                            <li><strong>Caídas Abruptas de Paridad:</strong> Alerta inmediata de que un competidor de la base seleccionada inició una campaña de rebajas masivas o folleto promocional agresivo que no hemos igualado.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SLIDE 5: Tabla de Detalle Operativo (Plan de Ejecución) -->
+        <div id="slide-5" class="slide w-full space-y-6">
+            <div>
+                <span class="text-walmart-blue font-bold uppercase tracking-wider text-xs">Detalle Transaccional</span>
+                <h3 class="text-2xl font-extrabold text-walmart-blue">4. Tabla de Detalle SKU y Ejecución de Cambios</h3>
+                <p class="text-slate-500 text-sm">El cuadro transaccional del dashboard donde ocurre el plan de acción táctico.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-stretch">
+                <!-- Explicación Técnica -->
+                <div class="md:col-span-7 space-y-4 text-xs leading-relaxed text-slate-600 flex flex-col justify-between">
+                    <div class="bg-slate-100 p-4 rounded border-l-4 border-walmart-success">
+                        <h5 class="font-bold text-slate-800 text-sm mb-1 uppercase">¿Qué visualizamos en este cuadro?</h5>
+                        <p>Es la tabla granular del reporte que despliega el listado de todos los SKUs comparables activos (excluyendo N/A). Contiene las columnas de: **SKU, Descripción del Producto, Precio Propio, Precio Competidor (Base), Diferencia en Pesos y Diferencia en Porcentaje**.</p>
+                    </div>
+
+                    <div class="space-y-3">
+                        <p>
+                            <strong>Importancia Operativa:</strong> Este es el cuadro que "hace que las cosas sucedan". Una vez identificadas las desviaciones en los gráficos de arriba, los analistas y gerentes exportan esta tabla para cargar los nuevos precios de venta en los sistemas de tiendas.
+                        </p>
+                        <p class="bg-amber-50 p-2.5 rounded border border-amber-200 text-walmart-sparkDark text-[11px] font-semibold">
+                            <i class="fa-solid fa-triangle-exclamation mr-1"></i> Consejo Directivo: Siempre ordene la tabla de mayor a menor por la brecha de porcentaje en la columna "Base Más Caro" para atacar primero las desviaciones más graves que afectan la percepción de precios.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Simulación Visual de la Tabla de Detalle -->
+                <div class="md:col-span-5 bg-white p-4 rounded-lg border border-slate-200 shadow-sm flex flex-col justify-between space-y-3">
+                    <span class="text-xs font-bold text-slate-400 block uppercase">Detalle SKU de Alertas</span>
+                    
+                    <div class="overflow-x-auto text-[10px]">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-100 border-b border-slate-200">
+                                    <th class="p-1.5 font-bold">SKU</th>
+                                    <th class="p-1.5 font-bold">Precio</th>
+                                    <th class="p-1.5 font-bold">Competidor</th>
+                                    <th class="p-1.5 font-bold">Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100">
+                                <tr>
+                                    <td class="p-1.5 font-medium">982103 Aceite 1L</td>
+                                    <td class="p-1.5 font-bold">$38.50</td>
+                                    <td class="p-1.5">$36.00</td>
+                                    <td class="p-1.5 text-walmart-error font-extrabold">Más Caro</td>
+                                </tr>
+                                <tr>
+                                    <td class="p-1.5 font-medium">441092 Detergente 2k</td>
+                                    <td class="p-1.5 font-bold">$45.00</td>
+                                    <td class="p-1.5">$45.00</td>
+                                    <td class="p-1.5 text-walmart-blue font-extrabold">Igual</td>
+                                </tr>
+                                <tr>
+                                    <td class="p-1.5 font-medium">102931 Leche 1L</td>
+                                    <td class="p-1.5 font-bold">$22.00</td>
+                                    <td class="p-1.5">$23.50</td>
+                                    <td class="p-1.5 text-walmart-success font-extrabold">Más Barato</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="pt-2 border-t border-slate-100">
+                        <a href="https://app.powerbi.com/links/VzhhEM8tkT?ctid=3cbcc3d3-094d-4006-9849-0d11d61f484d&pbi_source=linkShare" target="_blank" class="w-full block text-center bg-walmart-blue hover:bg-blue-800 text-white font-bold py-2 rounded text-[11px] transition-all uppercase">
+                            Abrir y Exportar Reporte de Power BI <i class="fa-solid fa-arrow-up-right-from-square ml-1"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Barra de Navegación del Slide Deck -->
+    <footer class="bg-white border-t border-slate-200 px-8 py-4 flex justify-between items-center shadow-inner">
+        <div class="text-xs text-slate-400 font-medium">
+            Soporte de Precios Walmart • ID de Agente: code-puppy-7a20e0
+        </div>
+        
+        <div class="flex gap-3">
+            <button id="prev-btn" onclick="changeSlide(-1)" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-4 py-2 rounded text-xs transition-colors flex items-center gap-2 border border-slate-200" disabled>
+                <i class="fa-solid fa-chevron-left"></i> Anterior
+            </button>
+            <button id="next-btn" onclick="changeSlide(1)" class="bg-walmart-blue hover:bg-blue-800 text-white font-bold px-4 py-2 rounded text-xs transition-colors flex items-center gap-2 shadow-sm">
+                Siguiente <i class="fa-solid fa-chevron-right"></i>
+            </button>
+        </div>
+    </footer>
+
+    <!-- Lógica de Control de Diapositivas -->
+    <script>
+        let currentSlide = 1;
+        const totalSlides = 5;
+
+        function updateSlideIndex() {
+            document.getElementById('slide-index').innerText = currentSlide;
+            
+            // Estado de los botones
+            document.getElementById('prev-btn').disabled = (currentSlide === 1);
+            if (currentSlide === 1) {
+                document.getElementById('prev-btn').classList.add('opacity-50', 'cursor-not-allowed');
+            } else {
+                document.getElementById('prev-btn').classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+
+            const nextBtn = document.getElementById('next-btn');
+            if (currentSlide === totalSlides) {
+                nextBtn.innerHTML = 'Finalizar <i class="fa-solid fa-circle-check"></i>';
+                nextBtn.classList.remove('bg-walmart-blue', 'hover:bg-blue-800');
+                nextBtn.classList.add('bg-walmart-success', 'hover:bg-green-700');
+            } else {
+                nextBtn.innerHTML = 'Siguiente <i class="fa-solid fa-chevron-right"></i>';
+                nextBtn.classList.remove('bg-walmart-success', 'hover:bg-green-700');
+                nextBtn.classList.add('bg-walmart-blue', 'hover:bg-blue-800');
+            }
+        }
+
+        function changeSlide(direction) {
+            const nextSlide = currentSlide + direction;
+            if (nextSlide >= 1 && nextSlide <= totalSlides) {
+                document.getElementById(`slide-${currentSlide}`).classList.remove('active');
+                currentSlide = nextSlide;
+                document.getElementById(`slide-${currentSlide}`).classList.add('active');
+                updateSlideIndex();
+            } else if (nextSlide > totalSlides) {
+                alert('Fin de la presentación técnica.');
+            }
+        }
+
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'ArrowLeft') changeSlide(-1);
+            if (event.key === 'ArrowRight') changeSlide(1);
+        });
+    </script>
+</body>
+</html>

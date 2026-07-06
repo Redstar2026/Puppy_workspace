@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block breadcrumb %}<span class="material-icons-round text-base">home</span><span>Dashboard</span>{% endblock %}
+
+{% block content %}
+{# ── Stats cards ──────────────────────────────────────────────────────── #}
+<div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5 mb-8">
+  {% set cards = [
+    ("Tareas Totales",     total,          "list_alt",   "bg-wm-blue10 text-wm-blue",   "text-wm-blue"),
+    ("En Progreso",        en_progreso,    "sync",       "bg-yellow-50 text-yellow-600","text-yellow-600"),
+    ("Completadas",        completadas,    "check_circle","bg-green-50 text-green-700", "text-green-700"),
+    ("Aprobac. Pendientes",pendientes_apr, "pending",    "bg-red-50 text-red-600",      "text-red-600"),
+  ] %}
+  {% for label, val, icon, icon_cls, text_cls in cards %}
+  <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 flex items-center gap-4">
+    <div class="w-12 h-12 rounded-xl {{ icon_cls }} flex items-center justify-center flex-shrink-0">
+      <span class="material-icons-round text-2xl">{{ icon }}</span>
+    </div>
+    <div>
+      <p class="text-3xl font-bold {{ text_cls }}">{{ val }}</p>
+      <p class="text-sm text-gray-500 mt-0.5">{{ label }}</p>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+  {# Tareas recientes #}
+  <div class="xl:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100">
+    <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+      <h2 class="font-semibold text-gray-800 flex items-center gap-2">
+        <span class="material-icons-round text-wm-blue">list_alt</span>Últimas Tareas
+      </h2>
+      <a href="/tareas" class="text-wm-blue text-sm font-medium hover:underline">Ver todas →</a>
+    </div>
+    <div class="divide-y divide-gray-50">
+      {% for t in recientes %}
+      {% set estado_map = {
+        'borrador':             ('gray',   'Borrador'),
+        'pendiente_aprobacion': ('yellow', 'Pend. Aprobación'),
+        'aprobada':             ('green',  'Aprobada'),
+        'rechazada':            ('red',    'Rechazada'),
+        'en_progreso':          ('blue',   'En Progreso'),
+        'en_revision':          ('purple', 'En Revisión'),
+        'completada':           ('green',  'Completada'),
+        'cancelada':            ('gray',   'Cancelada'),
+      } %}
+      {% set color, label = estado_map.get(t.estado.value, ('gray','—')) %}
+      {% set tipo_icon = {'cambio':'swap_horiz','tarea':'task','incidente':'warning','mejora':'trending_up'} %}
+      <a href="/tareas/{{ t.id }}" class="flex items-center gap-4 px-5 py-3.5 hover:bg-gray-50 transition-colors group">
+        <div class="w-8 h-8 rounded-lg bg-wm-blue10 flex items-center justify-center flex-shrink-0">
+          <span class="materons-round text-wm-blue text-base">{{ tipo_icon.get(t.tipo.value,'task') }}</span>
+        </div>
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-medium text-gray-800 truncate group-hover:text-wm-blue">{{ t.titulo }}</p>
+          <p class="text-xs text-gray-400 mt-0.5">
+            {{ t.encargado.nombre if t.encargado else '—' }} ·
+            {{ t.creado_en.strftime('%d/%m/%Y') }}
+          </p>
+        </div>
+        <span class="badge-estado
+          {% if color=='green' %}bg-green-100 text-green-700
+          {% elif color=='red' %}bg-red-100 text-red-700
+          {% elif color=='blue' %}bg-blue-100 text-blue-700
+          {% elif color=='yellow' %}bg-yellow-100 text-yellow-700
+          {% elif color=='purple' %}bg-purple-100 text-purple-700
+          {% else %}bg-gray-100 text-gray-600{% endif %}">
+          {{ label }}
+        </span>
+      </a>
+      {% else %}
+      <p class="px-5 py-8 text-center text-sm text-gray-400">Sin tareas aún. <a href="/tareas/nueva" class="text-wm-blue hover:underline">Crear primera tarea →</a></p>
+      {% endfor %}
+    </div>
+  </div>
+
+  {# Panel derecho #}
+  <div class="flex flex-col gap-5">
+    {# Mis aprobaciones pendientes #}
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100">
+      <div class="px-5 py-4 border-b border-gray-100">
+        <h2 class="font-semibold text-gray-800 flex items-center gap-2">
+          <span class="material-icons-round text-wm-spark">verified</span>Mis Aprobaciones
+        </h2>
+      </div>
+      <div class="divide-y divide-gray-50 max-h-48 overflow-y-auto">
+        {% for a in mis_pendientes %}
+        <div class="px-5 py-3">
+          <p class="text-sm font-medium text-gray-800 truncate">{{ a.tarea.titulo }}</p>
+          <div class="flex gap-2 mt-2">
+            <form method="post" action="/aprobaciones/{{ a.id }}/responder">
+              <input type="hidden" name="accion" value="aprobada"/>
+              <button class="bg-green-500 hover:bg-green-600 text-white text-xs px-3 py-1 rounded-md font-medium transition-colors">✅ Aprobar</button>
+            </form>
+            <form method="post" action="/aprobaciones/{{ a.id }}/responder">
+              <input type="hidden" name="accion" value="rechazada"/>
+              <button class="bg-red-500 hover:bg-red-600 text-white text-xs px-3 py-1 rounded-md font-medium transition-colors">❌ Rechazar</button>
+            </form>
+          </div>
+        </div>
+        {% else %}
+        <p class="px-5 py-6 text-center text-sm text-gray-400">Sin aprobaciones pendientes ✓</p>
+        {% endfor %}
+      </div>
+    </div>
+
+    {# Actividad reciente #}
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100">
+      <div class="px-5 py-4 border-b border-gray-100">
+        <h2 class="font-semibold text-gray-800 flex items-center gap-2">
+          <span class="material-icons-round text-gray-400">history</span>Actividad Reciente
+        </h2>
+      </div>
+      <div class="px-5 py-3 space-y-3 max-h-64 overflow-y-auto">
+        {% for h in actividad %}
+        <div class="flex gap-3 items-start">
+          <div class="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+            <span class="material-icons-round text-gray-400 text-sm">
+              {% if 'creada' in h.accion %}add_circle
+              {% elif 'modificado' in h.accion %}edit
+              {% elif 'Aprobación' in h.accion %}verified
+              {% elif 'Comentario' in h.accion %}comment
+              {% else %}info{% endif %}
+            </span>
+          </div>
+          <div class="min-w-0">
+            <p class="text-xs font-medium text-gray-700">{{ h.accion }}</p>
+            <p class="text-xs text-gray-400 truncate">
+              {{ h.usuario.nombre if h.usuario else 'Sistema' }} · {{ h.creado_en.strftime('%d/%m %H:%M') }}
+            </p>
+          </div>
+        </div>
+        {% else %}
+        <p class="py-4 text-center text-sm text-gray-400">Sin actividad</p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

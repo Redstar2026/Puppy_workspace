@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% block title %}Usuarios — {{ app_name }}{% endblock %}
+{% block breadcrumb %}
+  <span class="text-gray-400">Inicio /</span>
+  <span class="font-semibold text-walmart-blue">👥 Gestión de Usuarios</span>
+{% endblock %}
+
+{% block content %}
+<div class="space-y-5" x-data="{ mostrarForm: false }">
+  <div class="flex items-center justify-between">
+    <h1 class="text-xl font-bold text-gray-900 dark:text-white">Usuarios del Sistema</h1>
+    <button @click="mostrarForm = !mostrarForm"
+            class="inline-flex items-center gap-2 bg-walmart-blue text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
+      + Nuevo Usuario
+    </button>
+  </div>
+
+  {# Form crear usuario #}
+  <div x-show="mostrarForm" x-transition class="card p-6">
+    <h3 class="font-semibold text-gray-800 dark:text-gray-200 mb-4">➕ Crear Nuevo Usuario</h3>
+    <form method="POST" action="/usuarios/nuevo" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div>
+        <label class="form-label">Nombre Completo *</label>
+        <input type="text" name="nombre" required placeholder="Juan García" class="form-input" />
+      </div>
+      <div>
+        <label class="form-label">Email Walmart *</label>
+        <input type="email" name="email" required placeholder="jgarcia@walmart.com" class="form-input" />
+      </div>
+      <div>
+        <label class="form-label">Contraseña *</label>
+        <input type="password" name="password" required placeholder="••••••••" class="form-input" />
+      </div>
+      <div>
+        <label class="form-label">Rol</label>
+        <select name="rol" class="form-input">
+          {% for r in roles %}
+          <option value="{{ r }}">{{ r.capitalize() }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="form-label">Departamento</label>
+        <input type="text" name="departamento" value="Pricing" class="form-input" />
+      </div>
+      <div>
+        <label class="form-label">Cargo</label>
+        <input type="text" name="cargo" placeholder="Analista de Pricing" class="form-input" />
+      </div>
+      <div>
+        <label class="form-label">¿Es Aprobador?</label>
+        <select name="es_aprobador" class="form-input">
+          <option value="no">No</option>
+          <option value="si">Sí</option>
+        </select>
+      </div>
+      <div class="md:col-span-3 flex justify-end gap-3">
+        <button type="button" @click="mostrarForm=false" class="px-5 py-2 border border-gray-300 dark:border-gray-600 text-sm font-semibold rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">Cancelar</button>
+        <button type="submit" class="px-5 py-2 bg-walmart-blue text-white text-sm font-bold rounded-lg hover:bg-blue-700">Crear Usuario</button>
+      </div>
+    </form>
+  </div>
+
+  {# Lista #}
+  <div class="card overflow-hidden">
+    <table class="w-full text-sm">
+      <thead class="bg-gray-50 dark:bg-gray-700/50">
+        <tr>
+          {% for col in ['Usuario','Email','Rol','Departamento','Cargo','Aprobador','Estado','Último Acceso','Acción'] %}
+          <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">{{ col }}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+        {% for u in usuarios %}
+        <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
+          <td class="px-4 py-3">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-full bg-walmart-blue flex items-center justify-center text-white text-xs font-bold flex-shrink-0">{{ u.nombre[:2].upper() }}</div>
+              <span class="font-medium text-gray-800 dark:text-gray-200">{{ u.nombre }}</span>
+            </div>
+          </td>
+          <td class="px-4 py-3 text-xs text-gray-500">{{ u.email }}</td>
+          <td class="px-4 py-3">
+            {% set rol_colors = {'admin':'badge-red','manager':'badge-blue','developer':'badge-indigo','qa':'badge-purple','analista':'badge-yellow','viewer':'badge-gray'} %}
+            <span class="badge {{ rol_colors.get(u.rol.value, 'badge-gray') }}">{{ u.rol.value }}</span>
+          </td>
+          <td class="px-4 py-3 text-xs text-gray-500">{{ u.departamento }}</td>
+          <td class="px-4 py-3 text-xs text-gray-500">{{ u.cargo or '—' }}</td>
+          <td class="px-4 py-3">
+            {% if u.es_aprobador %}
+            <span class="badge badge-green">✅ Sí</span>
+            {% else %}
+            <span class="text-xs text-gray-400">No</span>
+            {% endif %}
+          </td>
+          <td class="px-4 py-3">
+            {% if u.activo %}
+            <span class="badge badge-green">Activo</span>
+            {% else %}
+            <span class="badge badge-red">Inactivo</span>
+            {% endif %}
+          </td>
+          <td class="px-4 py-3 text-xs text-gray-400">
+            {{ u.ultimo_acceso.strftime('%d/%m/%Y') if u.ultimo_acceso else '—' }}
+          </td>
+          <td class="px-4 py-3">
+            {% if u.id != user.id %}
+            <form method="POST" action="/usuarios/{{ u.id }}/toggle">
+              <button type="submit"
+                      class="text-xs {% if u.activo %}text-red-500 hover:text-red-700{% else %}text-green-600 hover:text-green-800{% endif %} font-semibold">
+                {{ 'Desactivar' if u.activo else 'Activar' }}
+              </button>
+            </form>
+            {% else %}
+            <span class="text-xs text-gray-300">(Tú)</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

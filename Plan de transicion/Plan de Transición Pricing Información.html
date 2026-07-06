@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Plan de Transición · Pricing Costa Rica</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<style>
+:root{
+  --blue:#0053e2; --blue-dark:#003db5; --blue-light:#e8effc;
+  --spark:#ffc220; --spark-dark:#995213;
+  --green:#2a8703; --green-light:#e8f5e3;
+  --red:#ea1100;
+  --gray-160:#1a1a1a; --gray-100:#767676; --gray-50:#c6c6c6; --gray-10:#f5f5f5;
+  --white:#fff; --radius:10px; --shadow:0 2px 14px rgba(0,83,226,.10);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4ff;color:var(--gray-160);min-height:100vh}
+
+/* ── HERO ── */
+.hero{background:linear-gradient(135deg,#0041bb 0%,#0053e2 55%,#1a6aff 100%);
+  color:#fff;padding:48px 48px 40px;position:relative;overflow:hidden}
+.hero::after{content:'';position:absolute;right:-60px;top:-60px;width:350px;height:350px;
+  border-radius:50%;background:rgba(255,194,32,.13);pointer-events:none}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.15);
+  border:1px solid rgba(255,255,255,.3);border-radius:20px;padding:4px 14px;font-size:12px;
+  font-weight:600;letter-spacing:.5px;text-transform:uppercase;margin-bottom:20px}
+.hero h1{font-size:clamp(22px,3.5vw,36px);font-weight:700;line-height:1.2;max-width:700px}
+.hero p{margin-top:10px;opacity:.85;font-size:15px;max-width:600px}
+.hero-meta{margin-top:28px;display:flex;gap:32px;flex-wrap:wrap}
+.hero-kpi{text-align:center}
+.hero-kpi .num{font-size:32px;font-weight:800;color:var(--spark)}
+.hero-kpi .lbl{font-size:11px;opacity:.8;text-transform:uppercase;letter-spacing:.5px}
+.spark-bar{height:4px;background:var(--spark);border-radius:2px;margin-top:6px;width:100%}
+
+/* ── LAYOUT ── */
+.container{max-width:1200px;margin:0 auto;padding:32px 24px}
+.section-title{font-size:20px;font-weight:700;color:var(--blue);margin-bottom:20px;
+  display:flex;align-items:center;gap:10px}
+.section-title::before{content:'';display:block;width:4px;height:22px;
+  background:var(--spark);border-radius:2px}
+
+/* ── PROCESS CARDS ── */
+.cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:18px;margin-bottom:40px}
+.card{background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);
+  padding:20px;border-top:4px solid transparent;transition:transform .2s,box-shadow .2s}
+.card:hover{transform:translateY(-3px);box-shadow:0 6px 24px rgba(0,83,226,.15)}
+.card.alta{border-top-color:var(--blue)}
+.card.media{border-top-color:var(--spark)}
+.card-header{disustify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:12px}
+.card-title{font-size:14px;font-weight:700;color:var(--gray-160);line-height:1.3;flex:1}
+.badge{display:inline-flex;align-items:center;gap:4px;border-radius:12px;
+  padding:3px 10px;font-size:11px;font-weight:700;white-space:nowrap;letter-spacing:.3px}
+.badge-alta{background:var(--blue-light);color:var(--blue)}
+.badge-media{background:#fff8e0;color:var(--spark-dark)}
+.badge-green{background:var(--green-light);color:var(--green)}
+.badge-gray{background:var(--gray-10);color:var(--gray-100)}
+
+.card-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:13px}
+.card-row .label{color:var(--gray-100);min-width:95px;font-size:12px}
+.progress-wrap{flex:1;background:var(--gray-10);border-radius:6px;height:8px;overflow:hidden}
+.progress-bar{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--blue),#3b7fff)}
+.progress-bar.low{background:linear-gradient(90deg,#ea5700,#ffc220)}
+.progress-pct{font-size:12px;font-weight:700;color:var(--blue);min-width:36px;text-align:right}
+.progress-pct.low{color:var(--spark-dark)}
+
+.card-detail{font-size:11px;color:var(--gray-100);line-height:1.45;margin-top:10px;
+  border-top:1px solid var(--gray-10);padding-top:10px}
+.owner-chip{display:inline-flex;align-items:center;gap:4px;background:var(--blue-light);
+  color:var(--blue);border-radius:20px;padding:2px 10px;font-size:11px;font-weight:600}
+.owner-chip.bi{background:#f0f8ff;color:#0080cc}
+
+/* ── GANTT ── */
+.gantt-wrapper{background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);
+  overflow-x:auto;margin-bottom:40px}
+.gantt-table{border-collapse:collapse;width:100%;font-size:12px;min-width:800px}
+.gantt-table th{background:var(--blue);color:#fff;padding:9px 10px;text-align:center;
+  font-weight:600;font-size:11px;position:sticky;top:0;z-index:1}
+.gantt-table th.left{text-align:left;min-width:160px;padding-left:16px}
+.gantt-table td{padding:7px 10px;border-bottom:1px solid var(--gray-10);vertical-align:middle}
+.gantt-table td.proc-name{font-weight:600;color:var(--gray-160);padding-left:16px}
+.gantt-table td.person{font-size:11px;color:var(--gray-100)}
+.gantt-table td.month{font-size:11px;font-weight:600}
+.gantt-table tr:hover td{background:var(--blue-light)}
+.gantt-cell{border-radius:6px;height:28px;width:100%;display:flex;align-items:center;
+  justify-content:center;font-size:10px;font-weight:700;color:#fff;letter-spacing:.3px}
+.gantt-cell.active-alta{background:var(--blue)}
+.gantt-cell.active-media{background:var(--spark);color:var(--gray-160)}
+.gantt-cell.milestone{background:var(--green);border-radius:50%}
+.gantt-cell.td{background:#888;border-radius:6px}
+.gantt-section-row td{background:#eef2fb;font-size:11px;font-weight:700;
+  color:var(--blue);text-transform:uppercase;letter-spacing:.5px;padding:5px 16px}
+
+.exp-badge{display:inline-block;border-radius:10px;padding:2px 8px;font-size:10px;font-weight:700}
+.exp-100{background:var(--green-light);color:var(--green)}
+.exp-high{background:var(--blue-light);color:var(--blue)}
+.exp-low{background:#fff8e0;color:var(--spark-dark)}
+
+/* ── CHART ── */
+.chart-row{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:40px}
+.chart-card{background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);padding:24px}
+.chart-card h3{font-size:14px;font-weight:700;color:var(--gray-160);margin-bottom:16px}
+.chart-container{position:relative;height:220px}
+
+/* ── FOOTER ── */
+.footer{text-align:center;padding:24px;font-size:11px;color:var(--gray-100)}
+.footer strong{color:var(--blue)}
+
+/* ── TAGS ── */
+.tag-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+
+@media(max-width:700px){
+  .hero{padding:28px 20px}
+  .hero-meta{gap:16px}
+  .chart-row{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-badge">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+    Walmart · Pricing Costa Rica
+  </div>
+  <h1>Plan de Transición de Conocimiento</h1>
+  <p>Traslado estructurado de procesos críticos de Pricing al equipo de continuidad operativa · SW 23–29 · Julio–Agosto 2026</p>
+  <div class="hero-meta">
+    <div class="hero-kpi"><div class="num">8</div><div class="lbl">Procesos Clave</div></div>
+    <div class="hero-kpi"><div class="num">6</div><div class="lbl">Prioridad Alta</div></div>
+    <div class="hero-kpi"><div class="num">56<span style="font-size:18px">%</span></div><div class="lbl">Avance Promedio</div></div>
+    <div class="hero-kpi"><div class="num">Jul–Ago</div><div class="lbl">Ventana de Traslado</div></div>
+  </div>
+  <div class="spark-bar" style="margin-top:28px;max-width:300px;opacity:.6"></div>
+</div>
+
+<div class="container">
+
+  <!-- PROCESOS -->
+  <div class="section-title">Mapa de Procesos y Transición</div>
+  <div class="cards-grid">
+
+    <div class="card alta">
+      <div class="card-header">
+        <div class="card-title">Carga de Inputs</div>
+        <div class="badge badge-alta"> ALTA</div>
+      </div>
+      <div class="card-row"><span class="label">Instructivo</span><span class="badge badge-green"> Sí</span></div>
+      <div class="card-row"><span class="label">Refuerzo</span>
+        <div class="progress-wrap"><div class="progress-bar" style="width:75%"></div></div>
+        <span class="progress-pct">75%</span>
+      </div>
+      <div class="card-row"><span class="label">Cronograma</span><span class="badge badge-green"> Con fecha</span></div>
+      <div class="card-row"><span class="label">Owner</span><span class="owner-chip">Pricing Información</span></div>
+    </div>
+
+    <div class="card alta">
+      <div class="card-header">
+        <div class="card-title">Proceso Reacción Precios (Modelo)</div>
+        <div class="badge badge-alta"> ALTA</div>
+      </div>
+      <div class="card-row"><span class="label">Instructivo</span><span class="badge badge-green"> Sí</span></div>
+      <div class="card-row"><span class="label">Refuerzo</span>
+        <div class="progress-wrap"><div class="progress-bar low" style="width:50%"></div></div>
+        <span class="progress-pct low">50%</span>
+      </div>
+      <div class="card-row"><span class="label">Cronograma</span><span class="badge badge-green"> Con fecha</span></div>
+      <div class="card-row"><span class="label">Owner</span><span class="owner-chip">Pricing Información</span></div>
+    </div>
+
+    <div class="card alta">
+      <div class="card-header">
+        <div class="card-title">Medición Interna – Externa</div>
+        <div class="badge badge-alta"> ALTA</div>
+      </div>
+      <div class="card-row"><span class="label">Instructivo</span><span class="badge badge-green"> Sí</span></div>
+      <div class="card-row"><span class="label">Refuerzo</span>
+        <div class="progress-wrap"><div class="progress-bar low" style="width:50%"></div></div>
+        <span class="progress-pct low">50%</span>
+      </div>
+      <div class="card-row"><span class="label">Cronograma</span><span class="badge badge-green"> Con fecha</span></div>
+      <div class="card-row"><span class="label">Owner</span><span class="owner-chip">Pricing Información</span></div>
+    </div>
+
+    <div class="card media">
+      <div class="card-header">
+        <div class="card-title">Bases de Pricing</div>
+        <div class="badge badge-media"> MEDIA</div>
+      </div>
+      <div class="card-row"><span class="label">Instructivo</span><span class="badge badge-green"> Sí</span></div>
+      <div class="card-row"><span class="label">Refuerzo</span>
+        <div class="progress-wrap"><div class="progress-bar" style="width:70%"></div></div>
+        <span class="progress-pct">70%</span>
+      </div>
+      <div class="card-row"><span class="label">Cronograma</span><span class="badge badge-green"> Con fecha</span></div>
+      <div class="card-row"><span class="label">Owner</span><span class="owner-chip">Pricing Información</span></div>
+    </div>
+
+    <div class="card alta">
+      <div class="card-header">
+        <div class="card-title">Reportería &amp; Dashboards</div>
+        <div class="badge badge-alta"> ALTA</div>
+      </div>
+      <div class="card-row"><span class="label">Instructivo</span><span class="badge badge-green"> Sí</span></div>
+      <div class="card-row"><span class="label">Refuerzo</span>
+        <div class="progress-wrap"><div class="progress-bar low" style="width:25%"></div></div>
+        <span class="progress-pct low">25%</span>
+      </div>
+      <div class="card-row"><span class="label">Cronograma</span><span class="badge badge-gray">⏳ Sin fecha (en definición)</span></div>
+      <div class="card-row"><span class="label">Owner</span><span class="owner-chip bi">BI</span></div>
+      <div class="card-detail"> Sesión realizada con BI para estimar capacidad. Conocimiento también se trasladará a especialistas de negocio de Pricing Información.</div>
+    </div>
+
+    <div class="card alta">
+      <div class="card-header">
+        <div class="card-title">Data Governance · Históricos &amp; Respaldos</div>
+        <div class="badge badge-alta"> ALTA</div>
+      </div>
+      <div class="card-row"><span class="label">Instructivo</span><span class="badge badge-green"> Sí</span></div>
+      <div class="card-row"><span class="label">Refuerzo</span>
+        <div class="progress-wrap"><div class="progress-bar low" style="width:40%"></div></div>
+        <span class="progress-pct low">40%</span>
+      </div>
+      <div class="card-row"><span class="label">Cronograma</span><span class="badge badge-green"> Con fecha</span></div>
+      <div class="card-row"><span class="label">Owner</span><span class="owner-chip bi">Pricing Info · BI</span></div>
+      <div class="card-detail"> Tablas BigQuery. En traslado activo a BI. Analistas de Pricing mantienen conocimiento completo.</div>
+    </div>
+
+    <div class="card media">
+      <div class="card-header">
+        <div class="card-title">Análisis Ad-Hoc · Paralelos · Modelos Adicionales</div>
+        <div class="badge badge-media"> MEDIA</div>
+      </div>
+      <div class="card-row"><span class="label">Instructivo</span><span class="badge badge-green"> Sí</span></div>
+      <div class="card-row"><span class="label">Refuerzo</span>
+        <div class="progress-wrap"><div class="progress-bar low" style="width:50%"></div></div>
+        <span class="progress-pct low">50%</span>
+      </div>
+      <div class="card-row"><span class="label">Cronograma</span><span class="badge badge-green"> Con fecha</span></div>
+      <div class="card-row"><span class="label">Owner</span><span class="owner-chip">Pricing Información</span></div>
+      <div class="card-detail"> Se planifican cambios en queries y lógica de paralelos.</div>
+    </div>
+
+    <div class="card alta">
+      <div class="card-header">
+        <div class="card-title">Herramienta Modelo</div>
+        <div class="badge badge-alta"> ALTA</div>
+      </div>
+      <div class="card-row"><span class="label">Instructivo</span><span class="badge badge-green"> Sí</span></div>
+      <div class="card-row"><span class="label">Refuerzo</span>
+        <div class="progress-wrap"><div class="progress-bar" style="width:100%"></div></div>
+        <span class="progress-pct">100%</span>
+      </div>
+      <div class="card-row"><span class="label">Cronograma</span><span class="badge badge-gray">⏳ Coordinando</span></div>
+      <div class="card-row"><span class="label">Owner</span><span class="owner-chip bi">Transformación Digital</span></div>
+      <div class="card-detail"> Sesiones activas con Transformación Digital. Requiere confirmación de fechas definitivas.</div>
+    </div>
+
+  </div><!-- /cards-grid -->
+
+  <!-- CHARTS -->
+  <div class="chart-row">
+    <div class="chart-card">
+      <h3>Avance de Traslado por Proceso (%)</h3>
+      <div class="chart-container"><canvas id="barChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h3>Distribución por Prioridad</h3>
+      <div class="chart-container"><canvas id="pieChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- CRONOGRAMA GANTT -->
+  <div class="section-title">Cronograma de Transferencia · SW 23–29</div>
+  <div class="gantt-wrapper">
+    <table class="gantt-table">
+      <thead>
+        <tr>
+          <th class="left">Proceso</th>
+          <th class="left" style="min-width:120px">Responsable</th>
+          <th class="left" style="min-width:90px">Acompañante</th>
+          <th>SW 23</th><th>SW 24</th><th>SW 25</th><th>SW 26</th>
+          <th>SW 27</th><th>SW 28</th><th>SW 29</th>
+          <th>Exp.</th>
+        </tr>
+      </thead>
+      <tbody id="ganttBody"></tbody>
+    </table>
+  </div>
+
+  <!-- NOTAS -->
+  <div class="section-title">Observaciones Clave</div>
+  <div class="cards-grid" style="grid-template-columns:repeat(auto-fill,minmax(340px,1fr))">
+    <div class="card" style="border-top-color:var(--spark)">
+      <div style="font-size:20px;margin-bottom:8px"></div>
+      <div class="card-title" style="margin-bottom:8px">Reportería &amp; Dashboards — Riesgo</div>
+      <div class="card-detail" style="border:none;padding:0;font-size:12px">El owner BI aún no tiene fecha confirmada en el cronograma. Es el proceso con menor avance (25%). Se recomienda definir la fecha límite con el equipo de BI esta semana.</div>
+    </div>
+    <div class="card" style="border-top-color:var(--green)">
+      <div style="font-size:20px;margin-bottom:8px"></div>
+      <div class="card-title" style="margin-bottom:8px">Herramienta Modelo — 100% Instructivo</div>
+      <div class="card-detail" style="border:none;padding:0;font-size:12px">Es el único proceso con refuerzo al 100%. Transformación Digital está activamente involucrada. Requiere solo confirmación de fechas de sesiones.</div>
+    </div>
+    <div class="card" style="border-top-color:var(--blue)">
+      <div style="font-size:20px;margin-bottom:8px"></div>
+      <div class="card-title" style="margin-bottom:8px">Semana 26 — Semana Crítica</div>
+      <div class="card-detail" style="border:none;padding:0;font-size:12px">Confluence de actividades: Reacción Precios (cierre Guillermo + inicio Edwin), Medición (cierre Guillermo + inicio Edwin), Metodología General. Es el punto de mayor carga paralela.</div>
+    </div>
+    <div class="card" style="border-top-color:var(--blue)">
+      <div style="font-size:20px;margin-bottom:8px"></div>
+      <div class="card-title" style="margin-bottom:8px">Modelo Dupla — Guillermo → Edwin</div>
+      <div class="card-detail" style="border:none;padding:0;font-size:12px">El traslado usa un modelo secuencial: Guillermo recibe primero (SW 23-26) y luego Edwin recibe el conocimiento ya asentado (SW 26-28), con Priscilla y Andrea como acompañantes de calidad.</div>
+    </div>
+  </div>
+
+</div><!-- /container -->
+
+<div class="footer">
+  Generado el <strong>1 de Julio 2026</strong> · Walmart Pricing Costa Rica ·
+  <strong>Confidencial — Solo para uso interno</strong>
+</div>
+
+<script>
+// ── GANTT DATA ──
+const WEEKS = ['SW 23','SW 24','SW 25','SW 26','SW 27','SW 28','SW 29'];
+const ganttRows = [
+  // [proceso, responsable, acompañante, [swStart,swEnd], mes, exp, prioridad]
+  {proc:'Carga de Inputs',resp:'Guillermo',acomp:'Priscilla',sw:[23,24],exp:1,pri:'MEDIA'},
+  {proc:'Carga de Inputs',resp:'Edwin',acomp:'Priscilla',sw:[25,26],exp:1,pri:'MEDIA'},
+  {proc:'Reacción Precios (Modelo)',resp:'Guillermo',acomp:'Priscilla',sw:[23,26],exp:0.8,pri:'ALTA'},
+  {proc:'Reacción Precios (Modelo)',resp:'Edwin',acomp:'Priscilla',sw:[26,27],exp:1,pri:'ALTA'},
+  {proc:'Medición Interna – Externa',resp:'Guillermo',acomp:'Priscilla',sw:[23,26],exp:0.9,pri:'ALTA'},
+  {proc:'Medición Interna – Externa',resp:'Edwin',acomp:'Priscilla',sw:[26,27],exp:1,pri:'ALTA'},
+  {proc:'Bases de Pricing',resp:'Guillermo',acomp:'Andrea',sw:[28,28],exp:1,pri:'MEDIA'},
+  {proc:'Bases de Pricing',resp:'Edwin',acomp:'Andrea',sw:[28,28],exp:1,pri:'MEDIA'},
+  {proc:'Reportería – Dashboards',resp:'Guillermo · BI',acomp:'Nicole',sw:[24,28],exp:0.8,pri:'MEDIA'},
+  {proc:'Reportería – Dashboards',resp:'Edwin · BI',acomp:'Nicole',sw:[24,28],exp:0.8,pri:'MEDIA'},
+  {proc:'Data Governance',resp:'Guillermo · BI',acomp:'Andrea',sw:[28,29],exp:1,pri:'MEDIA'},
+  {proc:'Data Governance',resp:'Edwin · BI',acomp:'Andrea',sw:[28,29],exp:1,pri:'MEDIA'},
+  {proc:'Análisis Ad-Hoc',resp:'Guillermo',acomp:'Priscilla',sw:[24,29],exp:1,pri:'ALTA'},
+  {proc:'Análisis Ad-Hoc',resp:'Edwin',acomp:'Priscilla',sw:[24,29],exp:1,pri:'ALTA'},
+  {proc:'Herramienta Modelo',resp:'Trans. Digital',acomp:'Edwin',sw:[0,0],exp:null,pri:'ALTA'},
+  {proc:'Metodología General',resp:'Guillermo – Edwin',acomp:'Información',sw:[26,26],exp:1,pri:'ALTA'},
+];
+
+function expBadge(v){
+  if(v===null) return '<span class="exp-badge exp-low">Por def.</span>';
+  if(v===1)   return '<span class="exp-badge exp-100">100%</span>';
+  if(v>=0.8)  return `<span class="exp-badge exp-high">${Math.round(v*100)}%</span>`;
+  return `<span class="exp-badge exp-low">${Math.round(v*100)}%</span>`;
+}
+
+const tbody = document.getElementById('ganttBody');
+let lastProc = '';
+ganttRows.forEach(r=>{
+  if(r.proc!==lastProc){
+    const sep=document.createElement('tr');
+    sep.className='gantt-section-row';
+    sep.innerHTML=`<td colspan="11">${r.proc}</td>`;
+    tbody.appendChild(sep);
+    lastProc=r.proc;
+  }
+  const tr=document.createElement('tr');
+  let cells='';
+  WEEKS.forEach((_,i)=>{
+    const sw=23+i;
+    const active=r.sw[0]>0 && sw>=r.sw[0] && sw<=r.sw[1];
+    if(active){
+      const cls=r.pri==='ALTA'?'active-alta':'active-media';
+      cells+=`<td><div class="gantt-cell ${cls}"></div></td>`;
+    } else if(r.sw[0]===0){
+      cells+=`<td><div style="height:28px;display:flex;align-items:center;justify-content:center;font-size:18px;opacity:.25">·</div></td>`;
+    } else {
+      cells+=`<td></td>`;
+    }
+  });
+  tr.innerHTML=`
+    <td class="proc-name"></td>
+    <td class="person">${r.resp}</td>
+    <td class="person" style="color:var(--gray-50)">${r.acomp}</td>
+    ${cells}
+    <td style="text-align:center">${expBadge(r.exp)}</td>
+  `;
+  tbody.appendChild(tr);
+});
+
+// ── BAR CHART ──
+const barLabels=['Carga Inputs','Reacción Precios','Medición','Bases Pricing','Reportería','Data Gov.','Ad-Hoc','Herramienta'];
+const barValues=[75,50,50,70,25,40,50,100];
+const barColors=barValues.map(v=>v>=70?'#2a8703':v>=50?'#0053e2':v>=30?'#ffc220':'#ea5700');
+new Chart(document.getElementById('barChart'),{
+  type:'bar',
+  data:{
+    labels:barLabels,
+    datasets:[{data:barValues,backgroundColor:barColors,borderRadius:6,borderSkipped:false}]
+  },
+  options:{
+    responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`Avance: ${c.raw}%`}}},
+    scales:{
+      y:{beginAtZero:true,max:100,ticks:{callback:v=>v+'%'},grid:{color:'#f0f0f0'}},
+      x:{ticks:{font:{size:10}},grid:{display:false}}
+    }
+  }
+});
+
+// ── PIE CHART ──
+new Chart(document.getElementById('pieChart'),{
+  type:'doughnut',
+  data:{
+    labels:['Prioridad Alta','Prioridad Media'],
+    datasets:[{data:[6,2],backgroundColor:['#0053e2','#ffc220'],
+      borderWidth:0,hoverOffset:8}]
+  },
+  options:{
+    responsive:true,maintainAspectRatio:false,
+    plugins:{
+      legend:{position:'bottom',labels:{padding:20,font:{size:12}}},
+      tooltip:{callbacks:{label:c=>`${c.label}: ${c.raw} procesos`}}
+    },
+    cutout:'62%'
+  }
+});
+</script>
+</body>
+</html>

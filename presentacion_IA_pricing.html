@@ -1,0 +1,1210 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Innovación con IA — Equipo de Pricing | Walmart</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    /* ===== RESET & BASE ===== */
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --blue:       #0053e2;
+      --blue-dark:  #003db3;
+      --blue-deep:  #001f6b;
+      --spark:      #ffc220;
+      --spark-dark: #e6a800;
+      --white:      #ffffff;
+      --gray-10:    #f5f7fa;
+      --gray-50:    #e8ecf2;
+      --gray-100:   #c5cdd9;
+      --gray-160:   #333d4d;
+      --text:       #1a2540;
+    }
+
+    body {
+      font-family: 'Segoe UI', -apple-system, Arial, sans-serif;
+      background: #000;
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+    }
+
+    /* ===== PROGRESS BAR ===== */
+    #progress-bar {
+      position: fixed;
+      top: 0; left: 0;
+      height: 5px;
+      background: var(--spark);
+      z-index: 9999;
+      transition: width 0.4s cubic-bezier(.4,0,.2,1);
+      box-shadow: 0 0 10px rgba(255,194,32,0.6);
+    }
+
+    /* ===== SLIDES ===== */
+    .slide {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding: 0;
+      opacity: 0;
+      pointer-events: none;
+      transform: translateX(60px);
+      transition: opacity 0.45s cubic-bezier(.4,0,.2,1), transform 0.45s cubic-bezier(.4,0,.2,1);
+      overflow: hidden;
+    }
+    .slide.active {
+      opacity: 1;
+      pointer-events: all;
+      transform: translateX(0);
+    }
+    .slide.exit-left {
+      opacity: 0;
+      transform: translateX(-60px);
+    }
+    .slide.exit-right {
+      opacity: 0;
+      transform: translateX(60px);
+    }
+
+    /* ===== NAVIGATION ===== */
+    .slide-nav {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      background: rgba(0,31,107,0.92);
+      backdrop-filter: blur(8px);
+      padding: 10px 22px;
+      border-radius: 40px;
+      z-index: 1000;
+      border: 1px solid rgba(255,194,32,0.3);
+      box-shadow: 0 4px 24px rgba(0,0,0,0.35);
+    }
+    .nav-btn {
+      background: none;
+      border: none;
+      color: var(--white);
+      font-size: 17px;
+      cursor: pointer;
+      padding: 8px 12px;
+      border-radius: 8px;
+      transition: background 0.2s, color 0.2s;
+      line-height: 1;
+    }
+    .nav-btn:hover { background: rgba(255,194,32,0.2); color: var(--spark); }
+    .nav-btn:focus { outline: 2px solid var(--spark); outline-offset: 2px; }
+    .slide-counter {
+      color: var(--white);
+      font-size: 13px;
+      font-weight: 600;
+      min-width: 64px;
+      text-align: center;
+      letter-spacing: 0.04em;
+    }
+    .dot-nav {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+    .dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.35);
+      cursor: pointer;
+      transition: background 0.3s, transform 0.3s;
+    }
+    .dot.active { background: var(--spark); transform: scale(1.4); }
+
+    /* ===== SLIDE HEADER STRIPE ===== */
+    .slide-number-badge {
+      position: absolute;
+      top: 22px;
+      right: 30px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--blue);
+      background: var(--gray-10);
+      border: 1.5px solid var(--gray-50);
+      border-radius: 20px;
+      padding: 4px 14px;
+      letter-spacing: 0.08em;
+    }
+
+    /* ===== TITLE SLIDE ===== */
+    .slide-title {
+      background: linear-gradient(135deg, #001030 0%, #001f6b 45%, #0053e2 100%);
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .slide-title::before {
+      content: '';
+      position: absolute;
+      top: -120px; right: -120px;
+      width: 500px; height: 500px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255,194,32,0.12) 0%, transparent 70%);
+    }
+    .slide-title::after {
+      content: '';
+      position: absolute;
+      bottom: -100px; left: -100px;
+      width: 400px; height: 400px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(0,83,226,0.3) 0%, transparent 70%);
+    }
+    .title-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 40px;
+      justify-content: center;
+      animation: fadeUp 0.6s 0.2s both;
+    }
+    .walmart-spark {
+      font-size: 36px;
+      color: var(--spark);
+    }
+    .walmart-label {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--white);
+      letter-spacing: -0.01em;
+    }
+    .title-icon-ring {
+      width: 130px; height: 130px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.07);
+      border: 2.5px solid rgba(255,194,32,0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 36px;
+      animation: pulse-ring 2.5s ease-in-out infinite;
+    }
+    .title-icon-ring i { font-size: 56px; color: var(--spark); }
+    @keyframes pulse-ring {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(255,194,32,0.3); }
+      50% { box-shadow: 0 0 0 18px rgba(255,194,32,0); }
+    }
+    .slide-title h1 {
+      font-size: clamp(32px, 4.5vw, 52px);
+      font-weight: 800;
+      color: var(--white);
+      line-height: 1.15;
+      margin-bottom: 18px;
+      animation: fadeUp 0.6s 0.4s both;
+      position: relative; z-index: 1;
+    }
+    .slide-title .subtitle {
+      font-size: clamp(16px, 2vw, 22px);
+      color: rgba(255,255,255,0.78);
+      max-width: 680px;
+      line-height: 1.5;
+      animation: fadeUp 0.6s 0.6s both;
+      position: relative; z-index: 1;
+    }
+    .title-spark-line {
+      width: 80px; height: 4px;
+      background: var(--spark);
+      border-radius: 2px;
+      margin: 24px auto;
+      animation: fadeUp 0.6s 0.5s both;
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ===== CONTENT SLIDE LAYOUT ===== */
+    .slide-content {
+      background: var(--white);
+      padding: 0;
+      flex-direction: column;
+    }
+    .slide-header {
+      background: var(--blue);
+      padding: 22px 50px 20px;
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      flex-shrink: 0;
+    }
+    .slide-header-icon {
+      width: 48px; height: 48px;
+      background: rgba(255,255,255,0.15);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .slide-header-icon i { font-size: 22px; color: var(--spark); }
+    .slide-header h2 {
+      font-size: clamp(20px, 2.6vw, 30px);
+      font-weight: 700;
+      color: var(--white);
+      line-height: 1.2;
+    }
+    .slide-header .slide-sub {
+      font-size: 14px;
+      color: rgba(255,255,255,0.7);
+      margin-top: 4px;
+      font-weight: 400;
+    }
+    .slide-body {
+      flex: 1;
+      padding: 28px 50px 80px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* ===== PILLAR CARDS ===== */
+    .pillars {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+      margin-top: 4px;
+    }
+    .pillar-card {
+      background: var(--gray-10);
+      border-radius: 16px;
+      padding: 28px 22px;
+      text-align: center;
+      border-top: 5px solid var(--blue);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .pillar-card:hover { transform: translateY(-4px); box-shadow: 0 8px 28px rgba(0,83,226,0.13); }
+    .pillar-icon {
+      width: 62px; height: 62px;
+      background: var(--blue);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 16px;
+    }
+    .pillar-icon i { font-size: 26px; color: var(--spark); }
+    .pillar-card h3 { font-size: 20px; font-weight: 700; color: var(--blue); margin-bottom: 10px; }
+    .pillar-card p { font-size: 14px; color: var(--gray-160); line-height: 1.55; }
+
+    .inspire-bar {
+      background: linear-gradient(90deg, var(--blue-deep), var(--blue));
+      border-radius: 12px;
+      padding: 18px 28px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-top: 8px;
+    }
+    .inspire-bar i { font-size: 22px; color: var(--spark); flex-shrink: 0; }
+    .inspire-bar p { font-size: 16px; color: var(--white); font-style: italic; font-weight: 500; line-height: 1.45; }
+
+    /* ===== PROJECT SLIDES ===== */
+    .project-grid {
+      display: grid;
+      grid-template-columns: 1fr 1.6fr;
+      gap: 22px;
+      flex: 1;
+    }
+    .project-left { display: flex; flex-direction: column; gap: 14px; }
+    .project-right { display: flex; flex-direction: column; gap: 14px; }
+
+    .info-card {
+      background: var(--gray-10);
+      border-radius: 12px;
+      padding: 16px 20px;
+      border-left: 4px solid var(--blue);
+    }
+    .info-card .label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--blue);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 6px;
+    }
+    .info-card p { font-size: 14px; color: var(--gray-160); line-height: 1.5; }
+    .info-card .owner-name { font-size: 18px; font-weight: 700; color: var(--text); }
+
+    .impact-badge {
+      background: var(--blue);
+      border-radius: 12px;
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .impact-badge i { font-size: 26px; color: var(--spark); flex-shrink: 0; }
+    .impact-badge .impact-text { font-size: 14px; color: var(--white); font-weight: 600; line-height: 1.4; }
+
+    .benefits-card {
+      background: var(--gray-10);
+      border-radius: 12px;
+      padding: 18px 20px;
+      flex: 1;
+    }
+    .benefits-card .label {
+      font-size: 11px; font-weight: 700; color: var(--blue);
+      text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 12px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .benefit-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 9px;
+      font-size: 13.5px;
+      color: var(--gray-160);
+      line-height: 1.45;
+    }
+    .benefit-item i { color: var(--blue); margin-top: 2px; flex-shrink: 0; font-size: 13px; }
+
+    /* ===== SUMMARY SLIDE ===== */
+    .summary-metrics {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+    .metric-box {
+      background: var(--blue);
+      border-radius: 14px;
+      padding: 18px;
+      text-align: center;
+    }
+    .metric-box .num {
+      font-size: 38px;
+      font-weight: 800;
+      color: var(--spark);
+      line-height: 1;
+    }
+    .metric-box .metric-label { font-size: 13px; color: rgba(255,255,255,0.85); margin-top: 6px; }
+    .chart-wrapper { flex: 1; min-height: 0; position: relative; }
+
+    /* ===== PROJECT CARDS IN SUMMARY ===== */
+    .project-cards {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+    .proj-card {
+      background: var(--gray-10);
+      border-radius: 10px;
+      padding: 14px 10px;
+      text-align: center;
+      border-top: 4px solid var(--blue);
+    }
+    .proj-card i { font-size: 22px; color: var(--blue); margin-bottom: 8px; display: block; }
+    .proj-card .proj-name { font-size: 12px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+    .proj-card .proj-owner { font-size: 11px; color: var(--blue); margin-bottom: 6px; }
+    .proj-card .proj-benefit { font-size: 11px; color: #555; line-height: 1.35; }
+
+    /* ===== CTA SLIDE ===== */
+    .cta-cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+      margin-bottom: 20px;
+    }
+    .cta-card {
+      background: var(--gray-10);
+      border-radius: 16px;
+      padding: 28px 22px;
+      text-align: center;
+      border-bottom: 5px solid var(--spark);
+      transition: transform 0.2s;
+    }
+    .cta-card:hover { transform: translateY(-4px); }
+    .cta-num {
+      width: 50px; height: 50px;
+      background: var(--spark);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 16px;
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--text);
+    }
+    .cta-card h3 { font-size: 17px; font-weight: 700; color: var(--blue); margin-bottom: 10px; }
+    .cta-card p { font-size: 13.5px; color: var(--gray-160); line-height: 1.5; }
+
+    .final-msg {
+      background: linear-gradient(90deg, var(--blue-deep), var(--blue));
+      border-radius: 14px;
+      padding: 20px 32px;
+      text-align: center;
+    }
+    .final-msg p { font-size: 16px; color: var(--white); font-weight: 600; line-height: 1.5; font-style: italic; }
+
+    /* ===== THANK YOU SLIDE ===== */
+    .slide-thanks {
+      background: linear-gradient(135deg, #001030 0%, #001f6b 50%, #0053e2 100%);
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .slide-thanks::before {
+      content: '';
+      position: absolute;
+      top: -80px; left: 50%;
+      transform: translateX(-50%);
+      width: 600px; height: 600px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255,194,32,0.08) 0%, transparent 65%);
+    }
+    .thanks-content { position: relative; z-index: 1; }
+    .thanks-content h1 { font-size: clamp(52px, 7vw, 80px); font-weight: 800; color: var(--white); margin-bottom: 12px; }
+    .thanks-content .thanks-sub { font-size: clamp(18px, 2.2vw, 24px); color: rgba(255,255,255,0.75); margin-bottom: 36px; }
+    .team-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      justify-content: center;
+      margin-bottom: 32px;
+    }
+    .chip {
+      background: rgba(255,255,255,0.1);
+      border: 1.5px solid rgba(255,194,32,0.5);
+      border-radius: 30px;
+      padding: 10px 22px;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--white);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .chip i { color: var(--spark); }
+    .final-phrase {
+      background: rgba(255,194,32,0.12);
+      border: 1.5px solid rgba(255,194,32,0.4);
+      border-radius: 12px;
+      padding: 16px 32px;
+      font-size: 17px;
+      color: var(--spark);
+      font-weight: 700;
+      max-width: 560px;
+      margin: 0 auto;
+    }
+
+    /* ===== UTILITY ===== */
+    .section-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--blue);
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .section-label::after {
+      content: '';
+      flex: 1;
+      height: 1.5px;
+      background: var(--gray-50);
+      border-radius: 1px;
+    }
+  </style>
+</head>
+<body>
+
+<!-- PROGRESS BAR -->
+<div id="progress-bar"></div>
+
+<!-- ===================== SLIDE 1: PORTADA ===================== -->
+<div class="slide slide-title active" id="slide-1" role="main" aria-label="Diapositiva 1 de 10: Portada">
+  <div style="animation: fadeUp 0.5s 0.1s both;">
+    <div class="title-brand">
+      <i class="fas fa-star walmart-spark"></i>
+      <span class="walmart-label">Walmart</span>
+    </div>
+  </div>
+  <div class="title-icon-ring" aria-hidden="true" style="animation: fadeUp 0.6s 0.2s both; position:relative; z-index:1;">
+    <i class="fas fa-microchip"></i>
+  </div>
+  <h1>Innovación con<br>Inteligencia Artificial</h1>
+  <div class="title-spark-line"></div>
+  <p class="subtitle">Transformando el Equipo de Pricing<br>con Tecnología de Vanguardia</p>
+  <div style="margin-top: 40px; display:flex; gap:24px; justify-content:center; animation: fadeUp 0.6s 0.8s both; position:relative; z-index:1;">
+    <div style="text-align:center;">
+      <div style="font-size:11px; color:rgba(255,255,255,0.5); text-transform:uppercase; letter-spacing:0.1em; margin-bottom:4px;">Equipo</div>
+      <div style="font-size:15px; color:var(--spark); font-weight:700;">Pricing</div>
+    </div>
+    <div style="width:1px; background:rgba(255,255,255,0.2);"></div>
+    <div style="text-align:center;">
+      <div style="font-size:11px; color:rgba(255,255,255,0.5); text-transform:uppercase; letter-spacing:0.1em; margin-bottom:4px;">Proyectos</div>
+      <div style="font-size:15px; color:var(--spark); font-weight:700;">5 Activos</div>
+    </div>
+    <div style="width:1px; background:rgba(255,255,255,0.2);"></div>
+    <div style="text-align:center;">
+      <div style="font-size:11px; color:rgba(255,255,255,0.5); text-transform:uppercase; letter-spacing:0.1em; margin-bottom:4px;">Tecnología</div>
+      <div style="font-size:15px; color:var(--spark); font-weight:700;">IA Aplicada</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== SLIDE 2: VISIÓN GENERAL ===================== -->
+<div class="slide slide-content" id="slide-2" role="main" aria-label="Diapositiva 2 de 10: Visión General">
+  <div class="slide-header">
+    <div class="slide-header-icon" aria-hidden="true"><i class="fas fa-lightbulb"></i></div>
+    <div>
+      <h2>Por qué IA en Pricing</h2>
+      <p class="slide-sub">Tres pilares estratégicos que guían nuestra transformación</p>
+    </div>
+    <span class="slide-number-badge" aria-label="Diapositiva 2 de 10">2 / 10</span>
+  </div>
+  <div class="slide-body">
+    <div class="pillars">
+      <div class="pillar-card">
+        <div class="pillar-icon" aria-hidden="true"><i class="fas fa-bolt"></i></div>
+        <h3>Velocidad</h3>
+        <p>Decisiones más rápidas con datos en tiempo real. Del análisis manual a insights instantáneos que impulsan la acción.</p>
+      </div>
+      <div class="pillar-card">
+        <div class="pillar-icon" aria-hidden="true"><i class="fas fa-bullseye"></i></div>
+        <h3>Precisión</h3>
+        <p>Menos errores, más confianza en la información. Modelos entrenados para detectar anomalías y validar resultados automáticamente.</p>
+      </div>
+      <div class="pillar-card">
+        <div class="pillar-icon" aria-hidden="true"><i class="fas fa-rocket"></i></div>
+        <h3>Escalabilidad</h3>
+        <p>Automatizar lo repetitivo para enfocarse en lo estratégico. El equipo trabaja en lo que realmente genera valor.</p>
+      </div>
+    </div>
+    <div class="inspire-bar" role="note">
+      <i class="fas fa-quote-left" aria-hidden="true"></i>
+      <p>"No estamos reemplazando el trabajo — estamos potenciando a nuestra gente para que haga lo que ninguna IA puede: pensar estratégicamente."</p>
+    </div>
+    <div style="display:grid; grid-template-columns: repeat(4,1fr); gap:14px; margin-top:2px;">
+      <div style="background:var(--gray-10); border-radius:10px; padding:14px; text-align:center; border-top:3px solid var(--spark);">
+        <div style="font-size:26px; font-weight:800; color:var(--blue);">5</div>
+        <div style="font-size:12px; color:#555; margin-top:4px;">Proyectos activos</div>
+      </div>
+      <div style="background:var(--gray-10); border-radius:10px; padding:14px; text-align:center; border-top:3px solid var(--spark);">
+        <div style="font-size:26px; font-weight:800; color:var(--blue);">5</div>
+        <div style="font-size:12px; color:#555; margin-top:4px;">Líderes comprometidos</div>
+      </div>
+      <div style="background:var(--gray-10); border-radius:10px; padding:14px; text-align:center; border-top:3px solid var(--spark);">
+        <div style="font-size:26px; font-weight:800; color:var(--blue);">100%</div>
+        <div style="font-size:12px; color:#555; margin-top:4px;">Desarrollado internamente</div>
+      </div>
+      <div style="background:var(--gray-10); border-radius:10px; padding:14px; text-align:center; border-top:3px solid var(--spark);">
+        <div style="font-size:26px; font-weight:800; color:var(--blue);">IA</div>
+        <div style="font-size:12px; color:#555; margin-top:4px;">Aplicada al negocio real</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== SLIDE 3: DATAPULSE ===================== -->
+<div class="slide slide-content" id="slide-3" role="main" aria-label="Diapositiva 3 de 10: DataPulse">
+  <div class="slide-header">
+    <div class="slide-header-icon" aria-hidden="true"><i class="fas fa-magnifying-glass-chart"></i></div>
+    <div>
+      <h2>DataPulse — Buscador Inteligente de Pricing</h2>
+      <p class="slide-sub">Motor de búsqueda semántico integrado en el sitio oficial de Pricing</p>
+    </div>
+    <span class="slide-number-badge" aria-label="Diapositiva 3 de 10">3 / 10</span>
+  </div>
+  <div class="slide-body">
+    <div class="project-grid">
+      <div class="project-left">
+        <div class="info-card">
+          <div class="label"><i class="fas fa-user-tie" style="color:var(--blue);"></i> Encargado</div>
+          <div class="owner-name">Nicol Mendoza</div>
+        </div>
+        <div class="info-card">
+          <div class="label"><i class="fas fa-circle-exclamation" style="color:var(--blue);"></i> Problema que resuelve</div>
+          <p>"¿Cuánto tiempo perdemos buscando información de pricing? Ahora ya no más." Lenguaje natural para encontrar datos al instante.</p>
+        </div>
+        <div class="info-card" style="border-left-color: var(--spark);">
+          <div class="label" style="color:var(--spark-dark);">Tecnologías</div>
+          <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:4px;">
+            <span style="background:var(--blue); color:#fff; border-radius:20px; padding:3px 10px; font-size:11px; font-weight:600;">Búsqueda Semántica</span>
+            <span style="background:var(--blue); color:#fff; border-radius:20px; padding:3px 10px; font-size:11px; font-weight:600;">NLP</span>
+            <span style="background:var(--blue); color:#fff; border-radius:20px; padding:3px 10px; font-size:11px; font-weight:600;">KPIs en tiempo real</span>
+          </div>
+        </div>
+        <div class="impact-badge">
+          <i class="fas fa-clock" aria-hidden="true"></i>
+          <div class="impact-text">Hasta 30% de ahorro en tiempo operativo por búsquedas</div>
+        </div>
+      </div>
+      <div class="project-right">
+        <div class="benefits-card" style="flex:1;">
+          <div class="label"><i class="fas fa-star" style="color:var(--spark); font-size:12px;"></i> Beneficios clave</div>
+          <div class="benefit-item"><i class="fas fa-check-circle"></i> Reduce el tiempo de búsqueda de información de minutos a segundos</div>
+          <div class="benefit-item"><i class="fas fa-check-circle"></i> Elimina la dependencia de saber exactamente dónde está cada dato</div>
+          <div class="benefit-item"><i class="fas fa-check-circle"></i> Democratiza el acceso a la información para todo el equipo</div>
+          <div class="benefit-item"><i class="fas fa-check-circle"></i> Reduce interrupciones entre compañeros para consultas básicas</div>
+          <div class="benefit-item"><i class="fas fa-check-circle"></i> Mejora la autonomía y productividad individual</div>
+        </div>
+        <div style="background:var(--gray-10); border-radius:12px; padding:14px 18px; display:flex; align-items:center; gap:14px;">
+          <i class="fas fa-brain" style="font-size:28px; color:var(--blue);" aria-hidden="true"></i>
+          <div>
+            <div style="font-size:13px; font-weight:700; color:var(--text);">OBW | Márgenes | Variaciones de costo | KPIs</div>
+            <div style="font-size:12px; color:#666; margin-top:3px;">Cualquier término de pricing, encontrado al instante con lenguaje natural</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== SLIDE 4: WEB SCRAPING ===================== -->
+<div class="slide slide-content" id="slide-4" role="main" aria-label="Diapositiva 4 de 10: Inteligencia Competitiva">
+  <div class="slide-header">
+    <div class="slide-header-icon" aria-hidden="true"><i class="fas fa-chart-line"></i></div>
+    <div>
+      <h2>Inteligencia Competitiva Automatizada</h2>
+      <p class="slide-sub">Extracción automática de precios de competidores por sucursal</p>
+    </div>
+    <span class="slide-number-badge" aria-label="Diapositiva 4 de 10">4 / 10</span>
+  </div>
+  <div class="slide-body">
+    <div class="project-grid">
+      <div class="project-left">
+        <div class="info-card">
+          <div class="label"><i class="fas fa-user-tie" style="color:var(--blue);"></i> Encargada</div>
+          <div class="owner-name">Andrea</div>
+        </div>
+        <div class="info-card">
+          <div class="label"><i class="fas fa-circle-exclamation" style="color:var(--blue);"></i> Problema que resuelve</div>
+          <p>"La competencia cambia cada día — nosotros también debemos estar al día, sin depender de procesos manuales."</p>
+        </div>
+        <div class="info-card" style="border-left-color: var(--spark);">
+          <div class="label" style="color:var(--spark-dark);">Plataforma</div>
+          <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:4px;">
+            <span style="background:var(--blue); color:#fff; border-radius:20px; padding:3px 10px; font-size:11px; font-weight:600;">GitHub Actions</span>
+            <span style="background:var(--blue); color:#fff; border-radius:20px; padding:3px 10px; font-size:11px; font-weight:600;">Web Scraping</span>
+            <span style="background:var(--blue); color:#fff; border-radius:20px; padding:3px 10px; font-size:11px; font-weight:600;">Automatización</span>
+          </div>
+        </div>
+        <div class="impact-badge">
+          <i class="fas fa-chart-bar" aria-hidden="true"></i>
+          <div class="impact-text">Decisiones competitivas con datos actualizados cada 24 horas</div>
+        </div>
+      </div>
+      <div class="project-right">
+        <div class="benefits-card" style="flex:1;">
+          <div class="label"><i class="fas fa-star" style="color:var(--spark); font-size:12px;"></i> Beneficios clave</div>
+          <div class="benefit-item"><i class="fas fa-check-circle"></i> Visibilidad diaria de precios de competidores sin esfuerzo manual</div>
+          <div class="benefit-item"><i class="fas fa-check-circle"></i> Acceso público y programado — cualquier miembro del equipo puede consultarlo</div>
+          <div class="benefit-item"><i class="fas fa-check-circle"></i> Elimina la complejidad de mantenimiento y actualización</div>
+          <div class="benefit-item"><i class="fas fa-check-circle"></i> Datos confiables y frescos para tomar decisiones de pricing competitivo</div>
+          <div class="benefit-item"><i class="fas fa-check-circle"></i> Ahorro de horas de trabajo manual semanal</div>
+        </div>
+        <div style="background:var(--gray-10); border-radius:12px; padding:14px 18px; display:flex; align-items:center; gap:14px;">
+          <i class="fas fa-rotate" style="font-size:28px; color:var(--blue);" aria-hidden="true"></i>
+          <div>
+            <div style="font-size:13px; font-weight:700; color:var(--text);">Ejecución programada y sin intervención humana</div>
+            <div style="font-size:12px; color:#666; margin-top:3px;">Sin permisos especiales ni conocimiento técnico profundo para operar</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== SLIDE 5: PROCESO CANASTO ===================== -->
+<div class="slide slide-content" id="slide-5" role="main" aria-label="Diapositiva 5 de 10: Proceso Canasto">
+  <div class="slide-header">
+    <div class="slide-header-icon" aria-hidden="true"><i class="fas fa-sitemap"></i></div>
+    <div>
+      <h2>Proceso Canasto — Claridad y Control Total</h2>
+      <p class="slide-sub">Diseño visual e interactivo del proceso completo de Canasto</p>
+    </div>
+    <span class="slide-number-badge" aria-label="Diapositiva 5 de 10">5 / 10</span>
+  </div>
+  <div class="slide-body">
+    <div class="project-grid">
+      <div class="project-left">
+        <div class="info-card">
+          <div class="label"><i class="fas fa-user-tie" style="color:var(--blue);"></i> Encargado</div>
+          <div class="owner-name">Starlyng</div>
+        </div>
+        <div class="info-card">
+          <div class="label"><i class="fas fa-circle-exclamation" style="color:var(--blue);"></i> Problema que resuelve</div>
+          <p>"¿Quién hace qué, cuándo y por qué? Ahora todos lo saben." Un solo punto de verdad para todo el equipo.</p>
+        </div>
+        <div class="info-card" style="border-left-color: var(--spark);">
+          <div class="label" style="color:var(--spark-dark);">Contenido</div>
+          <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:4px;">
+            <span style="background:var(--blue); color:#fff; border-radius:20px; padding:3px 10px; font-size:11px; font-weight:600;">Proceso visual</span>
+            <span style="background:var(--blue); color:#fff; border-radius:20px; padding:3px 10px; font-size:11px; font-weight:600;">Calendario anual</span>
+            <span style="background:var(--blue); color:#fff; border-radius:20px; padding:3px 10px; font-size:11px; font-weight:600;">Mantenimientos</span>
+          </div>
+        </div>
+        <div class="impact-badge">
+          <i class="fas fa-map" aria-hidden="true"></i>
+          <div class="impact-text">100% del equipo alineado en proceso y responsabilidades</div>
+        </div>
+      </div>
+      <div class="project-right">
+        <div class="benefits-card" style="flex:1;">
+          <div class="label"><i class="fas fa-star" style="color:var(--spark); font-size:12px;"></i> Beneficios clave</div>
+          <div class="benefit-item"><i class="fas fa-check-circle"></i> Onboarding acelerado para nuevos integrantes del equipo</div>
+          <div class="benefit-item"><i class="fas fa-check-circle"></i> Reducción de errores por malentendidos de proceso</div>
+          <div class="benefit-item"><i class="fas fa-check-circle"></i> Visibilidad total del calendario y las responsabilidades</div>
+          <div class="benefit-item"><i class="fas fa-check-circle"></i> Un solo punto de verdad para gestión y validación del canasto</div>
+          <div class="benefit-item"><i class="fas fa-check-circle"></i> Mejora la colaboración cross-funcional entre áreas</div>
+        </div>
+        <div style="background:var(--gray-10); border-radius:12px; padding:14px 18px; display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; text-align:center;">
+          <div>
+            <i class="fas fa-users" style="font-size:22px; color:var(--blue); margin-bottom:6px; display:block;" aria-hidden="true"></i>
+            <div style="font-size:11px; font-weight:700; color:var(--text);">Responsables</div>
+          </div>
+          <div>
+            <i class="fas fa-calendar-days" style="font-size:22px; color:var(--blue); margin-bottom:6px; display:block;" aria-hidden="true"></i>
+            <div style="font-size:11px; font-weight:700; color:var(--text);">Calendario</div>
+          </div>
+          <div>
+            <i class="fas fa-gears" style="font-size:22px; color:var(--blue); margin-bottom:6px; display:block;" aria-hidden="true"></i>
+            <div style="font-size:11px; font-weight:700; color:var(--text);">Mantenimientos</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== SLIDE 6: EXCEL VERTICAL ===================== -->
+<div class="slide slide-content" id="slide-6" role="main" aria-label="Diapositiva 6 de 10: Excel Vertical">
+  <div class="slide-header">
+    <div class="slide-header-icon" aria-hidden="true"><i class="fas fa-file-code"></i></div>
+    <div>
+      <h2>Excel Vertical — IA al Servicio del Código</h2>
+      <p class="slide-sub">Herramienta con IA que analiza y valida código VBA en Excel</p>
+    </div>
+    <span class="slide-number-badge" aria-label="Diapositiva 6 de 10">6 / 10</span>
+  </div>
+  <div class="slide-body">
+    <div class="project-grid">
+      <div class="project-left">
+        <div class="info-card">
+          <div class="label"><i class="fas fa-user-tie" style="color:var(--blue);"></i> Encargado</div>
+          <div class="owner-name">Edwin</div>
+        </div>
+        <div class="info-card">
+          <div class="label"><i class="fas fa-circle-exclamation" style="color:var(--blue);"></i> Problema que resuelve</div>
+          <p>"¿Nuestro código VBA es óptimo? Ahora tenemos un revisor inteligente que nos dice cómo mejorar con doble validación."</p>
+        </div>
+        <div class="info-card" style="border-left-color: var(--spark);">
+          <div class="label" style="color:var(--spark-dark);">Capacidades</div>
+          <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:4px;">
+            <span style="background:var(--blue); color:#fff; border-radius:20px; padding:3px 10px; font-size:11px; font-weight:600;">Análisis VBA</span>
+            <span style="background:var(--blue); color:#fff; border-radius:20px; padding:3px 10px; font-size:11px; font-weight:600;">Código muerto</span>
+            <span style="background:var(--blue); color:#fff; border-radius:20px; padding:3px 10px; font-size:11px; font-weight:600;">Doble validación</span>
+          </div>
+        </div>
+        <div class="impact-badge">
+          <i class="fas fa-broom" aria-hidden="true"></i>
+          <div class="impact-text">Código VBA optimizado = menos errores en producción</div>
+        </div>
+      </div>
+      <div class="project-right">
+        <div class="benefits-card" style="flex:1;">
+          <div class="label"><i class="fas fa-star" style="color:var(--spark); font-size:12px;"></i> Beneficios clave</div>
+          <div class="benefit-item"><i class="fas fa-check-circle"></i> Código más limpio, rápido y mantenible</div>
+          <div class="benefit-item"><i class="fas fa-check-circle"></i> Detección proactiva de bugs y vulnerabilidades en macros</div>
+          <div class="benefit-item"><i class="fas fa-check-circle"></i> Reducción de deuda técnica en herramientas existentes</div>
+          <div class="benefit-item"><i class="fas fa-check-circle"></i> Capacitación implícita del equipo a través de las recomendaciones</div>
+          <div class="benefit-item"><i class="fas fa-check-circle"></i> Validación inteligente que prioriza cambios de alto impacto</div>
+        </div>
+        <div style="background:var(--gray-10); border-radius:12px; padding:14px 18px; display:flex; align-items:center; gap:14px;">
+          <i class="fas fa-shield-halved" style="font-size:28px; color:var(--blue);" aria-hidden="true"></i>
+          <div>
+            <div style="font-size:13px; font-weight:700; color:var(--text);">Doble validación inteligente</div>
+            <div style="font-size:12px; color:#666; margin-top:3px;">Cada recomendación es verificada para asegurar que realmente agrega valor</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== SLIDE 7: OPTIMIZACIÓN PRECIOS ===================== -->
+<div class="slide slide-content" id="slide-7" role="main" aria-label="Diapositiva 7 de 10: Optimización de Precios">
+  <div class="slide-header">
+    <div class="slide-header-icon" aria-hidden="true"><i class="fas fa-tags"></i></div>
+    <div>
+      <h2>Optimización Inteligente de Precios Sugeridos</h2>
+      <p class="slide-sub">Modelo de IA que recomienda el mínimo de cambios necesarios para mantener competitividad</p>
+    </div>
+    <span class="slide-number-badge" aria-label="Diapositiva 7 de 10">7 / 10</span>
+  </div>
+  <div class="slide-body">
+    <div class="project-grid">
+      <div class="project-left">
+        <div class="info-card">
+          <div class="label"><i class="fas fa-users" style="color:var(--blue);"></i> Encargados</div>
+          <div class="owner-name">JC y Equipo de Pricing</div>
+        </div>
+        <div class="info-card">
+          <div class="label"><i class="fas fa-circle-exclamation" style="color:var(--blue);"></i> Problema que resuelve</div>
+          <p>"¿Cuántos cambios de precio necesitamos realmente para ser competitivos sin generar ruido en el negocio?"</p>
+        </div>
+        <div class="info-card" style="border-left-color: var(--spark);">
+          <div class="label" style="color:var(--spark-dark);">Enfoque</div>
+          <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:4px;">
+            <span style="background:var(--blue); color:#fff; border-radius:20px; padding:3px 10px; font-size:11px; font-weight:600;">Alto impacto</span>
+            <span style="background:var(--blue); color:#fff; border-radius:20px; padding:3px 10px; font-size:11px; font-weight:600;">Multi-formato</span>
+            <span style="background:var(--blue); color:#fff; border-radius:20px; padding:3px 10px; font-size:11px; font-weight:600;">Multi-bandera</span>
+          </div>
+        </div>
+        <div class="impact-badge">
+          <i class="fas fa-coins" aria-hidden="true"></i>
+          <div class="impact-text">Precio correcto, en el momento correcto, con el mínimo esfuerzo</div>
+        </div>
+      </div>
+      <div class="project-right">
+        <div class="benefits-card" style="flex:1;">
+          <div class="label"><i class="fas fa-star" style="color:var(--spark); font-size:12px;"></i> Beneficios clave</div>
+          <div class="benefit-item"><i class="fas fa-check-circle"></i> Competitividad sostenida con la menor cantidad de movimientos</div>
+          <div class="benefit-item"><i class="fas fa-check-circle"></i> Menor impacto negativo en percepción de precio del cliente</div>
+          <div class="benefit-item"><i class="fas fa-check-circle"></i> Eficiencia operativa — el equipo se enfoca en lo que más importa</div>
+          <div class="benefit-item"><i class="fas fa-check-circle"></i> Consistencia de precios entre formatos y banderas</div>
+          <div class="benefit-item"><i class="fas fa-check-circle"></i> Decisiones basadas en datos, no en intuición</div>
+        </div>
+        <div style="background:var(--gray-10); border-radius:12px; padding:14px 18px; display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <i class="fas fa-arrow-down-short-wide" style="font-size:22px; color:var(--blue);" aria-hidden="true"></i>
+            <div>
+              <div style="font-size:12px; font-weight:700; color:var(--text);">Menos cambios</div>
+              <div style="font-size:11px; color:#666;">Mayor estabilidad</div>
+            </div>
+          </div>
+          <div style="display:flex; align-items:center; gap:10px;">
+            <i class="fas fa-trophy" style="font-size:22px; color:var(--blue);" aria-hidden="true"></i>
+            <div>
+              <div style="font-size:12px; font-weight:700; color:var(--text);">Artículos clave</div>
+              <div style="font-size:11px; color:#666;">Máximo impacto</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== SLIDE 8: RESUMEN DE IMPACTO ===================== -->
+<div class="slide slide-content" id="slide-8" role="main" aria-label="Diapositiva 8 de 10: Resumen de Impacto">
+  <div class="slide-header">
+    <div class="slide-header-icon" aria-hidden="true"><i class="fas fa-chart-bar"></i></div>
+    <div>
+      <h2>El Equipo que Está Construyendo el Futuro</h2>
+      <p class="slide-sub">5 proyectos activos — 5 líderes comprometidos — 1 equipo innovador</p>
+    </div>
+    <span class="slide-number-badge" aria-label="Diapositiva 8 de 10">8 / 10</span>
+  </div>
+  <div class="slide-body" style="gap:12px;">
+    <div class="project-cards">
+      <div class="proj-card">
+        <i class="fas fa-magnifying-glass-chart" aria-hidden="true"></i>
+        <div class="proj-name">DataPulse</div>
+        <div class="proj-owner">Nicol Mendoza</div>
+        <div class="proj-benefit">Búsqueda semántica instantánea de información de pricing</div>
+      </div>
+      <div class="proj-card">
+        <i class="fas fa-chart-line" aria-hidden="true"></i>
+        <div class="proj-name">Intel. Competitiva</div>
+        <div class="proj-owner">Andrea</div>
+        <div class="proj-benefit">Precios de competidores actualizados cada 24 horas</div>
+      </div>
+      <div class="proj-card">
+        <i class="fas fa-sitemap" aria-hidden="true"></i>
+        <div class="proj-name">Proceso Canasto</div>
+        <div class="proj-owner">Starlyng</div>
+        <div class="proj-benefit">Todo el equipo alineado en un solo punto de verdad</div>
+      </div>
+      <div class="proj-card">
+        <i class="fas fa-file-code" aria-hidden="true"></i>
+        <div class="proj-name">Excel Vertical</div>
+        <div class="proj-owner">Edwin</div>
+        <div class="proj-benefit">Código VBA optimizado y con menos errores en producción</div>
+      </div>
+      <div class="proj-card">
+        <i class="fas fa-tags" aria-hidden="true"></i>
+        <div class="proj-name">Opt. Precios</div>
+        <div class="proj-owner">JC y Equipo</div>
+        <div class="proj-benefit">Mínimos cambios, máxima competitividad sostenida</div>
+      </div>
+    </div>
+    <div class="chart-wrapper">
+      <canvas id="impactChart" role="img" aria-label="Gráfico de impacto por área de los cinco proyectos de IA"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== SLIDE 9: PRÓXIMOS PASOS ===================== -->
+<div class="slide slide-content" id="slide-9" role="main" aria-label="Diapositiva 9 de 10: Próximos Pasos">
+  <div class="slide-header">
+    <div class="slide-header-icon" aria-hidden="true"><i class="fas fa-forward-step"></i></div>
+    <div>
+      <h2>¿Qué necesitamos para seguir avanzando?</h2>
+      <p class="slide-sub">Tres acciones concretas para la dirección</p>
+    </div>
+    <span class="slide-number-badge" aria-label="Diapositiva 9 de 10">9 / 10</span>
+  </div>
+  <div class="slide-body">
+    <div class="cta-cards">
+      <div class="cta-card">
+        <div class="cta-num"><i class="fas fa-handshake" style="font-size:20px;" aria-hidden="true"></i></div>
+        <h3>Apoyo y visibilidad de la dirección</h3>
+        <p>Que los proyectos de IA sean reconocidos como iniciativas estratégicas del equipo, con espacio en los foros ejecutivos y revisiones de negocio.</p>
+      </div>
+      <div class="cta-card">
+        <div class="cta-num"><i class="fas fa-wrench" style="font-size:20px;" aria-hidden="true"></i></div>
+        <h3>Recursos y tiempo dedicado</h3>
+        <p>Tiempo protegido para iteración y desarrollo. Acceso a herramientas, datos y entornos necesarios para que los proyectos lleguen a producción.</p>
+      </div>
+      <div class="cta-card">
+        <div class="cta-num"><i class="fas fa-seedling" style="font-size:20px;" aria-hidden="true"></i></div>
+        <h3>Cultura de innovación</h3>
+        <p>Celebrar los experimentos, aprender del proceso y normalizar el aprendizaje continuo como parte del ADN del equipo de Pricing.</p>
+      </div>
+    </div>
+    <div class="final-msg" role="note">
+      <p>"La IA no es el futuro de Walmart Pricing — es el presente.<br>Y nuestro equipo ya está ahí."</p>
+    </div>
+    <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-top:4px;">
+      <div style="background:var(--gray-10); border-radius:10px; padding:14px; text-align:center;">
+        <i class="fas fa-trophy" style="font-size:22px; color:var(--spark); margin-bottom:8px; display:block;" aria-hidden="true"></i>
+        <div style="font-size:12px; font-weight:700; color:var(--text);">Reconocimiento al equipo</div>
+      </div>
+      <div style="background:var(--gray-10); border-radius:10px; padding:14px; text-align:center;">
+        <i class="fas fa-cloud" style="font-size:22px; color:var(--blue); margin-bottom:8px; display:block;" aria-hidden="true"></i>
+        <div style="font-size:12px; font-weight:700; color:var(--text);">Infraestructura adecuada</div>
+      </div>
+      <div style="background:var(--gray-10); border-radius:10px; padding:14px; text-align:center;">
+        <i class="fas fa-graduation-cap" style="font-size:22px; color:var(--blue); margin-bottom:8px; display:block;" aria-hidden="true"></i>
+        <div style="font-size:12px; font-weight:700; color:var(--text);">Capacitación continua</div>
+      </div>
+      <div style="background:var(--gray-10); border-radius:10px; padding:14px; text-align:center;">
+        <i class="fas fa-arrows-spin" style="font-size:22px; color:var(--blue); margin-bottom:8px; display:block;" aria-hidden="true"></i>
+        <div style="font-size:12px; font-weight:700; color:var(--text);">Iteración y mejora continua</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== SLIDE 10: CIERRE ===================== -->
+<div class="slide slide-thanks" id="slide-10" role="main" aria-label="Diapositiva 10 de 10: Gracias">
+  <div class="thanks-content">
+    <div style="display:inline-flex; align-items:center; gap:10px; background:rgba(255,255,255,0.08); border:1.5px solid rgba(255,194,32,0.4); border-radius:30px; padding:8px 20px; margin-bottom:30px;">
+      <i class="fas fa-star" style="color:var(--spark); font-size:14px;" aria-hidden="true"></i>
+      <span style="font-size:13px; color:rgba(255,255,255,0.8); font-weight:600; letter-spacing:0.05em;">WALMART — EQUIPO DE PRICING</span>
+    </div>
+    <h1>Gracias</h1>
+    <p class="thanks-sub">Preguntas y comentarios son bienvenidos</p>
+    <div class="team-chips" aria-label="Integrantes del equipo">
+      <div class="chip"><i class="fas fa-user" aria-hidden="true"></i> Nicol Mendoza</div>
+      <div class="chip"><i class="fas fa-user" aria-hidden="true"></i> Andrea</div>
+      <div class="chip"><i class="fas fa-user" aria-hidden="true"></i> Starlyng</div>
+      <div class="chip"><i class="fas fa-user" aria-hidden="true"></i> Edwin</div>
+      <div class="chip"><i class="fas fa-user" aria-hidden="true"></i> JC</div>
+    </div>
+    <div class="final-phrase">
+      <i class="fas fa-rocket" aria-hidden="true"></i>
+      Innovando juntos para un Pricing más inteligente
+    </div>
+    <div style="margin-top:28px; font-size:12px; color:rgba(255,255,255,0.35); letter-spacing:0.08em;">WALMART PRICING — INTELIGENCIA ARTIFICIAL APLICADA — 2025</div>
+  </div>
+</div>
+
+<!-- ===================== NAVIGATION ===================== -->
+<nav class="slide-nav" role="navigation" aria-label="Navegación de diapositivas">
+  <button class="nav-btn" id="btn-prev" aria-label="Diapositiva anterior">
+    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+  </button>
+  <div class="dot-nav" id="dot-nav" role="tablist" aria-label="Indicadores de diapositiva"></div>
+  <span class="slide-counter" id="slide-counter" aria-live="polite" aria-atomic="true">1 / 10</span>
+  <button class="nav-btn" id="btn-next" aria-label="Siguiente diapositiva">
+    <i class="fas fa-chevron-right" aria-hidden="true"></i>
+  </button>
+  <button class="nav-btn" id="btn-fs" aria-label="Pantalla completa">
+    <i class="fas fa-expand" aria-hidden="true"></i>
+  </button>
+</nav>
+
+<script>
+  // ===== SLIDES ENGINE =====
+  const slides = document.querySelectorAll('.slide');
+  const counter = document.getElementById('slide-counter');
+  const progress = document.getElementById('progress-bar');
+  const dotNav = document.getElementById('dot-nav');
+  const total = slides.length;
+  let current = 0;
+  let animating = false;
+
+  // Build dots
+  slides.forEach((_, i) => {
+    const d = document.createElement('button');
+    d.className = 'dot' + (i === 0 ? ' active' : '');
+    d.setAttribute('role', 'tab');
+    d.setAttribute('aria-label', `Ir a diapositiva ${i + 1}`);
+    d.setAttribute('aria-selected', i === 0 ? 'true' : 'false');
+    d.addEventListener('click', () => goTo(i));
+    dotNav.appendChild(d);
+  });
+
+  function updateDots(n) {
+    document.querySelectorAll('.dot').forEach((d, i) => {
+      d.classList.toggle('active', i === n);
+      d.setAttribute('aria-selected', i === n ? 'true' : 'false');
+    });
+  }
+
+  function updateProgress(n) {
+    progress.style.width = ((n + 1) / total * 100) + '%';
+  }
+
+  function goTo(n, dir) {
+    if (animating || n === current) return;
+    animating = true;
+    const prev = current;
+    const direction = dir !== undefined ? dir : (n > current ? 1 : -1);
+
+    slides[prev].classList.remove('active');
+    slides[prev].classList.add(direction > 0 ? 'exit-left' : 'exit-right');
+
+    current = (n + total) % total;
+    slides[current].style.transform = direction > 0 ? 'translateX(60px)' : 'translateX(-60px)';
+    slides[current].classList.add('active');
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        slides[current].style.transform = '';
+        setTimeout(() => {
+          slides[prev].classList.remove('exit-left', 'exit-right');
+          animating = false;
+        }, 460);
+      });
+    });
+
+    counter.textContent = `${current + 1} / ${total}`;
+    updateDots(current);
+    updateProgress(current);
+
+    // Init chart on slide 8
+    if (current === 7 && !chartInited) initChart();
+  }
+
+  function next() { goTo(current + 1, 1); }
+  function prev() { goTo(current - 1, -1); }
+
+  document.getElementById('btn-next').addEventListener('click', next);
+  document.getElementById('btn-prev').addEventListener('click', prev);
+
+  document.getElementById('btn-fs').addEventListener('click', () => {
+    const icon = document.querySelector('#btn-fs i');
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen();
+      icon.className = 'fas fa-compress';
+    } else {
+      document.exitFullscreen();
+      icon.className = 'fas fa-expand';
+    }
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); next(); }
+    if (e.key === 'ArrowLeft') { e.preventDefault(); prev(); }
+    if (e.key === 'Home') { e.preventDefault(); goTo(0); }
+    if (e.key === 'End') { e.preventDefault(); goTo(total - 1); }
+  });
+
+  // Init progress
+  updateProgress(0);
+
+  // ===== CHART.JS — SLIDE 8 =====
+  let chartInited = false;
+  function initChart() {
+    chartInited = true;
+    const ctx = document.getElementById('impactChart').getContext('2d');
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: ['DataPulse', 'Intel. Competitiva', 'Proc. Canasto', 'Excel Vertical', 'Opt. Precios'],
+        datasets: [
+          {
+            label: 'Productividad',
+            data: [90, 70, 75, 65, 80],
+            backgroundColor: '#0053e2',
+            borderRadius: 5,
+          },
+          {
+            label: 'Competitividad',
+            data: [50, 95, 40, 30, 95],
+            backgroundColor: '#ffc220',
+            borderRadius: 5,
+          },
+          {
+            label: 'Calidad de Proceso',
+            data: [60, 60, 95, 85, 70],
+            backgroundColor: '#001f6b',
+            borderRadius: 5,
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'top',
+            labels: {
+              color: '#1a2540',
+              font: { family: 'Segoe UI', size: 12, weight: '600' },
+              padding: 16
+            }
+          },
+          tooltip: {
+            callbacks: {
+              label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y}%`
+            }
+          }
+        },
+        scales: {
+          x: {
+            ticks: { color: '#333d4d', font: { family: 'Segoe UI', size: 12 } },
+            grid: { display: false }
+          },
+          y: {
+            beginAtZero: true,
+            max: 100,
+            ticks: {
+              color: '#666',
+              font: { family: 'Segoe UI', size: 11 },
+              callback: v => v + '%'
+            },
+            grid: { color: '#e8ecf2' }
+          }
+        }
+      }
+    });
+  }
+</script>
+</body>
+</html>

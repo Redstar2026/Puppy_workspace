@@ -1,0 +1,249 @@
+Análisis Semanal de Impactos Modelo
+Rintyn debes actuar como un experto en análisis de Datos, debes ser un experto para identificar efectos de variación, adicional debes ser un experto en brindar detalles específicos que muevan la aguja en las variaciones de la información.
+Necesito que visites github y puedas revisar las wikis que creamos y llamamos como Formulas y Glosario.
+Este es uno:https://github.com/Redstar2026/Puppy_workspace/wiki/Form
+ulas y este es el otro para que leeas los wikis de github:https://github.com/Redstar2026/Puppy_workspace/wiki/Glosario favor ayudame leyendolos
+Una vez entendiendo esto y examinando y aprendiendo quiero que iniciemos el análisis correspondiente:
+Debemos realizar el análisis desde la data de la siguiente consulta:
+select * from wmt-k1-cons-data-users.k1_adhoc_tables.prcng_info_cam_a0g0dn3_impactos_modelo_semanal a
+where DIVISION !="MG Y TEXTIL"
+Segmento 1 Análisis General:
+Visual por Pais:
+1-) COSTO COMPETITIVO HO TW
+2-) COSTO COMPETITIVO INICIAL LW
+1-2-)Delta Entre Ambos Costo Competitivo HO TW vs Costo Competitivo INICIL LW
+3-) CAMBIOS PRECIOS TW
+4-) CAMBIOS PRECIOS INICIAL LW
+3-4-) Delta Entre Cambios precios TW vs Cambios Precios Inicial LW, llevarlo a base 100 para verlo en peso porcentual.
+5-)% PG ACTUAL TW
+6-)% MB ACTUAL TW
+7-)% PG HO INICIAL
+8-)% MB HO INICIAL
+9-)% PG HO INICIAL LW
+10-)% MB HO INICIAL LW
+11-)BPS PG  HO INICIAL VS % PG HO INICAL LW
+12-)BPS MB HO INICIAL VS %MB HO INICIAL LW
+13-)% PG MEDICION TW
+14-)% PG MEDICION 4WK
+15-)% MB TW MEDICION
+16-)% MB 4 WK MEDICION
+Visual por División:
+1-) COSTO COMPETITIVO HO TW
+2-) COSTO COMPETITIVO INICIAL LW
+1-2-)Delta Entre Ambos Costo Competitivo HO TW vs Costo Competitivo INICIL LW
+3-) CAMBIOS PRECIOS TW
+4-) CAMBIOS PRECIOS INICIAL LW
+3-4-) Delta Entre Cambios precios TW vs Cambios Precios Inicial LW, llevarlo a base 100 para verlo en peso porcentual.
+5-)% PG ACTUAL TW
+6-)% MB ACTUAL TW
+7-)% PG HO INICIAL
+8-)% MB HO INICIAL
+9-)% PG HO INICIAL LW
+10-)% MB HO INICIAL LW
+11-)BPS PG  HO INICIAL VS % PG HO INICAL LW
+12-)BPS MB HO INICIAL VS %MB HO INICIAL LW
+13-)% PG MEDICION TW
+14-)% PG MEDICION 4WK
+15-)% MB TW MEDICION
+16-)% MB 4 WK MEDICION
+Visual por Tier:
+1-) COSTO COMPETITIVO HO TW
+2-) COSTO COMPETITIVO INICIAL LW
+1-2-)Delta Entre Ambos Costo Competitivo HO TW vs Costo Competitivo  INICIL LW
+3-) CAMBIOS PRECIOS TW
+4-) CAMBIOS PRECIOS INICIAL LW
+3-4-) Delta Entre Cambios precios TW vs Cambios Precios Inicial LW, llevarlo a base 100 para verlo en peso porcentual.
+5-)% PG ACTUAL TW
+6-)% MB ACTUAL TW
+7-)% PG HO INICIAL
+8-)% MB HO INICIAL
+9-)% PG HO INICIAL LW
+10-)% MB HO INICIAL LW
+11-)BPS PG  HO INICIAL VS % PG HO INICAL LW
+12-)BPS MB HO INICIAL VS %MB HO INICIAL LW
+13-)% PG MEDICION TW
+14-)% PG MEDICION 4WK
+15-)% MB TW MEDICION
+16-)% MB 4 WK MEDICION
+Visual flag_movimiento_precio_comp:
+1-) COSTO COMPETITIVO HO TW
+2-) COSTO COMPETITIVO INICIAL LW
+1-2-)Delta Entre Ambos Costo Competitivo HO TW vs Costo Competitivo INICIL LW
+3-) CAMBIOS PRECIOS TW
+4-) CAMBIOS PRECIOS INICIAL LW
+3-4-) Delta Entre Cambios precios TW vs Cambios Precios Inicial LW, llevarlo a base 100 para verlo en peso porcentual.
+5-)% PG ACTUAL TW
+6-)% MB ACTUAL TW
+7-)% PG HO INICIAL
+8-)% MB HO INICIAL
+9-)% PG HO INICIAL LW
+10-)% MB HO INICIAL LW
+11-)BPS PG  HO INICIAL VS % PG HO INICAL LW
+12-)BPS MB HO INICIAL VS %MB HO INICIAL LW
+13-)% PG MEDICION TW
+14-)% PG MEDICION 4WK
+15-)% MB TW MEDICION
+16-)% MB 4 WK MEDICION
+Visual tendencia_reaccion_ho
+1-) COSTO COMPETITIVO HO TW
+2-) COSTO COMPETITIVO INICIAL LW
+1-2-)Delta Entre Ambos Costo Competitivo HO TW vs Costo Competitivo INICIL LW
+3-) CAMBIOS PRECIOS TW
+4-) CAMBIOS PRECIOS INICIAL LW
+3-4-) Delta Entre Cambios precios TW vs Cambios Precios Inicial LW, llevarlo a base 100 para verlo en peso porcentual.
+5-)% PG ACTUAL TW
+6-)% MB ACTUAL TW
+7-)% PG HO INICIAL
+8-)% MB HO INICIAL
+9-)% PG HO INICIAL LW
+10-)% MB HO INICIAL LW
+11-)BPS PG  HO INICIAL VS % PG HO INICAL LW
+12-)BPS MB HO INICIAL VS %MB HO INICIAL LW
+13-)% PG MEDICION TW
+14-)% PG MEDICION 4WK
+15-)% MB TW MEDICION
+16-)% MB 4 WK MEDICION
+Visual flag_respeto_pricing_modelo
+1-) COSTO COMPETITIVO HO TW
+2-) COSTO COMPETITIVO INICIAL LW
+1-2-)Delta Entre Ambos Costo Competitivo HO TW vs Costo Competitivo  INICIL LW
+3-) CAMBIOS PRECIOS TW
+4-) CAMBIOS PRECIOS INICIAL LW
+3-4-) Delta Entre Cambios precios TW vs Cambios Precios Inicial LW, llevarlo a base 100 para verlo en peso porcentual.
+5-)% PG ACTUAL TW
+6-)% MB ACTUAL TW
+7-)% PG HO INICIAL
+8-)% MB HO INICIAL
+9-)% PG HO INICIAL LW
+10-)% MB HO INICIAL LW
+11-)BPS PG  HO INICIAL VS % PG HO INICAL LW
+12-)BPS MB HO INICIAL VS %MB HO INICIAL LW
+13-)% PG MEDICION TW
+14-)% PG MEDICION 4WK
+15-)% MB TW MEDICION
+16-)% MB 4 WK MEDICION
+Hasta acá en el segmento de Análisis General:
+Segmento 2 Visual Nuevo análisis de Calidad:
+Visual PERFORMANCE_PRIMARIO
+1-) COSTO COMPETITIVO HO TW
+2-) COSTO COMPETITIVO INICIAL LW
+1-2-)Delta Entre Ambos Costo Competitivo HO TW vs Costo Competitivo INICIL LW
+3-) CAMBIOS PRECIOS TW
+4-) CAMBIOS PRECIOS INICIAL LW
+3-4-) Delta Entre Cambios precios TW vs Cambios Precios Inicial LW, llevarlo a base 100 para verlo en peso porcentual.
+5-)% PG ACTUAL TW
+6-)% MB ACTUAL TW
+7-)% PG HO INICIAL
+8-)% MB HO INICIAL
+9-)% PG HO INICIAL LW
+10-)% MB HO INICIAL LW
+11-)BPS PG  HO INICIAL VS % PG HO INICAL LW
+12-)BPS MB HO INICIAL VS %MB HO INICIAL LW
+13-)% PG MEDICION TW
+14-)% PG MEDICION 4WK
+15-)% MB TW MEDICION
+16-)% MB 4 WK MEDICION
+Visual RANGOS_COSTO_COMPETITIVO_INICIAL
+1-) COSTO COMPETITIVO HO TW
+2-) COSTO COMPETITIVO INICIAL LW
+1-2-)Delta Entre Ambos Costo Competitivo HO TW vs Costo Competitivo INICIL LW
+3-) CAMBIOS PRECIOS TW
+4-) CAMBIOS PRECIOS INICIAL LW
+3-4-) Delta Entre Cambios precios TW vs Cambios Precios Inicial LW, llevarlo a base 100 para verlo en peso porcentual.
+5-)% PG ACTUAL TW
+6-)% MB ACTUAL TW
+7-)% PG HO INICIAL
+8-)% MB HO INICIAL
+9-)% PG HO INICIAL LW
+10-)% MB HO INICIAL LW
+11-)BPS PG  HO INICIAL VS % PG HO INICAL LW
+12-)BPS MB HO INICIAL VS %MB HO INICIAL LW
+13-)% PG MEDICION TW
+14-)% PG MEDICION 4WK
+15-)% MB TW MEDICION
+16-)% MB 4 WK MEDICION
+Visual RANGO_PG_ACTUAL
+1-) COSTO COMPETITIVO HO TW
+2-) COSTO COMPETITIVO INICIAL LW
+1-2-)Delta Entre Ambos COSTO COMPETITIVO HO TW vs COSTO COMPETITIVO NICIL LW
+3-) CAMBIOS PRECIOS TW
+4-) CAMBIOS PRECIOS INICIAL LW
+3-4-) Delta Entre Cambios precios TW vs Cambios Precios Inicial LW, llevarlo a base 100 para verlo en peso porcentual.
+5-)% PG ACTUAL TW
+6-)% MB ACTUAL TW
+7-)% PG HO INICIAL
+8-)% MB HO INICIAL
+9-)% PG HO INICIAL LW
+10-)% MB HO INICIAL LW
+11-)BPS PG  HO INICIAL VS % PG HO INICAL LW
+12-)BPS MB HO INICIAL VS %MB HO INICIAL LW
+13-)% PG MEDICION TW
+14-)% PG MEDICION 4WK
+15-)% MB TW MEDICION
+16-)% MB 4 WK MEDICION
+Visual Rango META:
+1-) COSTO COMPETITIVO HO TW
+2-) COSTO COMPETITIVO INICIAL LW
+1-2-)Delta Entre Ambos Costo Competitivo HO TW vs Costo Competitivo INICIL LW
+3-) CAMBIOS PRECIOS TW
+4-) CAMBIOS PRECIOS INICIAL LW
+3-4-) Delta Entre Cambios precios TW vs Cambios Precios Inicial LW, llevarlo a base 100 para verlo en peso porcentual.
+5-)% PG ACTUAL TW
+6-)% MB ACTUAL TW
+7-)% PG HO INICIAL
+8-)% MB HO INICIAL
+9-)% PG HO INICIAL LW
+10-)% MB HO INICIAL LW
+11-)BPS PG  HO INICIAL VS % PG HO INICAL LW
+12-)BPS MB HO INICIAL VS %MB HO INICIAL LW
+13-)% PG MEDICION TW
+14-)% PG MEDICION 4WK
+15-)% MB TW MEDICION
+16-)% MB 4 WK MEDICION
+SEGMENTO 3 VISUAL NUEVO DETALLE DE CATEGORÍA – COMPETIDOR
+Que requerimos:
+1-) Tener filtros de Pais, División, Formato, Categoría, Tier.
+2-)Que la Tabla muestre Pais – Categoría – Tier – Competidor y que se pueda agrupar cualquiera de estas tres variables.
+3-) Que inicialmente muestre todo, pero que se pueda resumir la tabla según el país y que tenga la tabla corte de segmento por cada país.
+4-)Que tenga un botom de descargable en CSV.
+5-) Que tenga un filtro que identifique las categorías top ten que invierten más por país y las que oxigenan más por país siempre tomando en cuenta el calculo de
+1-) COSTO COMPETITIVO HO TW
+2-) COSTO COMPETITIVO INICIAL LW
+1-2-)Delta Entre Ambos Costo Competitivo HO TW vs  Costo Competitivo INICIL LW
+Importante este punto 5 es tener un filtro para poder visualizar las categorías top de inversión según las variables seleccionadas en los filtros generales.
+6-) Debemos tener en la tabla estos cálculos:
+1-) COSTO COMPETITIVO HO TW
+2-) COSTO COMPETITIVO INICIAL LW
+1-2-)Delta Entre Ambos Costo Competitivo HO TW vs costo Competitivo INICIL LW
+3-) CAMBIOS PRECIOS TW
+4-) CAMBIOS PRECIOS INICIAL LW
+3-4-) Delta Entre Cambios precios TW vs Cambios Precios Inicial LW, llevarlo a base 100 para verlo en peso porcentual.
+5-)% PG ACTUAL TW
+6-)% MB ACTUAL TW
+7-)% PG HO INICIAL
+8-)% MB HO INICIAL
+9-)% PG HO INICIAL LW
+10-)% MB HO INICIAL LW
+11-)BPS PG  HO INICIAL VS % PG HO INICAL LW
+12-)BPS MB HO INICIAL VS %MB HO INICIAL LW
+13-)% PG MEDICION TW
+14-)% PG MEDICION 4WK
+15-)% MB TW MEDICION
+16-)% MB 4 WK MEDICION
+Segmento 4  análisis Micro ítem
+Visual Costo Competitivo:
+1-) Visual detalle Ítems, quiero una tabla con la información completa, que traiga el detalle micro, debe tener filtros Generales de País, Formato, División, Categoría, Tier, Ítems, Descripción.
+2-) Necesito toda la información de los ítems, que venga toda la información añadida.
+3-) Quiero un filtro del top 50 de lo que más invierta ósea que el delta de costo Competitivo sea negativo que sea móvil según los filtros generales.
+4-) Quiero un filtro del top 50 de lo que más oxigena ósea que el delta de costo Competitivo sea positivo que sea móvil según los filtros generales.
+5-) Créame un Filtro de análisis que tenga las siguiente Combinaciones:
+A-ítems Cuyo delta de Costo Competitivo es negativo y que Su delta dé %PG también es negativo.
+B-Items Cuyo Delta de Costo Competitivo es Negativo , y su Delta de %PG se mantienen positivo.
+C-)Items cuyo delta de costo competitivo es positivo y su Delta de % PG es Negativo.
+D-)Items cuyo delta de costo es positivo y su delta de % PG es positivo.
+e-)Items que mantienen su delta igual al escenario comparativo.
+Segmento 5  Visual nuevo Analisis Competitivo – Competidores:
+Filtros Pais, Formato, División, Categoría,Clasificación
+Visual 1 Tomar el Campo de Competidor _ reacción y el campo Competidor_reaccion_lw y realizar para cada uno un conteo de items y realizar un comparativo en donde mostremos un delta del recuento, Esto que la tabla muestre la data por país, competidor.
+Visual 2: Realizar una tabla que me permita evaluar Si los precios de competencia han bajado de una semana a otra, determinar conteos para cada competidor en donde clasifiques  de la siguiente forma:
+Bajo, Subio o Mantiene, tomando la información para la logica a Nivel Pais, Formato, zona, división, categoría, item y realizando un campo que nos diga si Bajo, subió o mantuvo el precio por cada linea para luego nada mas realizar un conteo por competidor de este flag que determina si realmente bajo, subió o mantuvo su precio. Para esto debes tomar las columnas Precio_compe_reaccion  vs Precio_compe_reacción_lw, si al realizar la lógica encontramos líneas que no tienen precio en alguno de los campos Si no tiene precio en Precio_compe_reaccion entonces colocamos “Solo LW” y si encontramos precio uncamente en Precio_compe_reaccion y no encontramos precio en el campo Precio_compe_reaccion_lw entonces colocamos “nuevo registro”
