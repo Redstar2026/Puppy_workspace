@@ -1,0 +1,168 @@
+PROMPT REESTRUCTURADO
+Rol
+Actúa como un Consultor Senior de Pricing, Data Analytics y BigQuery, especializado en Retail y optimización de surtidos.
+No actúes únicamente como un desarrollador SQL. Tu responsabilidad es analizar el comportamiento de precios de las familias de productos, identificar desviaciones y proponer una solución escalable para BigQuery.
+Antes de escribir cualquier consulta SQL debes comprender completamente las reglas de negocio.
+Objetivo del negocio
+El objetivo es evaluar la consistencia de precios dentro de las familias del canasto de pricing.
+Cada familia posee un  SKU Primario, que representa el precio de referencia.
+A partir de ese ITEM Primario se debe determinar qué tan alineados están los demás SKUs de la misma familia.
+El resultado será utilizado por el equipo de Pricing para detectar oportunidades de homologación de precios.
+Definiciones de negocio
+Familia
+Una familia está definida por la combinación de:
+País 
+Formato 
+Zona 
+Código_Familia 
+SKU Primario
+El SKU Primario es el registro donde:
+Item = Codigo_Familia
+Debe existir uno y solo uno por familia.
+Si no existe, la familia debe marcarse como inconsistente.
+Precio de referencia
+El precio a evaluar será:
+PRECIO_GPI_C_IMP
+Reglas más importantes (prioridad alta)
+Estas reglas tienen prioridad sobre cualquier otra lógica.
+Regla 1
+Todos los SKUs que pertenezcan a una familia y tengan exactamente el mismo tamaño deberían compartir el mismo precio que el ITEM Primario, usualmente se identifican porque su Factor y % ahorro es =1
+Regla 2
+Existen SKUs que representan:
+Packs 
+Gramajes diferentes 
+Presentaciones distintas 
+Estos productos se identifican porque poseen:
+Factor_Conversion ≠ 1 
+%Ahorro ≠ 1 
+Estos productos NO deben considerarse como desviaciones de precio, ya que es esperado que tengan un precio mayor o diferente al del SKU Primario.
+Por lo tanto:
+Estos SKUs deben analizarse por separado y no deben afectar el porcentaje de alineación de la familia.
+Mas si deben mostrarse en las tablas de información completa y tener una leyenda algo similar a : Esperado precio distinto por packs o tamaño diferente.
+Esta regla es crítica.
+Consulta base
+WITH formatos_zonas AS (    SELECT DISTINCT        Pais,        Formato,        nomb_zone,        item    FROM `wmt-k1-cons-data-users.k1_adhoc_tables.prcng_info_cam_insumos_diario`    WHERE EXTRACT_DATE = "2026-07-04 00:00:00 UTC"),canasto_explosionado AS (    SELECT        c.*,        fz.Formato,        fz.nomb_zone    FROM `wmt-k1-cons-data-users.k1_adhoc_tables.prcng_info_cam_a0g0dn3_canasto_universal_extendido` c    INNER JOIN formatos_zonas fz        ON c.Pais = fz.Pais       AND c.item = fz.item),insumos AS (    SELECT        Pais,        Formato,        nomb_zone,        Item,        PRECIO_GPI_C_IMP,        Rotaciones,        Ventas,        Sell_QTY    FROM `wmt-k1-cons-data-users.k1_adhoc_tables.prcng_info_cam_insumos_diario`    WHERE EXTRACT_DATE = "2026-07-04 00:00:00 UTC"),Familias AS (    SELECT        ce.*,        i.PRECIO_GPI_C_IMP,        i.Rotaciones,        i.Ventas,        i.Sell_QTY    FROM canasto_explosionado ce    LEFT JOIN insumos i        ON ce.Pais = i.Pais       AND ce.Formato = i.Formato       AND ce.nomb_zone = i.nomb_zone       AND ce.Item = i.Item)SELECT *FROM Familias;
+Análisis requerido
+Una vez obtenida la tabla anterior, realiza los siguientes análisis.
+1. Construcción de la base de detalle
+No eliminar ningún registro.
+Agregar las siguientes columnas:
+SKU_Primario 
+Precio_Primario 
+ESTADO_PRECIO 
+AGRUPACION 
+Cantidad_SKUs_Mismo_Precio 
+Cantidad_Precios_Distintos 
+OBSERVACIONES 
+Donde:
+AGRUPACION debe contener únicamente:
+Primario 
+Secundario 
+2. Comparación de precios
+Comparar cada SKU contra el SKU Primario.
+Crear:
+ESTADO_PRECIO
+Valores posibles:
+Igual al Primario 
+Diferente al Primario 
+3. Agrupación por precio
+Dentro de cada familia identificar cuántos artículos tienen exactamente el mismo precio.
+Ejemplo
+Precio
+Cantidad SKU
+100
+4
+105
+2
+110
+1
+Agregar esta información al detalle.
+4. Resumen Ejecutivo
+Construir una segunda tabla agrupada por
+País 
+Formato 
+Zona 
+Código_Familia 
+Con las siguientes métricas:
+Número de SKUs 
+SKU Primario 
+Precio del Primario 
+Venta del Primario 
+Rotación del Primario 
+Número de precios distintos 
+Número de SKUs con precio igual al Primario 
+Número de SKUs con precio diferente al Primario 
+Porcentaje de alineación 
+Observaciones 
+Donde
+Porcentaje de alineación =
+(SKUs con precio igual al Primario)
+/
+(Total SKUs válidos)
+5. Vista exclusiva de Packs y Gramajes
+Crear una tercera vista únicamente con los productos que tengan
+Factor_Conversion ≠ 1
+o
+%Ahorro ≠ 1
+Esta vista debe mostrar visualmente:
+SKU Primario 
+SKU Secundario 
+Precio Primario 
+Precio Secundario 
+Factor Conversión 
+% Ahorro 
+Diferencia absoluta 
+Diferencia porcentual 
+El objetivo de esta vista es validar que las diferencias de precio sean coherentes con el tamaño del producto.
+Estos registros no deben afectar los indicadores generales.
+6. Indicadores para Dirección
+Una vez excluidos los productos con
+Factor_Conversion ≠ 1 
+%Ahorro ≠ 1 
+calcular el porcentaje general de alineación de precios.
+Generar dos niveles de resumen.
+Global
+Total Familias 
+Total SKUs 
+Familias 100% alineadas 
+Familias con diferencias 
+% General de alineación 
+Por País
+Mostrar para cada país:
+Familias 
+SKUs 
+Familias alineadas 
+Familias no alineadas 
+% Alineación 
+Ordenar de menor a mayor alineación.
+7. Observaciones automáticas
+Detectar automáticamente:
+Familias con un solo SKU 
+Familias sin Primario 
+Dos Primarios 
+Precio Primario nulo 
+Ventas nulas 
+Rotaciones nulas 
+Duplicados 
+Más de tres precios distintos 
+Valores extremos 
+Cualquier inconsistencia encontrada 
+Entregables esperados
+Quiero que la respuesta se entregue exactamente en este orden:
+Explicación de la estrategia utilizada. 
+Lógica de negocio aplicada. 
+SQL completamente documentado. 
+Tabla de detalle. 
+Tabla Resumen. 
+Vista Packs / Gramajes. 
+Indicadores Ejecutivos. 
+Observaciones encontradas. 
+Recomendaciones para Pricing. 
+Recomendaciones para optimizar el SQL en BigQuery. 
+Restricciones
+No eliminar registros. 
+No modificar la estructura original del dataset. 
+Toda la lógica debe ser escalable. 
+Utilizar funciones analíticas (WINDOW FUNCTIONS) cuando sea posible. 
+Evitar subconsultas innecesarias. 
+Priorizar rendimiento en BigQuery. 
