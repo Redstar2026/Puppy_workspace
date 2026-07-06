@@ -1,0 +1,22 @@
+  FAIL  Chart.js embebido
+  OK  DATA_DET inyectado (no literal)
+  OK  DATA_FAM inyectado
+  OK  DATA_PCK inyectado
+  OK  DATA_DIR inyectado
+  OK  LABELS inyectado
+  OK  renderTbl det
+  OK  renderTbl fam
+  OK  renderTbl pck
+  OK  body_det existe
+  OK  body_fam existe
+  OK  body_pck existe
+  OK  pg_det existe
+  OK  pg_fam existe
+  OK  pg_pck existe
+  OK  dlCSV funcion
+  OK  applyFilter funcion
+  OK  switchTab funcion
+  OK  HTML cierra
+
+RESULTADO: HAY FALLOS
+Tamano HTML: 6,052,627 chars
