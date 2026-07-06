@@ -231,7 +231,7 @@ def generate_html(kpis: dict, director: pd.DataFrame, problemas: pd.DataFrame,
 
     conv_cols = ["PAIS", "Formato", "ZONA", "CODIGO_FAMILIA", "DESC_PRIMARIO",
                  "PRECIO_PRIMARIO", "TAMANO_PRIMARIO", "MEDIDA_PRIMARIO",
-                 "ITEM", "SIGNING_DESC", "PRECIO_GPI_C_IMP",
+                 "ITEM", "AGRUPACION", "SIGNING_DESC", "PRECIO_GPI_C_IMP",
                  "TAMANO_TOTAL", "MEDIDA", "FACTOR_DE_CONVERSION",
                  "AHORRO_DIFERENCIAL", "RATIO_PRECIO_VS_PRIMARIO",
                  "PRECIO_NORMALIZADO", "PRECIO_ESPERADO", "EVALUACION_PRECIO",
@@ -242,6 +242,9 @@ def generate_html(kpis: dict, director: pd.DataFrame, problemas: pd.DataFrame,
     dir_rows_html = director_rows(director)
     obs_html = obs_cards(observations)
     now = datetime.now().strftime("%d/%m/%Y %H:%M")
+
+    # dir_json for CSV download (all columns, all rows)
+    dir_json = df_to_json(director, list(director.columns), max_rows=10)
 
     # color por pct global
     g = kpis["pct_global"]
@@ -305,6 +308,13 @@ def generate_html(kpis: dict, director: pd.DataFrame, problemas: pd.DataFrame,
   .page-info{{font-size:.78rem;color:#64748b;margin-left:auto}}
   select.filter-sel{{padding:7px 10px;border:1px solid #cbd5e1;border-radius:8px;
                      font-size:.82rem;outline:none;background:#fff}}
+  .btn-dl{{padding:6px 14px;border-radius:7px;border:1px solid #0053e2;background:#fff;
+           color:#0053e2;font-size:.78rem;font-weight:600;cursor:pointer;white-space:nowrap}}
+  .btn-dl:hover{{background:#eff6ff}}
+  .agrup-primario{{background:#dbeafe;color:#1e40af;padding:2px 8px;border-radius:12px;
+                  font-size:.7rem;font-weight:700;white-space:nowrap}}
+  .agrup-secundario{{background:#f1f5f9;color:#475569;padding:2px 8px;border-radius:12px;
+                     font-size:.7rem;font-weight:600;white-space:nowrap}}
 </style>
 </head>
 <body class="min-h-screen">
@@ -376,11 +386,14 @@ def generate_html(kpis: dict, director: pd.DataFrame, problemas: pd.DataFrame,
     <div style="height:260px"><canvas id="chartPais"></canvas></div>
   </div>
   <div class="kpi-card">
-    <h2 style="font-size:.95rem;font-weight:700;color:#0053e2;margin-bottom:14px">
-       Resumen Ejecutivo por País — Vista para Directores
-    </h2>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <h2 style="font-size:.95rem;font-weight:700;color:#0053e2;margin:0">
+         Resumen Ejecutivo por País — Vista para Directores
+      </h2>
+      <button class="btn-dl" onclick="downloadCSV('dir')">Descargar CSV</button>
+    </div>
     <div class="tbl-wrap">
-    <table>
+    <table id="tableDir">
       <thead><tr>
         <th>País</th><th>Familias</th><th>Total SKUs</th>
         <th>Mismo Tam.</th><th>Alineados</th><th>No Alineados</th>
@@ -415,6 +428,7 @@ def generate_html(kpis: dict, director: pd.DataFrame, problemas: pd.DataFrame,
       <option>CR</option><option>GT</option><option>HN</option>
       <option>SV</option><option>NI</option>
     </select>
+    <button class="btn-dl" onclick="downloadCSV('prob')">Descargar CSV</button>
     <span id="countProb" style="font-size:.78rem;color:#64748b"></span>
   </div>
   <div class="tbl-wrap">
@@ -458,6 +472,7 @@ def generate_html(kpis: dict, director: pd.DataFrame, problemas: pd.DataFrame,
       <option>PRECIO CORRECTO (normalizado)</option>
       <option>REVISAR</option>
     </select>
+    <button class="btn-dl" onclick="downloadCSV('conv')">Descargar CSV</button>
     <span id="countConv" style="font-size:.78rem;color:#64748b"></span>
   </div>
   <div class="tbl-wrap">
@@ -466,7 +481,7 @@ def generate_html(kpis: dict, director: pd.DataFrame, problemas: pd.DataFrame,
       <th>País</th><th>Formato</th><th>Zona</th>
       <th>Familia</th><th>SKU Primario</th><th>Precio Primario</th>
       <th>Tam. Primario</th><th>Medida</th>
-      <th>Item</th><th>Descripción Item</th>
+      <th>Item</th><th>Agrupación</th><th>Descripción Item</th>
       <th>Precio Item</th><th>Tam. Total</th>
       <th>Factor Conv.</th><th>Ahorro Dif.</th>
       <th>Ratio P/Primario</th><th>Precio Norm.</th>
@@ -512,6 +527,38 @@ def generate_html(kpis: dict, director: pd.DataFrame, problemas: pd.DataFrame,
 // ─── Datos ───────────────────────────────────────────────────────────────────
 const probData = {prob_json};
 const convData = {conv_json};
+const dirData  = {dir_json};
+
+// ─── Descarga CSV ────────────────────────────────────────────────────────────
+function downloadCSV(which) {{
+  let rows, filename;
+  if (which === 'dir') {{
+    rows = dirData;
+    filename = 'director_alineacion_pais.csv';
+  }} else if (which === 'prob') {{
+    rows = state['tableProb']?.filtered || probData;
+    filename = 'familias_con_problemas.csv';
+  }} else {{
+    rows = state['tableConv']?.filtered || convData;
+    filename = 'items_tamano_diferente.csv';
+  }}
+  if (!rows || !rows.length) return;
+  const headers = Object.keys(rows[0]);
+  const escape = v => {{
+    const s = (v === null || v === undefined) ? '' : String(v);
+    return s.includes(',') || s.includes('"') || s.includes('\n')
+      ? `"${{s.replace(/"/g, '""')}}"`
+      : s;
+  }};
+  const csv = [headers.join(','),
+    ...rows.map(r => headers.map(h => escape(r[h])).join(','))
+  ].join('\n');
+  const blob = new Blob(['\uFEFF' + csv], {{type: 'text/csv;charset=utf-8;'}});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+}}
 
 // ─── Chart ──────────────────────────────────────────────────────────────────
 const ctx = document.getElementById('chartPais').getContext('2d');
@@ -666,6 +713,9 @@ function evalBadge(v) {{
 }}
 
 function renderConvRow(r) {{
+  const agrupBadge = r.AGRUPACION === 'PRIMARIO'
+    ? `<span class="agrup-primario">PRIMARIO</span>`
+    : `<span class="agrup-secundario">SECUNDARIO</span>`;
   return `<tr>
     <td class="font-semibold">${{r.PAIS||'—'}}</td>
     <td>${{r.Formato||'—'}}</td>
@@ -677,6 +727,7 @@ function renderConvRow(r) {{
     <td class="text-right">${{fmt(r.TAMANO_PRIMARIO,0)}}</td>
     <td>${{r.MEDIDA_PRIMARIO||'—'}}</td>
     <td style="font-family:monospace;font-size:.73rem">${{r.ITEM||'—'}}</td>
+    <td>${{agrupBadge}}</td>
     <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"
         title="${{r.SIGNING_DESC||''}}">${{r.SIGNING_DESC||'—'}}</td>
     <td class="text-right font-semibold" style="color:#0053e2">${{fmt(r.PRECIO_GPI_C_IMP,2)}}</td>
