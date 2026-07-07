@@ -285,7 +285,7 @@ pT({id:'tblA5',data:DATA_A5,ps:50,si:'srcA5',
 
 // --- TAB 6: Chequeos vs Universo ---
 (function(){
-  var bp={};DATA_A6.forEach(function(r){if(!bp[r.PAIS])bp[r.PAIS]={vt:0,vch:0};bp[r.PAIS].vt+=parseFloat(r.VENTAS_TOTALES)||0;bp[r.PAIS].vch+=parseFloat(r.VENTAS_CON_CHEQUEOS)||0;});
+  var bp={};DATA_A6.forEach(function(r){if(!bp[r.PAIS])bp[r.PAIS]={vt:0,vch:0};bp[r.PAIS].vt+=parseFloat(r.VENTAS_CANASTO)||0;bp[r.PAIS].vch+=parseFloat(r.VENTAS_CON_CHEQUEOS)||0;});
   var ls=Object.keys(bp).sort();
   chBar('ch6',ls,[{label:'% Cob Ventas vs Universo',data:ls.map(function(p){return bp[p].vt?parseFloat((bp[p].vch/bp[p].vt*100).toFixed(2)):0;}),backgroundColor:'#2a8703',borderRadius:4}],
     {plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,max:100,ticks:{callback:function(v){return v+'%';}},grid:{color:'#f2f3f4'}},x:{grid:{display:false}}}});
@@ -293,10 +293,10 @@ pT({id:'tblA5',data:DATA_A5,ps:50,si:'srcA5',
 pT({id:'tblA6',data:DATA_A6,ps:50,si:'srcA6',
   sels:[{id:'fA6p',f:'PAIS'},{id:'fA6f',f:'FORMATO'}],
   cols:[{f:'PAIS',l:'Pais'},{f:'FORMATO',l:'Formato'},{f:'DIVISION',l:'Division'},
-    {f:'VENTAS_TOTALES',l:'Vtas Universo',f2:function(r){return'<td class="nm">'+fN(r.VENTAS_TOTALES)+'</td>';}},
+    {f:'VENTAS_CANASTO',l:'Vtas Universo',f2:function(r){return'<td class="nm">'+fN(r.VENTAS_CANASTO)+'</td>';}},
     {f:'VENTAS_CON_CHEQUEOS',l:'Vtas c/Cheq',f2:function(r){return'<td class="nm">'+fN(r.VENTAS_CON_CHEQUEOS)+'</td>';}},
     {f:'PCT_COB_VENTAS',l:'% Cob Vtas',f2:function(r){return'<td class="pt '+pc(r.PCT_COB_VENTAS)+'">'+fP(r.PCT_COB_VENTAS)+'</td>';}},
-    {f:'ITEMS_TOTALES',l:'Items Universo',f2:function(r){return'<td class="nm">'+parseInt(r.ITEMS_TOTALES).toLocaleString()+'</td>';}},
+    {f:'ITEMS_CANASTO',l:'Items Universo',f2:function(r){return'<td class="nm">'+parseInt(r.ITEMS_CANASTO).toLocaleString()+'</td>';}},
     {f:'ITEMS_CON_CHEQUEOS',l:'Items c/Cheq',f2:function(r){return'<td class="nm">'+parseInt(r.ITEMS_CON_CHEQUEOS).toLocaleString()+'</td>';}},
     {f:'PCT_COB_ITEMS',l:'% Cob Items',f2:function(r){return'<td class="pt '+pc(r.PCT_COB_ITEMS)+'">'+fP(r.PCT_COB_ITEMS)+'</td>';}},
     {f:'PCT_COB_VENTAS',l:'Barra',f2:function(r){return bar(r.PCT_COB_VENTAS);}}]});
