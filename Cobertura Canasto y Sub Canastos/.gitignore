@@ -1,0 +1,5 @@
+diag_*.py  
+verify_*.py  
+extracted.txt  
+read_docx.py  
+check_syntax.py 
